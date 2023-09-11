@@ -886,6 +886,12 @@ bool GenMCDriver::isHbBefore(Event a, Event b, ProgramPoint p /* = step */)
 	return getGraph().isHbBefore(a, b, getCheckConsType(p));
 }
 
+/*NEWSC_DPOR*/
+bool GenMCDriver::isCbBefore(Event a, Event b, ProgramPoint p /* = step */)
+{
+	return getGraph().isCbBefore(a, b, getCheckConsType(p));
+}
+
 bool GenMCDriver::isCoMaximal(SAddr addr, Event e, bool checkCache /* = false */,
 			      ProgramPoint p /* = step */)
 {

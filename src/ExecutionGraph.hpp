@@ -82,7 +82,7 @@ public:
 
 	/* Different relations that might exist in the graph */
 	enum class RelationId {
-		hb, co, lb, psc, ar, prop, ar_lkmm, pb, rcu_link, rcu, rcu_fence, xb
+		hb, co, lb, psc, ar, prop, ar_lkmm, pb, rcu_link, rcu, rcu_fence, xb, cb/*capture po-rf*/
 	};
 
 protected:
@@ -428,6 +428,9 @@ public:
 
 	/* Returns true if a is hb-before b */
 	bool isHbBefore(Event a, Event b, CheckConsType t = CheckConsType::fast);
+	/* Returns true if a is cb-before b */
+	bool isCbBefore(Event a, Event b, CheckConsType t = CheckConsType::fast);
+	
 
 	/* Returns true if e is maximal in addr */
 	bool isCoMaximal(SAddr addr, Event e, bool checkCache = false,

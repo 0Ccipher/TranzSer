@@ -372,6 +372,10 @@ protected:
 
 	/* Returns true if A is hb-before B at P */
 	bool isHbBefore(Event a, Event b, ProgramPoint p = ProgramPoint::step);
+	
+	/*NEWSC_DPOR*/
+	/* Returns true if A is hb-before B at P */
+	bool isCbBefore(Event a, Event b, ProgramPoint p = ProgramPoint::step);
 
 	/* Returns true if E is maximal in ADDR at P*/
 	bool isCoMaximal(SAddr addr, Event e, bool checkCache = false,

@@ -625,7 +625,18 @@ bool ExecutionGraph::isHbBefore(Event a, Event b, CheckConsType t /* = fast */)
 	isConsistent(t);
 	return getGlobalRelation(ExecutionGraph::RelationId::hb)(a, b);
 }
+/*NEWSC_DPOR*/
+bool ExecutionGraph::isCbBefore(Event a, Event b, CheckConsType t /* = fast */)
+{
+	if (getFPStatus() == FS_Done && getFPType() == t)
+		return getGlobalRelation(ExecutionGraph::RelationId::hb)(a, b);
+	if (t == CheckConsType::fast)
+		return getEventLabel(b)->getHbView().contains(a);
 
+	/* We have to trigger a calculation */
+	isConsistent(t);
+	return getGlobalRelation(ExecutionGraph::RelationId::cb)(a, b);
+}
 bool isCoMaximalInRel(const Calculator::PerLocRelation &co, SAddr addr, const Event &e)
 {
 	auto &coLoc = co.at(addr);
@@ -654,6 +665,10 @@ void ExecutionGraph::doInits(bool full /* = false */)
 	auto &hb = relations.global[relationIndex[RelationId::hb]];
 	populateHbEntries(hb);
 	hb.transClosure();
+	/*NEWSC_DPOR*/
+	auto &cb = relations.global[relationIndex[RelationId::cb]];
+	populatePorfEntries(cb);
+	cb.transClosure();
 
 	/* Clear out unused locations */
 	for (auto i = 0u; i < relations.perLoc.size(); i++) {
@@ -872,10 +887,59 @@ do {								        \
         }								\
 } while (0)
 
+/*NEWSC_DPOR*/
 void ExecutionGraph::populatePorfEntries(AdjList<Event, EventHasher> &relation) const
 {
-	IMPLEMENT_POPULATE_ENTRIES(relation, getPorfBefore);
+	std::vector<Event> elems;
+	std::vector<std::pair<Event, Event> > edges;
+
+	for (auto i = 0u; i < getNumThreads(); i++) {
+		auto thrIdx = elems.size();
+		for (auto j = 0u; j < getThreadSize(i); j++) {
+			auto *lab = getEventLabel(Event(i, j));
+			if (!isNonTrivial(lab))
+				continue;
+
+			auto labIdx = elems.size();
+			elems.push_back(Event(i, j));
+
+			if (labIdx == thrIdx) {
+				auto *bLab = getEventLabel(Event(i, 0));
+				BUG_ON(!llvm::isa<ThreadStartLabel>(bLab));
+
+				auto parentLast = getPreviousNonTrivial(
+					llvm::dyn_cast<ThreadStartLabel>(bLab)->getParentCreate());
+				if (!parentLast.isInitializer())
+					edges.push_back(std::make_pair(parentLast, elems[labIdx]));
+			}
+			if (labIdx > thrIdx)
+				edges.push_back(std::make_pair(elems[labIdx - 1], elems[labIdx]));
+			if (auto *rLab = llvm::dyn_cast<ReadLabel>(lab)) {
+				if (!rLab->getRf().isInitializer()) {
+					auto pred = (labIdx > thrIdx) ?
+						elems[labIdx - 1] : Event::getInitializer();
+					auto &v = rLab->getPorfView();
+					auto &predV = getEventLabel(pred)->getPorfView();
+					for (auto k = 0u; k < v.size(); k++) {
+						if (k != rLab->getThread() &&
+						    v[k] > 0 &&
+						    !predV.contains(Event(k, v[k]))) {
+							auto cndt = getPreviousNonTrivial(Event(k, v[k]).next());
+							if (cndt.isInitializer())
+								continue;
+							edges.push_back(std::make_pair(cndt, rLab->getPos()));
+						}
+					}
+				}
+			}
+		}
+	}
+	relation = AdjList<Event, EventHasher>(std::move(elems));
+	for (auto &e : edges)
+		relation.addEdge(e.first, e.second);
+	return;
 }
+
 
 void ExecutionGraph::populatePPoRfEntries(AdjList<Event, EventHasher> &relation) const
 {
