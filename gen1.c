@@ -37,7 +37,7 @@ void *writer2(void *arg){
 
 void *writer3(void *arg){
   	atomic_store_explicit(&x, 3, memory_order_seq_cst);
-	atomic_store_explicit(&x, 9, memory_order_seq_cst);	
+	// atomic_store_explicit(&x, 9, memory_order_seq_cst);	
 	return NULL;
 }
 

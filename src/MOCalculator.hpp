@@ -91,6 +91,12 @@ public:
 	std::vector<Event>
 	getCoherentRevisits(const WriteLabel *wLab) override;
 
+	//newscdpor
+	/* Returns all the reads that "wLab" can revisit without violating
+	 * consistency */
+	std::vector<Event>
+	getConsistentLoadRevisits(const WriteLabel *wLab) override;
+
 	bool inMaximalPath(const BackwardRevisit &r) override;
 
 	/* Overrided Calculator methods */

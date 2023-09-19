@@ -1957,6 +1957,17 @@ std::vector<Event> GenMCDriver::getRevisitableApproximation(const WriteLabel *sL
 	return loads;
 }
 
+//newscdpor
+std::vector<Event> GenMCDriver::getRevisitableLoads(const WriteLabel *sLab)
+{
+	auto &g = getGraph();
+	auto loads = g.getConsistentRevisits(sLab);
+	std::sort(loads.begin(), loads.end(), [&g](const Event &l1, const Event &l2){
+		return g.getEventLabel(l1)->getStamp() > g.getEventLabel(l2)->getStamp();
+	});
+	return loads;
+}
+
 void GenMCDriver::visitStore(std::unique_ptr<WriteLabel> wLab, const EventDeps *deps)
 {
 	if (isExecutionDrivenByGraph())
@@ -1997,7 +2008,7 @@ void GenMCDriver::visitStore(std::unique_ptr<WriteLabel> wLab, const EventDeps *
 			continue;
 
 		/* Push the stack item */
-		if(!isHbBefore(lab->getPos() , *it)) /// NEW_SCDPOR
+		if(!isHbBefore(*it, lab->getPos())) /// NEW_SCDPOR
 			if (!inRecoveryMode())
 				addToWorklist(std::make_unique<WriteRevisit>(
 					      lab->getPos(), std::distance(store_begin(g, lab->getAddr()), it)));
@@ -2609,6 +2620,61 @@ bool GenMCDriver::checkRevBlockHELPER(const WriteLabel *sLab, const std::vector<
 	return true;
 }
 
+//newscdpor
+bool GenMCDriver::loadRevisits(const WriteLabel *sLab)
+{
+	auto &g = getGraph();
+	//TODO: hande the case when the slab is first in MO(after init)
+	auto loads = getRevisitableLoads(sLab);
+	if (tryOptimizeRevisits(sLab, loads))
+		return true;
+
+	for (auto &l : loads) {
+		auto *rLab = g.getReadLabel(l);
+		BUG_ON(!rLab);
+
+		auto br = constructBackwardRevisit(rLab, sLab);
+		if (!g.isMaximalExtension(*br))
+			break;
+
+		/* Optimize handling of lock operations */
+		if (llvm::isa<LockCasReadLabel>(rLab) && llvm::isa<UnlockWriteLabel>(sLab)) {
+			if (tryRevisitLockInPlace(*br))
+				break;
+			moot();
+		}
+
+		GENMC_DEBUG(checkForDuplicateRevisit(rLab, sLab););
+
+		auto v = g.getRevisitView(*br);
+		auto og = copyGraph(&*br, &*v);
+		auto read = rLab->getPos();
+		auto write = sLab->getPos(); /* prefetch since we are gonna change state */
+
+		auto localState = releaseLocalState();
+		auto newState = std::make_unique<SharedState>(std::move(og), getEE()->getSharedState());
+
+		setSharedState(std::move(newState));
+
+		notifyEERemoved(*v);
+		revisitRead(BackwardRevisit(read, write));
+
+		/* If there are idle workers in the thread pool,
+		 * try submitting the job instead */
+		auto *tp = getThreadPool();
+		if (tp && tp->getRemainingTasks() < 8 * tp->size()) {
+			tp->submit(getSharedState());
+		} else {
+			if (isConsistent(ProgramPoint::step))
+				explore();
+		}
+
+		restoreLocalState(std::move(localState));
+	}
+
+	return checkAtomicity(sLab) && checkRevBlockHELPER(sLab, loads) && !isMoot();
+}
+
 bool GenMCDriver::calcRevisits(const WriteLabel *sLab)
 {
 	auto &g = getGraph();
@@ -2662,6 +2728,7 @@ bool GenMCDriver::calcRevisits(const WriteLabel *sLab)
 
 	return checkAtomicity(sLab) && checkRevBlockHELPER(sLab, loads) && !isMoot();
 }
+
 
 void GenMCDriver::repairLock(LockCasReadLabel *lab)
 {

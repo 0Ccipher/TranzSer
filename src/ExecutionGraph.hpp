@@ -345,6 +345,9 @@ public:
 	/* Returns a list of loads that can be revisited */
 	virtual std::vector<Event> getRevisitable(const WriteLabel *sLab) const;
 
+	/* Returns a list of loads that can be revisited (storerule)*/
+	virtual std::vector<Event> getConsistentRevisitable(const WriteLabel *sLab) const;
+
 	/* Returns the first po-predecessor satisfying F */
 	template <typename F>
 	const EventLabel *getPreviousLabelST(const EventLabel *lab, F&& cond) const {
@@ -426,9 +429,13 @@ public:
 	const View &getHbPoBefore(Event e) const;
 	std::vector<Event> getInitRfsAtLoc(SAddr addr) const;
 
+	//newscdpor
+	/* Return true if all the cb_after events are puntcual*/
+	bool isFree(Event e);
+
 	/* Returns true if a is hb-before b */
 	bool isHbBefore(Event a, Event b, CheckConsType t = CheckConsType::fast);
-	/* Returns true if a is cb-before b */
+	/* Returns true if a is cb_before b */
 	bool isCbBefore(Event a, Event b, CheckConsType t = CheckConsType::fast);
 	
 
@@ -584,6 +591,7 @@ public:
 	std::vector<Event> getCoherentStores(SAddr addr, Event pos);
 	std::pair<int, int> getCoherentPlacings(SAddr addr, Event pos, bool isRMW);
 	std::vector<Event> getCoherentRevisits(const WriteLabel *wLab);
+	std::vector<Event> getConsistentRevisits(const WriteLabel *wLab);
 
 
 	/* Graph modification methods */

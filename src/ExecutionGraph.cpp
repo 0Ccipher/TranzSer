@@ -379,6 +379,31 @@ Event ExecutionGraph::getPendingRMW(const WriteLabel *sLab) const
 	return getMinimumStampEvent(pending);
 }
 
+//newscdpor
+std::vector<Event> ExecutionGraph::getConsistentRevisitable(const WriteLabel *sLab) const
+{
+	auto &before = getPorfBefore(sLab->getPos());
+	auto pendingRMW = getPendingRMW(sLab);
+	std::vector<Event> loads;
+
+	for (auto i = 0u; i < getNumThreads(); i++) {
+		for (auto j = before[i] + 1u; j < getThreadSize(i); j++) {
+			const EventLabel *lab = getEventLabel(Event(i, j));
+			if (auto *rLab = llvm::dyn_cast<ReadLabel>(lab)) {
+				if (rLab->getAddr() == sLab->getAddr() &&
+				    rLab->isRevisitable())
+					loads.push_back(rLab->getPos());
+			}
+		}
+	}
+	if (!pendingRMW.isInitializer())
+		loads.erase(std::remove_if(loads.begin(), loads.end(), [&](Event &e){
+			auto *confLab = getEventLabel(pendingRMW);
+			return getEventLabel(e)->getStamp() > confLab->getStamp();
+		}), loads.end());
+	return loads;
+}
+
 std::vector<Event> ExecutionGraph::getRevisitable(const WriteLabel *sLab) const
 {
 	auto &before = getPorfBefore(sLab->getPos());
@@ -839,6 +864,12 @@ ExecutionGraph::getCoherentStores(SAddr addr, Event pos)
 {
 	return getCoherenceCalculator()->getCoherentStores(addr, pos);
 }
+//newscdpor
+std::vector<Event>
+ExecutionGraph::getConsistentRevisits(const WriteLabel *wLab)
+{
+	return getCoherenceCalculator()->getConsistentLoadRevisits(wLab);
+}
 
 std::vector<Event>
 ExecutionGraph::getCoherentRevisits(const WriteLabel *wLab)
@@ -870,6 +901,32 @@ const View &ExecutionGraph::getPorfBefore(Event e) const
 const View &ExecutionGraph::getHbPoBefore(Event e) const
 {
 	return getPreviousNonEmptyLabel(e)->getHbView();
+}
+
+//newscdpor
+bool ExecutionGraph::isFree(Event e)
+{
+	auto &before = getPorfBefore(e);
+	Event loade = Event(e);
+	std::vector<std::pair<int,int>> cb_after;
+	/* Get cb_after events*/
+	for (auto i = 0u; i < getNumThreads(); i++) {
+		for (auto j = before[i] + 1u; j < getThreadSize(i); j++) {
+			auto *lab = getEventLabel(Event(i, j));
+			if(!isNonTrivial(lab))
+				continue;
+			if(isCbBefore(loade , lab->getPos()))
+				cb_after.push_back({i, j});
+		}
+	}
+
+	for(auto ev : cb_after) {
+		auto *lab = getEventLabel(Event(ev.first , ev.second));
+		if (auto *mLab = llvm::dyn_cast<MemAccessLabel>(lab))
+			if(!mLab->wasAddedMax())
+			return false;
+	}
+	return true;
 }
 
 #define IMPLEMENT_POPULATE_ENTRIES(MATRIX, GET_VIEW)			\

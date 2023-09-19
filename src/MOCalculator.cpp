@@ -222,6 +222,45 @@ MOCalculator::getMOInvOptRfAfter(const WriteLabel *sLab)
 	return after;
 }
 
+//newscdpor
+std::vector<Event>
+MOCalculator::getConsistentLoadRevisits(const WriteLabel *sLab)
+{
+	const auto &g = getGraph();
+	/* Get the w \in (w,R1,w').. that is get MO-before write*/
+	auto offset = getStoreOffset(sLab->getAddr(), sLab->getPos());
+	Event pred_store;
+	if(offset > 0){
+		pred_store = *(store_begin(sLab->getAddr()) + offset - 1);
+	}
+
+	/* Get loads which are not cb_before the store slab*/
+	auto ls = g.getConsistentRevisitable(sLab);
+
+	/* Remove the loads not reading from pred_store */
+	ls.erase(std::remove_if(ls.begin(), ls.end() , [&](Event e)
+				{
+					auto *rLab = g.getReadLabel(e);
+					bool flag = false;
+					if(offset > 0 && rLab->getRf() != pred_store)
+						flag = true;
+					else if(offset == 0 && rLab->getRf() != Event::getInitializer() )
+						flag = true;
+					return flag;
+				}) , 
+		ls.end());
+
+	/* Remove the loads which are not free in the ExecutionGraph(storerule) */
+	ls.erase(std::remove_if(ls.begin() , ls.end(), [&](Event e)
+				{
+					auto flag = getGraph().isFree(e);
+					return flag;
+				}), 
+		ls.end());
+	return ls;
+}
+
+
 std::vector<Event>
 MOCalculator::getCoherentRevisits(const WriteLabel *sLab)
 {

@@ -546,6 +546,11 @@ private:
 	 * Returns true if the current exploration should continue */
 	bool calcRevisits(const WriteLabel *lab);
 
+	// NEWSC_DPOR
+	/* Calculates revisit(StoreRule) options and pushes them to the worklist.
+	 * Returns true if the current exploration should continue */ 
+	bool loadRevisits(const WriteLabel *lab);
+
 	/* Modifies (but not restricts) the graph when we are revisiting a read.
 	 * Returns true if the resulting graph should be explored. */
 	bool revisitRead(const ReadRevisit &s);
@@ -734,6 +739,11 @@ private:
 	/* Returns an approximation of the reads that SLAB can revisit.
 	 * The reads are ordered in reverse-addition order */
 	virtual std::vector<Event> getRevisitableApproximation(const WriteLabel *sLab);
+
+	// NEWSCDPOR
+	/* Returns an approximation of the reads that SLAB can revisit.
+	 * The reads are ordered in reverse-addition order */
+	virtual std::vector<Event> getRevisitableLoads(const WriteLabel *sLab);
 
 	/* Changes the reads-from edge for the specified label.
 	 * This effectively changes the label, hence this method is virtual */
