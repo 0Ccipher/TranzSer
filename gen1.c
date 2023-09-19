@@ -17,16 +17,16 @@ atomic_int x,y,z,w;
 atomic_int var[N];
 
 void *writer1(void *arg){
-	atomic_store_explicit(&x, 1, memory_order_seq_cst); //Currently only one co-ordering load will not read from this
+	// atomic_store_explicit(&x, 1, memory_order_seq_cst); //Currently only one co-ordering load will not read from this
 	// atomic_store_explicit(&x, 2, memory_order_seq_cst);
 	return NULL;
 }
 
 void *writer2(void *arg){
-	atomic_store_explicit(&x, 2, memory_order_seq_cst);
+	// atomic_store_explicit(&x, 2, memory_order_seq_cst);
 	atomic_store_explicit(&x, 4, memory_order_seq_cst);
 	int l1 = atomic_load_explicit(&x, memory_order_seq_cst);
-	printf("l1:%d\n",l1);
+	printf("\tl1: %d\n",l1);
 	// atomic_store_explicit(&x, 1, memory_order_seq_cst);
 	// atomic_store_explicit(&x, 2, memory_order_seq_cst);
 	// int l1 = y;
@@ -37,7 +37,7 @@ void *writer2(void *arg){
 
 void *writer3(void *arg){
   	atomic_store_explicit(&x, 3, memory_order_seq_cst);
-	
+	atomic_store_explicit(&x, 9, memory_order_seq_cst);	
 	return NULL;
 }
 
@@ -47,14 +47,14 @@ int main(int argc, char **argv){
   	pthread_t t[4];
 	pthread_t e[N];
      
-    	pthread_create(&t[0], NULL, writer1, NULL);
+    pthread_create(&t[0], NULL, writer1, NULL);
 	pthread_create(&t[1], NULL, writer2, NULL);
 	pthread_create(&t[2], NULL, writer3, NULL);
 
 
   
   
-    	pthread_join(t[0], NULL);
+    pthread_join(t[0], NULL);
 	pthread_join(t[1], NULL);
 	pthread_join(t[2], NULL);
 	

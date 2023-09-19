@@ -1989,21 +1989,22 @@ void GenMCDriver::visitStore(std::unique_ptr<WriteLabel> wLab, const EventDeps *
 	g.getCoherenceCalculator()->addStoreToLoc(lab->getAddr(), lab->getPos(), endO);
 	
 	// TODO:::::::: CO orderings
-	// for (auto it = store_begin(g, lab->getAddr()) + begO,
-	// 	  ie = store_begin(g, lab->getAddr()) + endO; it != ie; ++it) {
+	for (auto it = store_begin(g, lab->getAddr()) + begO,
+		  ie = store_begin(g, lab->getAddr()) + endO; it != ie; ++it) {
 
-	// 	/* We cannot place the write just before the write of an RMW */
-	// 	if (g.isRMWStore(*it))
-	// 		continue;
+		/* We cannot place the write just before the write of an RMW */
+		if (g.isRMWStore(*it))
+			continue;
 
-	// 	/* Push the stack item */
-	// 	if (!inRecoveryMode())
-	// 		addToWorklist(std::make_unique<WriteRevisit>(
-	// 				      lab->getPos(), std::distance(store_begin(g, lab->getAddr()), it)));
-	// }
+		/* Push the stack item */
+		if(!isHbBefore(lab->getPos() , *it)) /// NEW_SCDPOR
+			if (!inRecoveryMode())
+				addToWorklist(std::make_unique<WriteRevisit>(
+					      lab->getPos(), std::distance(store_begin(g, lab->getAddr()), it)));
+	}
 
 	/* If the graph is not consistent (e.g., w/ LAPOR) stop the exploration */
-	bool cons = ensureConsistentStore(lab);
+	// bool cons = ensureConsistentStore(lab);
 
 	GENMC_DEBUG(
 		if (getConf()->vLevel >= VerbosityLevel::V3) {
@@ -2015,8 +2016,8 @@ void GenMCDriver::visitStore(std::unique_ptr<WriteLabel> wLab, const EventDeps *
 	// if (!inRecoveryMode() && !inReplay())
 	// 	calcRevisits(lab);
 
-	if (!cons)
-		return;
+	// if (!cons)
+	// 	return;
 
 	checkReconsiderFaiSpinloop(lab);
 	if (llvm::isa<HelpedCasWriteLabel>(lab))
@@ -2843,7 +2844,8 @@ bool GenMCDriver::restrictAndRevisit(WorkSet::ItemT item)
 		wLab->setAddedMax(false);
 		repairDanglingLocks();
 		repairDanglingBarriers();
-		return calcRevisits(wLab);
+		return true; // NEWSC_DPOR
+		// return calcRevisits(wLab); // NEWSC_DPOR
 	} else if (auto *oi = llvm::dyn_cast<OptionalRevisit>(item.get())) {
 		auto *oLab = llvm::dyn_cast<OptionalLabel>(lab);
 		--result.exploredBlocked;
