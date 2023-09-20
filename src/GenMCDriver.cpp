@@ -2026,6 +2026,8 @@ void GenMCDriver::visitStore(std::unique_ptr<WriteLabel> wLab, const EventDeps *
 
 	// if (!inRecoveryMode() && !inReplay())
 	// 	calcRevisits(lab);
+	if (!inRecoveryMode() && !inReplay())
+		loadRevisits(lab);
 
 	// if (!cons)
 	// 	return;
