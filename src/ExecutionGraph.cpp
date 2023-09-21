@@ -924,7 +924,7 @@ bool ExecutionGraph::isFree(Event e)
 		auto *lab = getEventLabel(Event(ev.first , ev.second));
 		if (auto *mLab = llvm::dyn_cast<MemAccessLabel>(lab))
 			if(!mLab->wasAddedMax())
-			return false;
+				return false;
 	}
 	return true;
 }

@@ -1999,6 +1999,7 @@ void GenMCDriver::visitStore(std::unique_ptr<WriteLabel> wLab, const EventDeps *
 		const_cast<WriteLabel*>(lab)->setVal(getBarrierInitValue(lab->getAddr(), lab->getAccess()));
 	g.getCoherenceCalculator()->addStoreToLoc(lab->getAddr(), lab->getPos(), endO);
 	
+	std::vector<int> mos;
 	// TODO:::::::: CO orderings
 	for (auto it = store_begin(g, lab->getAddr()) + begO,
 		  ie = store_begin(g, lab->getAddr()) + endO; it != ie; ++it) {
@@ -2009,9 +2010,12 @@ void GenMCDriver::visitStore(std::unique_ptr<WriteLabel> wLab, const EventDeps *
 
 		/* Push the stack item */
 		if(!isHbBefore(*it, lab->getPos())) /// NEW_SCDPOR
-			if (!inRecoveryMode())
+			if(!inRecoveryMode()){
 				addToWorklist(std::make_unique<WriteRevisit>(
 					      lab->getPos(), std::distance(store_begin(g, lab->getAddr()), it)));
+				mos.push_back(std::distance(store_begin(g, lab->getAddr()), it));
+			}
+				
 	}
 
 	/* If the graph is not consistent (e.g., w/ LAPOR) stop the exploration */
@@ -2630,7 +2634,7 @@ bool GenMCDriver::loadRevisits(const WriteLabel *sLab)
 	auto loads = getRevisitableLoads(sLab);
 	if (tryOptimizeRevisits(sLab, loads))
 		return true;
-
+	
 	for (auto &l : loads) {
 		auto *rLab = g.getReadLabel(l);
 		BUG_ON(!rLab);
@@ -2661,6 +2665,9 @@ bool GenMCDriver::loadRevisits(const WriteLabel *sLab)
 		notifyEERemoved(*v);
 		revisitRead(BackwardRevisit(read, write));
 
+		auto temp = rLab;
+		auto temp1 = temp->getRf();
+
 		/* If there are idle workers in the thread pool,
 		 * try submitting the job instead */
 		auto *tp = getThreadPool();
@@ -2673,8 +2680,14 @@ bool GenMCDriver::loadRevisits(const WriteLabel *sLab)
 
 		restoreLocalState(std::move(localState));
 	}
-
-	return checkAtomicity(sLab) && checkRevBlockHELPER(sLab, loads) && !isMoot();
+	bool res = true;
+	bool res1 = checkAtomicity(sLab);
+	bool res2 = checkRevBlockHELPER(sLab, loads);
+	bool res3 = !isMoot();
+	res = res1 && res2;
+	res = res && res3;
+	return res;
+	// return checkAtomicity(sLab) && checkRevBlockHELPER(sLab, loads) && !isMoot();
 }
 
 bool GenMCDriver::calcRevisits(const WriteLabel *sLab)
@@ -2860,8 +2873,14 @@ bool GenMCDriver::revisitRead(const ReadRevisit &ri)
 	BUG_ON(!rLab);
 
 	changeRf(rLab->getPos(), ri.getRev());
-	auto *fri = llvm::dyn_cast<ForwardRevisit>(&ri);
-	rLab->setAddedMax(fri ? fri->isMaximal() : isCoMaximal(rLab->getAddr(), ri.getRev()));
+	// auto *fri = llvm::dyn_cast<ForwardRevisit>(&ri);
+	//newscdpor 
+	/* Every read-from from load-rule(forward-visit) is punctual*/
+	if(auto *fri = llvm::dyn_cast<ForwardRevisit>(&ri))
+		rLab->setAddedMax(true);
+	else
+		rLab->setAddedMax(false);
+	// rLab->setAddedMax(fri ? fri->isMaximal() : isCoMaximal(rLab->getAddr(), ri.getRev()));
 
 	GENMC_DEBUG(
 		if (getConf()->vLevel >= VerbosityLevel::V2) {
@@ -2910,10 +2929,11 @@ bool GenMCDriver::restrictAndRevisit(WorkSet::ItemT item)
 		auto *wLab = llvm::dyn_cast<WriteLabel>(lab);
 		BUG_ON(!wLab);
 		g.changeStoreOffset(wLab->getAddr(), wLab->getPos(), mi->getMOPos());
-		wLab->setAddedMax(false);
+		//TODO:: This write and its co-pred are punctual--and all writes co-after this write are not punctual
+		wLab->setAddedMax(true);
 		repairDanglingLocks();
 		repairDanglingBarriers();
-		return true; // NEWSC_DPOR
+		return loadRevisits(wLab); // NEWSC_DPOR
 		// return calcRevisits(wLab); // NEWSC_DPOR
 	} else if (auto *oi = llvm::dyn_cast<OptionalRevisit>(item.get())) {
 		auto *oLab = llvm::dyn_cast<OptionalLabel>(lab);

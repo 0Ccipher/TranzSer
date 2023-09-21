@@ -236,7 +236,16 @@ MOCalculator::getConsistentLoadRevisits(const WriteLabel *sLab)
 
 	/* Get loads which are not cb_before the store slab*/
 	auto ls = g.getConsistentRevisitable(sLab);
-
+	int moplace = 0;
+	if(offset == 0){
+		bool flag = 0;
+		if(!ls.empty()){
+			auto *rLab = g.getReadLabel(ls[0]);
+			flag = true;
+			auto rf = rLab->getRf();
+		}
+		moplace = 1;
+	}
 	/* Remove the loads not reading from pred_store */
 	ls.erase(std::remove_if(ls.begin(), ls.end() , [&](Event e)
 				{
@@ -244,17 +253,17 @@ MOCalculator::getConsistentLoadRevisits(const WriteLabel *sLab)
 					bool flag = false;
 					if(offset > 0 && rLab->getRf() != pred_store)
 						flag = true;
-					else if(offset == 0 && rLab->getRf() != Event::getInitializer() )
+					if(offset == 0 && rLab->getRf() != Event::getInitializer() )
 						flag = true;
 					return flag;
 				}) , 
 		ls.end());
-
+	
 	/* Remove the loads which are not free in the ExecutionGraph(storerule) */
 	ls.erase(std::remove_if(ls.begin() , ls.end(), [&](Event e)
 				{
 					auto flag = getGraph().isFree(e);
-					return flag;
+					return (!flag);
 				}), 
 		ls.end());
 	return ls;
