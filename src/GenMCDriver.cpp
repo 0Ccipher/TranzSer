@@ -2607,6 +2607,44 @@ GenMCDriver::copyGraph(const BackwardRevisit *br, VectorClock *v) const
 	return og;
 }
 
+//newscdpor
+std::unique_ptr<ExecutionGraph>
+GenMCDriver::copyGraphTillStore(const BackwardRevisit *br, VectorClock *v) const
+{
+	auto &g = getGraph();
+
+	/* Adjust the view that will be used for copying */
+	if (auto *brh = llvm::dyn_cast<BackwardRevisitHELPER>(br)) {
+		if (auto *dv = llvm::dyn_cast<DepView>(v)) {
+			dv->addHole(brh->getMid());
+			dv->addHole(brh->getMid().prev());
+		} else {
+			--(*v)[brh->getMid().thread];
+			--(*v)[brh->getMid().thread];
+		}
+	}
+	// auto *rLab = g.getReadLabel(br->getPos());
+	// auto &sLab = g.getWrtieLabel(br->getPos());
+	/* Copy events till the sLab--except rLab cb_after events*/
+	auto og = g.getCopyUpToStore(*v,&*br);
+
+	/* Adjust stamps in the copy, and ensure the prefix of the
+	 * write will not be revisitable */
+	auto *revLab = og->getReadLabel(br->getPos());
+	auto &prefix = og->getPrefixView(br->getRev());
+	og->resetStamp(revLab->getStamp() + 1);
+
+	for (auto *lab : labels(*og)) {
+		if (auto *rLab = llvm::dyn_cast<ReadLabel>(lab)) {
+			if (rLab && prefix.contains(rLab->getPos()))
+				rLab->setRevisitStatus(false);
+		}
+		if (lab->getStamp() > revLab->getStamp())
+			lab->setStamp(og->nextStamp());
+	}
+	return og;
+}
+
 bool GenMCDriver::checkRevBlockHELPER(const WriteLabel *sLab, const std::vector<Event> &loads)
 {
 	if (!getConf()->helper || !sLab->hasAttr(WriteAttr::RevBlocker))
@@ -2632,16 +2670,19 @@ bool GenMCDriver::loadRevisits(const WriteLabel *sLab)
 	auto &g = getGraph();
 	//TODO: hande the case when the slab is first in MO(after init)
 	auto loads = getRevisitableLoads(sLab);
-	if (tryOptimizeRevisits(sLab, loads))
-		return true;
-	
+	// if (tryOptimizeRevisits(sLab, loads))
+	// 	return true;
+
+	/* Get the powerset of the reads and filter out the incosistent ones.
+	   R={r1,r2,r3,r4} is incosistent if r_i~[cb]~r_j for some i and j. 
+	*/ // TODO
 	for (auto &l : loads) {
 		auto *rLab = g.getReadLabel(l);
 		BUG_ON(!rLab);
 
 		auto br = constructBackwardRevisit(rLab, sLab);
-		if (!g.isMaximalExtension(*br))
-			break;
+		// if (!g.isMaximalExtension(*br))
+		// 	break;
 
 		/* Optimize handling of lock operations */
 		if (llvm::isa<LockCasReadLabel>(rLab) && llvm::isa<UnlockWriteLabel>(sLab)) {
@@ -2652,8 +2693,11 @@ bool GenMCDriver::loadRevisits(const WriteLabel *sLab)
 
 		GENMC_DEBUG(checkForDuplicateRevisit(rLab, sLab););
 
-		auto v = g.getRevisitView(*br);
-		auto og = copyGraph(&*br, &*v);
+		/* Get the View till this SLab->timestamp */ // TODO: new method
+		auto v = g.getRevisitViewTillStore(*br);
+		// auto v = g.getRevisitView(*br);
+		/* Copy the graph -- except the rLab-cb-after events*/ // TODO: new method
+		auto og = copyGraphTillStore(&*br, &*v);
 		auto read = rLab->getPos();
 		auto write = sLab->getPos(); /* prefetch since we are gonna change state */
 
@@ -2876,6 +2920,7 @@ bool GenMCDriver::revisitRead(const ReadRevisit &ri)
 	// auto *fri = llvm::dyn_cast<ForwardRevisit>(&ri);
 	//newscdpor 
 	/* Every read-from from load-rule(forward-visit) is punctual*/
+	/* Every backward-visit Read is not punctual */
 	if(auto *fri = llvm::dyn_cast<ForwardRevisit>(&ri))
 		rLab->setAddedMax(true);
 	else
@@ -2896,7 +2941,8 @@ bool GenMCDriver::revisitRead(const ReadRevisit &ri)
 
 	/* If the revisited label became an RMW, add the store part and revisit */
 	if (auto *sLab = completeRevisitedRMW(rLab))
-		return calcRevisits(sLab);
+		return loadRevisits(sLab);
+		// return calcRevisits(sLab);
 
 	/* Blocked lock -> prioritize locking thread */
 	repairDanglingLocks();
@@ -2929,8 +2975,10 @@ bool GenMCDriver::restrictAndRevisit(WorkSet::ItemT item)
 		auto *wLab = llvm::dyn_cast<WriteLabel>(lab);
 		BUG_ON(!wLab);
 		g.changeStoreOffset(wLab->getAddr(), wLab->getPos(), mi->getMOPos());
-		//TODO:: This write and its co-pred are punctual--and all writes co-after this write are not punctual
+		//This write and its co-pred are punctual
 		wLab->setAddedMax(true);
+		// Make all writes co-after this write are not punctual
+		// TODO: setAddedMaxFalse(stores , wLab)
 		repairDanglingLocks();
 		repairDanglingBarriers();
 		return loadRevisits(wLab); // NEWSC_DPOR

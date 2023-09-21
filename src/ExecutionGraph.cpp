@@ -888,6 +888,18 @@ ExecutionGraph::getRevisitView(const BackwardRevisit &r) const
 	return std::move(preds);
 }
 
+//newscdpor
+std::unique_ptr<VectorClock>
+ExecutionGraph::getRevisitViewTillStore(const BackwardRevisit &r) const
+{
+	auto *sLab = getReadLabel(r.getRev());
+	auto preds = std::make_unique<View>(getViewFromStamp(sLab->getStamp()));
+	preds->update(getWriteLabel(r.getRev())->getPorfView());
+	// if (auto *br = llvm::dyn_cast<BackwardRevisitHELPER>(&r))
+	// 	preds->update(getWriteLabel(br->getMid())->getPorfView());
+	return std::move(preds);
+}
+
 const DepView &ExecutionGraph::getPPoRfBefore(Event e) const
 {
 	return getEventLabel(e)->getPPoRfView();
@@ -1404,7 +1416,7 @@ void ExecutionGraph::cutToStamp(unsigned int stamp)
 	setFPStatus(FS_Stale);
 	auto preds = getViewFromStamp(stamp);
 
-	/* Inform all calculators about the events cutted */
+	/* Inform all calculators about the events cut */
 	auto &calcs = consistencyCalculators;
 	for (auto i = 0u; i < calcs.size(); i++)
 		calcs[i]->removeAfter(preds);
@@ -1512,10 +1524,90 @@ void ExecutionGraph::copyGraphUpTo(ExecutionGraph &other, const VectorClock &v) 
 	return;
 }
 
+//newscdpor
+void ExecutionGraph::copyGraphUpToStore(ExecutionGraph &other, const VectorClock &v, const BackwardRevisit *br) const
+{
+	/* First, populate calculators, etc */
+	other.timestamp = timestamp;
+
+	other.relations = relations;
+	other.relsCache = relsCache;
+
+	other.relations.fixStatus = FS_Stale;
+	other.relsCache.fixStatus = FS_Stale;
+
+	for (const auto &cc : consistencyCalculators)
+		other.consistencyCalculators.push_back(cc->clone(other));
+
+	other.partialConsCalculators = partialConsCalculators;
+
+	other.calculatorIndex = calculatorIndex;
+	other.relationIndex = relationIndex;
+
+	if (persChecker.get())
+		other.persChecker = persChecker->clone(other);
+	other.recoveryTID = recoveryTID;
+
+	other.bam = bam;
+
+	/* Then, copy the appropriate events */
+	/* FIXME: Fix LAPOR (use addLockLabelToGraphLAPOR??) */
+	auto *cc = getCoherenceCalculator();
+	auto *occ = other.getCoherenceCalculator();
+	BUG_ON(!cc || !occ);
+
+	// FIXME: The reason why we resize to num of threads instead of v.size() is
+	// to keep the same size as the interpreter threads.
+	other.events.resize(getNumThreads());
+	for (auto i = 0u; i < getNumThreads(); i++) {
+		other.addOtherLabelToGraph(std::move(getEventLabel(Event(i, 0))->clone()));
+		for (auto j = 1; j <= v[i]; j++) {
+			if (!v.contains(Event(i, j))) {
+				other.addOtherLabelToGraph(
+					EmptyLabel::create(other.nextStamp(), Event(i, j)));
+				continue;
+			}
+			auto *nLab = other.addOtherLabelToGraph(getEventLabel(Event(i, j))->clone());
+			if (auto *wLab = llvm::dyn_cast<WriteLabel>(nLab)) {
+				const_cast<WriteLabel *>(wLab)->removeReader([&v](const Event &r){
+					return !v.contains(r);
+				});
+			}
+			if (auto *mLab = llvm::dyn_cast<MemAccessLabel>(nLab))
+				occ->trackCoherenceAtLoc(mLab->getAddr());
+			if (auto *tcLab = llvm::dyn_cast<ThreadCreateLabel>(nLab))
+				;
+			if (auto *eLab = llvm::dyn_cast<ThreadFinishLabel>(nLab))
+				;
+			if (auto *lLab = llvm::dyn_cast<LockLabelLAPOR>(nLab))
+				other.getLbCalculatorLAPOR()->addLockToList(lLab->getLockAddr(), lLab->getPos());
+		}
+	}
+
+	/* Finally, copy coherence info */
+	/* FIXME: Temporary ugly hack */
+	for (auto it = cc->begin(); it != cc->end(); ++it) {
+		for (auto sIt = it->second.begin(); sIt != it->second.end(); ++sIt) {
+			if (v.contains(*sIt)) {
+				occ->addStoreToLoc(it->first, *sIt, -1);
+			}
+		}
+	}
+	/* FIXME: Make sure all fields are copied */
+	return;
+}
+
 std::unique_ptr<ExecutionGraph> ExecutionGraph::getCopyUpTo(const VectorClock &v) const
 {
 	auto og = std::unique_ptr<ExecutionGraph>(new ExecutionGraph(warnOnGraphSize));
 	copyGraphUpTo(*og, v);
+	return og;
+}
+//newscdpor
+std::unique_ptr<ExecutionGraph> ExecutionGraph::getCopyUpToStore(const VectorClock &v , const BackwardRevisit *br) const
+{
+	auto og = std::unique_ptr<ExecutionGraph>(new ExecutionGraph(warnOnGraphSize));
+	copyGraphUpToStore(*og, v, &*br);
 	return og;
 }
 

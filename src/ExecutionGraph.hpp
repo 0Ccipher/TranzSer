@@ -342,6 +342,12 @@ public:
 	virtual std::unique_ptr<VectorClock>
 	getRevisitView(const BackwardRevisit &r) const;
 
+	//NEWSCDPOR
+	/* Given a revisit RLAB <- WLAB, returns the view of the resulting graph till WLAB.
+	*/
+	virtual std::unique_ptr<VectorClock>
+	getRevisitViewTillStore(const BackwardRevisit &r) const;
+
 	/* Returns a list of loads that can be revisited */
 	virtual std::vector<Event> getRevisitable(const WriteLabel *sLab) const;
 
@@ -647,6 +653,8 @@ public:
 	 * 2) Copy events => these should notify calculators so that calcs populate their structures
 	 */
 	virtual std::unique_ptr<ExecutionGraph> getCopyUpTo(const VectorClock &v) const;
+	//newscdpor
+	virtual std::unique_ptr<ExecutionGraph> getCopyUpToStore(const VectorClock &v , const BackwardRevisit *br) const;
 
 	/* Overloaded operators */
 	friend llvm::raw_ostream& operator<<(llvm::raw_ostream &s, const ExecutionGraph &g);
@@ -668,6 +676,8 @@ protected:
 	Event getMinimumStampEvent(const std::vector<Event> &es) const;
 
 	void copyGraphUpTo(ExecutionGraph &other, const VectorClock &v) const;
+    //newscdpor
+	void copyGraphUpToStore(ExecutionGraph &other, const VectorClock &v, const BackwardRevisit *br) const;
 
 	FixpointStatus getFPStatus() const { return relations.fixStatus; }
 	void setFPStatus(FixpointStatus s) { relations.fixStatus = s; }
