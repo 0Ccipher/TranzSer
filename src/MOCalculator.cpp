@@ -269,6 +269,17 @@ MOCalculator::getConsistentLoadRevisits(const WriteLabel *sLab)
 	return ls;
 }
 
+//newscdpor
+void
+MOCalculator::setAddedMaxFalse(const WriteLabel *sLab)
+{
+	/* Sets maximal=false for the MO-successor of this sLab */
+	std::for_each(succ_begin(sLab->getAddr(), sLab->getPos()),
+		      succ_end(sLab->getAddr(), sLab->getPos()), [&](const Event &w){
+			      auto *wLab = getGraph().getWriteLabel(w);
+			      wLab->setAddedMax(false);
+	});
+}
 
 std::vector<Event>
 MOCalculator::getCoherentRevisits(const WriteLabel *sLab)

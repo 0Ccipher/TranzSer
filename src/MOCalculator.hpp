@@ -96,6 +96,9 @@ public:
 	 * consistency */
 	std::vector<Event>
 	getConsistentLoadRevisits(const WriteLabel *wLab) override;
+	//newscdpor
+	/* Sets maximal=false for the MO-successor of this sLab */
+	void setAddedMaxFalse(const WriteLabel *sLab) override;
 
 	bool inMaximalPath(const BackwardRevisit &r) override;
 

@@ -2609,7 +2609,7 @@ GenMCDriver::copyGraph(const BackwardRevisit *br, VectorClock *v) const
 
 //newscdpor
 std::unique_ptr<ExecutionGraph>
-GenMCDriver::copyGraphTillStore(const BackwardRevisit *br, VectorClock *v) const
+GenMCDriver::copyGraphTillStore( BackwardRevisit *br, VectorClock *v)
 {
 	auto &g = getGraph();
 
@@ -2635,10 +2635,11 @@ GenMCDriver::copyGraphTillStore(const BackwardRevisit *br, VectorClock *v) const
 	og->resetStamp(revLab->getStamp() + 1);
 
 	for (auto *lab : labels(*og)) {
-		if (auto *rLab = llvm::dyn_cast<ReadLabel>(lab)) {
-			if (rLab && prefix.contains(rLab->getPos()))
-				rLab->setRevisitStatus(false);
-		}
+		/* Set Revisitable to false for the events after the rLab and cb-before  */
+		// if (auto *rLab = llvm::dyn_cast<ReadLabel>(lab)) {
+		// 	if (rLab && prefix.contains(rLab->getPos()))
+		// 		rLab->setRevisitStatus(false);
+		// }
 		if (lab->getStamp() > revLab->getStamp())
 			lab->setStamp(og->nextStamp());
 	}
@@ -2698,6 +2699,7 @@ bool GenMCDriver::loadRevisits(const WriteLabel *sLab)
 		// auto v = g.getRevisitView(*br);
 		/* Copy the graph -- except the rLab-cb-after events*/ // TODO: new method
 		auto og = copyGraphTillStore(&*br, &*v);
+		// auto og = copyGraph(&*br, &*v);
 		auto read = rLab->getPos();
 		auto write = sLab->getPos(); /* prefetch since we are gonna change state */
 
@@ -2707,6 +2709,7 @@ bool GenMCDriver::loadRevisits(const WriteLabel *sLab)
 		setSharedState(std::move(newState));
 
 		notifyEERemoved(*v);
+		/* Change rf-edge for all the reads in this subset */
 		revisitRead(BackwardRevisit(read, write));
 
 		auto temp = rLab;
@@ -2978,7 +2981,7 @@ bool GenMCDriver::restrictAndRevisit(WorkSet::ItemT item)
 		//This write and its co-pred are punctual
 		wLab->setAddedMax(true);
 		// Make all writes co-after this write are not punctual
-		// TODO: setAddedMaxFalse(stores , wLab)
+		g.setAddedMaxFalse(wLab);
 		repairDanglingLocks();
 		repairDanglingBarriers();
 		return loadRevisits(wLab); // NEWSC_DPOR

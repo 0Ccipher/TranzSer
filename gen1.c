@@ -17,30 +17,30 @@ atomic_int x,y,z,w;
 atomic_int var[N];
 
 void *writer1(void *arg){
-	atomic_store_explicit(&x, 1, memory_order_seq_cst); //Currently only one co-ordering load will not read from this
-	// atomic_store_explicit(&x, 2, memory_order_seq_cst);
+	int l1 = atomic_load_explicit(&x, memory_order_seq_cst);
+	printf("\tl1: %d\t",l1);
+	atomic_store_explicit(&x, 1, memory_order_seq_cst);
 	return NULL;
 }
 
 void *writer2(void *arg){
 	// atomic_store_explicit(&x, 2, memory_order_seq_cst);
 	// atomic_store_explicit(&x, 4, memory_order_seq_cst);
-	int l1 = atomic_load_explicit(&x, memory_order_seq_cst);
-	printf("\tl1: %d\n",l1);
-	// atomic_store_explicit(&x, 1, memory_order_seq_cst);
-	// atomic_store_explicit(&x, 2, memory_order_seq_cst);
-	// int l1 = y;
-	// x = 1;
-	// x = 2;
+	// int l1 = atomic_load_explicit(&x, memory_order_seq_cst);
+	// printf("\tl1: %d\t",l1);
+	int ly = 0;
+	ly = atomic_load_explicit(&y, memory_order_seq_cst);
+	printf("\tly1: %d\n",ly);
+	atomic_store_explicit(&x, 1, memory_order_seq_cst);
   	return NULL;
 }
 
 void *writer3(void *arg){
-	int l2 = 0;
-	l2 = atomic_load_explicit(&w, memory_order_seq_cst);
-	printf("\tl2: %d\n",l2);
-  	atomic_store_explicit(&x, 3, memory_order_seq_cst);
-	// atomic_store_explicit(&x, 9, memory_order_seq_cst);	
+	// int l2 = 0;
+	// l2 = atomic_load_explicit(&w, memory_order_seq_cst);
+	// printf("\tl2: %d\n",l2);
+  	// atomic_store_explicit(&x, 3, memory_order_seq_cst);
+	atomic_store_explicit(&y, 3, memory_order_seq_cst);	
 	return NULL;
 }
 

@@ -582,7 +582,7 @@ private:
 		--except rLav~cb_after events.
 	 * May modify V but will not execute BR in the copy. */
 	std::unique_ptr<ExecutionGraph>
-	copyGraphTillStore(const BackwardRevisit *br, VectorClock *v) const;
+	copyGraphTillStore( BackwardRevisit *br, VectorClock *v) ;
 
 	/* Given a list of stores that it is consistent to read-from,
 	 * filters out options that can be skipped (according to the conf),

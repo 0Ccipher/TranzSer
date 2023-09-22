@@ -147,6 +147,7 @@ public:
 	 * consistency */
 	virtual std::vector<Event>
 	getConsistentLoadRevisits(const WriteLabel *wLab) = 0;
+	virtual void setAddedMaxFalse(const WriteLabel *sLab) = 0;
 
 	/* Returns whether the path from RLAB to WLAB is maximal */
 	virtual bool

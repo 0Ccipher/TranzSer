@@ -597,7 +597,9 @@ public:
 	std::vector<Event> getCoherentStores(SAddr addr, Event pos);
 	std::pair<int, int> getCoherentPlacings(SAddr addr, Event pos, bool isRMW);
 	std::vector<Event> getCoherentRevisits(const WriteLabel *wLab);
+	//newscdpor
 	std::vector<Event> getConsistentRevisits(const WriteLabel *wLab);
+	void setAddedMaxFalse(const WriteLabel *wLab);
 
 
 	/* Graph modification methods */
@@ -654,7 +656,7 @@ public:
 	 */
 	virtual std::unique_ptr<ExecutionGraph> getCopyUpTo(const VectorClock &v) const;
 	//newscdpor
-	virtual std::unique_ptr<ExecutionGraph> getCopyUpToStore(const VectorClock &v , const BackwardRevisit *br) const;
+	virtual std::unique_ptr<ExecutionGraph> getCopyUpToStore( VectorClock &v ,  BackwardRevisit *br) ;
 
 	/* Overloaded operators */
 	friend llvm::raw_ostream& operator<<(llvm::raw_ostream &s, const ExecutionGraph &g);
@@ -677,7 +679,7 @@ protected:
 
 	void copyGraphUpTo(ExecutionGraph &other, const VectorClock &v) const;
     //newscdpor
-	void copyGraphUpToStore(ExecutionGraph &other, const VectorClock &v, const BackwardRevisit *br) const;
+	void copyGraphUpToStore(ExecutionGraph &other,  VectorClock &v,  BackwardRevisit *br);
 
 	FixpointStatus getFPStatus() const { return relations.fixStatus; }
 	void setFPStatus(FixpointStatus s) { relations.fixStatus = s; }

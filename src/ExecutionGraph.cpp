@@ -864,11 +864,18 @@ ExecutionGraph::getCoherentStores(SAddr addr, Event pos)
 {
 	return getCoherenceCalculator()->getCoherentStores(addr, pos);
 }
+
 //newscdpor
 std::vector<Event>
 ExecutionGraph::getConsistentRevisits(const WriteLabel *wLab)
 {
 	return getCoherenceCalculator()->getConsistentLoadRevisits(wLab);
+}
+
+//newscdpor
+void ExecutionGraph::setAddedMaxFalse(const WriteLabel *wLab)
+{
+	getCoherenceCalculator()->setAddedMaxFalse(wLab);
 }
 
 std::vector<Event>
@@ -892,9 +899,9 @@ ExecutionGraph::getRevisitView(const BackwardRevisit &r) const
 std::unique_ptr<VectorClock>
 ExecutionGraph::getRevisitViewTillStore(const BackwardRevisit &r) const
 {
-	auto *sLab = getReadLabel(r.getRev());
+	auto *sLab = getWriteLabel(r.getRev());
 	auto preds = std::make_unique<View>(getViewFromStamp(sLab->getStamp()));
-	preds->update(getWriteLabel(r.getRev())->getPorfView());
+	// preds->update(getWriteLabel(r.getRev())->getPorfView());
 	// if (auto *br = llvm::dyn_cast<BackwardRevisitHELPER>(&r))
 	// 	preds->update(getWriteLabel(br->getMid())->getPorfView());
 	return std::move(preds);
@@ -1525,7 +1532,7 @@ void ExecutionGraph::copyGraphUpTo(ExecutionGraph &other, const VectorClock &v) 
 }
 
 //newscdpor
-void ExecutionGraph::copyGraphUpToStore(ExecutionGraph &other, const VectorClock &v, const BackwardRevisit *br) const
+void ExecutionGraph::copyGraphUpToStore(ExecutionGraph &other,  VectorClock &v,  BackwardRevisit *br)
 {
 	/* First, populate calculators, etc */
 	other.timestamp = timestamp;
@@ -1558,20 +1565,30 @@ void ExecutionGraph::copyGraphUpToStore(ExecutionGraph &other, const VectorClock
 
 	// FIXME: The reason why we resize to num of threads instead of v.size() is
 	// to keep the same size as the interpreter threads.
+	auto *rLab = getReadLabel(br->getPos());
+	Event readev = rLab->getPos();
 	other.events.resize(getNumThreads());
 	for (auto i = 0u; i < getNumThreads(); i++) {
 		other.addOtherLabelToGraph(std::move(getEventLabel(Event(i, 0))->clone()));
 		for (auto j = 1; j <= v[i]; j++) {
-			if (!v.contains(Event(i, j))) {
-				other.addOtherLabelToGraph(
-					EmptyLabel::create(other.nextStamp(), Event(i, j)));
+			if(isCbBefore(readev , Event(i,j)) && readev != Event(i,j)){
 				continue;
 			}
+			// if (!v.contains(Event(i, j))) {
+			// 	other.addOtherLabelToGraph(
+			// 		EmptyLabel::create(other.nextStamp(), Event(i, j)));
+			// 	continue;
+			// }
 			auto *nLab = other.addOtherLabelToGraph(getEventLabel(Event(i, j))->clone());
 			if (auto *wLab = llvm::dyn_cast<WriteLabel>(nLab)) {
-				const_cast<WriteLabel *>(wLab)->removeReader([&v](const Event &r){
-					return !v.contains(r);
-				});
+				auto &readers = (const_cast<WriteLabel *>(wLab)->readerList);
+				readers.erase(std::remove_if(readers.begin(),
+						readers.end(), [&](Event r)
+						{ return (!v.contains(r) || isCbBefore(readev , r)); }),
+				 readers.end());
+				// const_cast<WriteLabel *>(wLab)->removeReader([&v , &readev](const Event &r){
+				// 	return (!v.contains(r) || isCbBefore(readev , r));
+				// });
 			}
 			if (auto *mLab = llvm::dyn_cast<MemAccessLabel>(nLab))
 				occ->trackCoherenceAtLoc(mLab->getAddr());
@@ -1588,7 +1605,7 @@ void ExecutionGraph::copyGraphUpToStore(ExecutionGraph &other, const VectorClock
 	/* FIXME: Temporary ugly hack */
 	for (auto it = cc->begin(); it != cc->end(); ++it) {
 		for (auto sIt = it->second.begin(); sIt != it->second.end(); ++sIt) {
-			if (v.contains(*sIt)) {
+			if (v.contains(*sIt) && !isCbBefore(readev , *sIt)) {
 				occ->addStoreToLoc(it->first, *sIt, -1);
 			}
 		}
@@ -1604,7 +1621,7 @@ std::unique_ptr<ExecutionGraph> ExecutionGraph::getCopyUpTo(const VectorClock &v
 	return og;
 }
 //newscdpor
-std::unique_ptr<ExecutionGraph> ExecutionGraph::getCopyUpToStore(const VectorClock &v , const BackwardRevisit *br) const
+std::unique_ptr<ExecutionGraph> ExecutionGraph::getCopyUpToStore( VectorClock &v ,  BackwardRevisit *br) 
 {
 	auto og = std::unique_ptr<ExecutionGraph>(new ExecutionGraph(warnOnGraphSize));
 	copyGraphUpToStore(*og, v, &*br);

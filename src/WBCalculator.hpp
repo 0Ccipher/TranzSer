@@ -146,6 +146,7 @@ public:
 	 * consistency */
 	std::vector<Event>
 	getConsistentLoadRevisits(const WriteLabel *wLab) {return {};};
+	void setAddedMaxFalse(const WriteLabel *sLab) {return ;};
 
 	bool inMaximalPath(const BackwardRevisit &r) override;
 
