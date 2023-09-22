@@ -10,15 +10,16 @@
 #include <pthread.h>
 #include <stdio.h>
 
-#define N 100
+#define N 0
 
 atomic_int x,y,z,w;
 
 atomic_int var[N];
 
 void *writer1(void *arg){
-	int l1 = atomic_load_explicit(&x, memory_order_seq_cst);
-	printf("\tl1: %d\t",l1);
+	// atomic_store_explicit(&w, 1, memory_order_seq_cst);
+	// int l1 = atomic_load_explicit(&x, memory_order_seq_cst);
+	// printf("\tlx1: %d\t",l1);
 	atomic_store_explicit(&x, 1, memory_order_seq_cst);
 	return NULL;
 }
@@ -30,16 +31,17 @@ void *writer2(void *arg){
 	// printf("\tl1: %d\t",l1);
 	int ly = 0;
 	ly = atomic_load_explicit(&y, memory_order_seq_cst);
-	printf("\tly1: %d\n",ly);
-	atomic_store_explicit(&x, 1, memory_order_seq_cst);
+	printf("\tly2: %d\n",ly);
+	atomic_store_explicit(&x, 5, memory_order_seq_cst);
+	// atomic_store_explicit(&y, 2, memory_order_seq_cst);
   	return NULL;
 }
 
 void *writer3(void *arg){
-	// int l2 = 0;
-	// l2 = atomic_load_explicit(&w, memory_order_seq_cst);
-	// printf("\tl2: %d\n",l2);
-  	// atomic_store_explicit(&x, 3, memory_order_seq_cst);
+	int l2 = 0;
+	l2 = atomic_load_explicit(&w, memory_order_seq_cst);
+	printf("\tlw3: %d\n",l2);
+  	atomic_store_explicit(&x, 3, memory_order_seq_cst);
 	atomic_store_explicit(&y, 3, memory_order_seq_cst);	
 	return NULL;
 }
@@ -51,17 +53,24 @@ int main(int argc, char **argv){
   	pthread_t t[4];
 	pthread_t e[N];
      
-    	pthread_create(&t[0], NULL, writer1, NULL);
+    pthread_create(&t[0], NULL, writer1, NULL);
 	pthread_create(&t[1], NULL, writer2, NULL);
 	pthread_create(&t[2], NULL, writer3, NULL);
-
+	// for (int i = 0; i < N; i++)
+	// {
+	// 	pthread_create(&e[i], NULL, writer3, NULL);
+	// }
+	
 
   
   
-   	 pthread_join(t[0], NULL);
+   	pthread_join(t[0], NULL);
 	pthread_join(t[1], NULL);
 	pthread_join(t[2], NULL);
-	
+	// for (int i = 0; i < N; i++)
+	// {
+	// 	pthread_join(e[i], NULL);
+	// }
 	printf("\tEnd____________________________\n");
   return 0;
 }

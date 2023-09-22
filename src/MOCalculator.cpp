@@ -236,16 +236,7 @@ MOCalculator::getConsistentLoadRevisits(const WriteLabel *sLab)
 
 	/* Get loads which are not cb_before the store slab*/
 	auto ls = g.getConsistentRevisitable(sLab);
-	int moplace = 0;
-	if(offset == 0){
-		bool flag = 0;
-		if(!ls.empty()){
-			auto *rLab = g.getReadLabel(ls[0]);
-			flag = true;
-			auto rf = rLab->getRf();
-		}
-		moplace = 1;
-	}
+	
 	/* Remove the loads not reading from pred_store */
 	ls.erase(std::remove_if(ls.begin(), ls.end() , [&](Event e)
 				{
@@ -262,8 +253,44 @@ MOCalculator::getConsistentLoadRevisits(const WriteLabel *sLab)
 	/* Remove the loads which are not free in the ExecutionGraph(storerule) */
 	ls.erase(std::remove_if(ls.begin() , ls.end(), [&](Event e)
 				{
-					auto flag = getGraph().isFree(e);
-					return (!flag);
+					// auto flag = getGraph().isFree(e);
+					// return (!flag);
+					auto &before = g.getPorfBefore(e);
+					Event loade = Event(e);
+					std::vector<std::pair<int,int>> cb_after;
+					/* Get cb_after events*/
+					for (auto i = 0u; i < g.getNumThreads(); i++) {
+						for (auto j = before[i] + 1u; j < g.getThreadSize(i); j++) {
+							auto *lab = g.getEventLabel(Event(i, j));
+							if(!g.isNonTrivial(lab))
+								continue;
+							if(getGraph().isCbBefore(loade , lab->getPos()))
+								cb_after.push_back({i, j});
+						}
+					}
+					for(auto ev : cb_after) {
+						auto *lab = g.getEventLabel(Event(ev.first , ev.second));
+						if (auto *mLab = llvm::dyn_cast<MemAccessLabel>(lab)){
+							/* If mLab or that co-successor of mLab(mLab->Rf) is not punctual 
+							then return false  */
+							if(!mLab->wasAddedMax())
+								return true; // this load not free
+							auto *fri = llvm::dyn_cast<ReadLabel>(mLab);
+							auto *sLab = fri ? g.getWriteLabel(fri->getRf()) : 
+														llvm::dyn_cast<WriteLabel>(mLab);
+							// bool flag = true;
+							for(auto it = succ_begin(sLab->getAddr(), sLab->getPos()); 
+									it != succ_end(sLab->getAddr(), sLab->getPos()); it++){
+										auto *wLab = g.getWriteLabel(*it);
+										if(fri && fri->getStamp() > wLab->getStamp())
+											return true; // this load not free
+										if(!fri && sLab->getStamp() > wLab->getStamp())
+											return true;
+
+							}
+						}
+					}
+					return false;
 				}), 
 		ls.end());
 	return ls;
@@ -277,8 +304,17 @@ MOCalculator::setAddedMaxFalse(const WriteLabel *sLab)
 	std::for_each(succ_begin(sLab->getAddr(), sLab->getPos()),
 		      succ_end(sLab->getAddr(), sLab->getPos()), [&](const Event &w){
 			      auto *wLab = getGraph().getWriteLabel(w);
-			      wLab->setAddedMax(false);
+				//   if(wLab->getStamp() < sLab->getStamp())
+			      	wLab->setAddedMax(false);
+				//   if(wLab->getStamp() > sLab->getStamp())
+			    //   	wLab->setAddedMax(true);
 	});
+	// std::for_each(pred_begin(sLab->getAddr(), sLab->getPos()),
+	// 	      pred_end(sLab->getAddr(), sLab->getPos()), [&](const Event &w){
+	// 		      auto *wLab = getGraph().getWriteLabel(w);
+	// 			//   if(wLab->getStamp() < sLab->getStamp())
+	// 		      	wLab->setAddedMax(true);
+	// });
 }
 
 std::vector<Event>

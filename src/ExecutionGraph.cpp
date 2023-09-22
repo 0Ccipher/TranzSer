@@ -390,8 +390,7 @@ std::vector<Event> ExecutionGraph::getConsistentRevisitable(const WriteLabel *sL
 		for (auto j = before[i] + 1u; j < getThreadSize(i); j++) {
 			const EventLabel *lab = getEventLabel(Event(i, j));
 			if (auto *rLab = llvm::dyn_cast<ReadLabel>(lab)) {
-				if (rLab->getAddr() == sLab->getAddr() &&
-				    rLab->isRevisitable())
+				if (rLab->getAddr() == sLab->getAddr())
 					loads.push_back(rLab->getPos());
 			}
 		}
@@ -925,26 +924,36 @@ const View &ExecutionGraph::getHbPoBefore(Event e) const
 //newscdpor
 bool ExecutionGraph::isFree(Event e)
 {
-	auto &before = getPorfBefore(e);
-	Event loade = Event(e);
-	std::vector<std::pair<int,int>> cb_after;
-	/* Get cb_after events*/
-	for (auto i = 0u; i < getNumThreads(); i++) {
-		for (auto j = before[i] + 1u; j < getThreadSize(i); j++) {
-			auto *lab = getEventLabel(Event(i, j));
-			if(!isNonTrivial(lab))
-				continue;
-			if(isCbBefore(loade , lab->getPos()))
-				cb_after.push_back({i, j});
-		}
-	}
+	// auto &before = getPorfBefore(e);
+	// Event loade = Event(e);
+	// std::vector<std::pair<int,int>> cb_after;
+	// /* Get cb_after events*/
+	// for (auto i = 0u; i < getNumThreads(); i++) {
+	// 	for (auto j = before[i] + 1u; j < getThreadSize(i); j++) {
+	// 		auto *lab = getEventLabel(Event(i, j));
+	// 		if(!isNonTrivial(lab))
+	// 			continue;
+	// 		if(isCbBefore(loade , lab->getPos()))
+	// 			cb_after.push_back({i, j});
+	// 	}
+	// }
 
-	for(auto ev : cb_after) {
-		auto *lab = getEventLabel(Event(ev.first , ev.second));
-		if (auto *mLab = llvm::dyn_cast<MemAccessLabel>(lab))
-			if(!mLab->wasAddedMax())
-				return false;
-	}
+	// for(auto ev : cb_after) {
+	// 	auto *lab = getEventLabel(Event(ev.first , ev.second));
+	// 	if (auto *mLab = llvm::dyn_cast<MemAccessLabel>(lab))
+	// 		/* If mLab or that co-successor of mLab(mLab->Rf) is not punctual then return false  */
+	// 		if(!mLab->wasAddedMax())
+	// 			return false;
+	// 		auto *fri = llvm::dyn_cast<ReadLabel>(lab);
+	// 		auto *sLab = fri ? fri->getRf() : llvm::dyn_cast<ReadLabel>(lab);
+	// 		bool flag = true;
+	// 		for(auto it=succ_begin(sLab->getAddr(), sLab->getPos()); 
+	// 				it != succ_end(sLab->getAddr(), sLab->getPos()), it++){
+	// 					if(!(*it->wasAddedMax()))
+	// 						return false;
+
+	// 		}
+	// }
 	return true;
 }
 

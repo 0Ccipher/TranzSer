@@ -2674,6 +2674,11 @@ bool GenMCDriver::loadRevisits(const WriteLabel *sLab)
 	// if (tryOptimizeRevisits(sLab, loads))
 	// 	return true;
 
+	// This write and its co-pred are punctual
+	const_cast<WriteLabel *>(sLab)->setAddedMax(true);
+	// Make all writes co-after this write are not punctual
+	g.setAddedMaxFalse(sLab);
+
 	/* Get the powerset of the reads and filter out the incosistent ones.
 	   R={r1,r2,r3,r4} is incosistent if r_i~[cb]~r_j for some i and j. 
 	*/ // TODO
@@ -2711,9 +2716,6 @@ bool GenMCDriver::loadRevisits(const WriteLabel *sLab)
 		notifyEERemoved(*v);
 		/* Change rf-edge for all the reads in this subset */
 		revisitRead(BackwardRevisit(read, write));
-
-		auto temp = rLab;
-		auto temp1 = temp->getRf();
 
 		/* If there are idle workers in the thread pool,
 		 * try submitting the job instead */
@@ -2978,10 +2980,6 @@ bool GenMCDriver::restrictAndRevisit(WorkSet::ItemT item)
 		auto *wLab = llvm::dyn_cast<WriteLabel>(lab);
 		BUG_ON(!wLab);
 		g.changeStoreOffset(wLab->getAddr(), wLab->getPos(), mi->getMOPos());
-		//This write and its co-pred are punctual
-		wLab->setAddedMax(true);
-		// Make all writes co-after this write are not punctual
-		g.setAddedMaxFalse(wLab);
 		repairDanglingLocks();
 		repairDanglingBarriers();
 		return loadRevisits(wLab); // NEWSC_DPOR
