@@ -640,25 +640,25 @@ void ExecutionGraph::addPersistencyChecker(std::unique_ptr<PersistencyChecker> p
 
 bool ExecutionGraph::isHbBefore(Event a, Event b, CheckConsType t /* = fast */)
 {
-	if (getFPStatus() == FS_Done && getFPType() == t)
-		return getGlobalRelation(ExecutionGraph::RelationId::hb)(a, b);
-	if (t == CheckConsType::fast)
-		return getEventLabel(b)->getHbView().contains(a);
+	// if (getFPStatus() == FS_Done && getFPType() == t)
+	// 	return getGlobalRelation(ExecutionGraph::RelationId::hb)(a, b);
+	// if (t == CheckConsType::fast)
+	// 	return getEventLabel(b)->getHbView().contains(a);
 
 	/* We have to trigger a calculation */
-	isConsistent(t);
+	// isConsistent(t);
 	return getGlobalRelation(ExecutionGraph::RelationId::hb)(a, b);
 }
 /*NEWSC_DPOR*/
 bool ExecutionGraph::isCbBefore(Event a, Event b, CheckConsType t /* = fast */)
 {
-	if (getFPStatus() == FS_Done && getFPType() == t)
-		return getGlobalRelation(ExecutionGraph::RelationId::hb)(a, b);
-	if (t == CheckConsType::fast)
-		return getEventLabel(b)->getHbView().contains(a);
+	// if (getFPStatus() == FS_Done && getFPType() == t)
+	// 	return getGlobalRelation(ExecutionGraph::RelationId::hb)(a, b);
+	// if (t == CheckConsType::fast)
+	// 	return getEventLabel(b)->getHbView().contains(a);
 
 	/* We have to trigger a calculation */
-	isConsistent(t);
+	// isConsistent(t);
 	return getGlobalRelation(ExecutionGraph::RelationId::cb)(a, b);
 }
 bool isCoMaximalInRel(const Calculator::PerLocRelation &co, SAddr addr, const Event &e)
@@ -970,12 +970,12 @@ bool ExecutionGraph::isFree(Event e)
 							temp.push_back(m1Lab->getPos());
 							tstamp.push_back(m1Lab->getStamp());
 					}
-					bool flag1 = mLabView.contains(m1Lab->getPos());
+					bool flag1 = isHbBefore(m1Lab->getPos() , mLab->getPos());
 					if(flag1){
 						if(m1Lab->getStamp() > mLab->getStamp())
 							return false; // this load not free	
 					}
-					flag1 = m1LabView.contains(mLab->getPos());
+					flag1 = isHbBefore(mLab->getPos() , m1Lab->getPos());
 					if(flag1)
 						if(mLab->getStamp() > m1Lab->getStamp())
 							return false; // this load not free
@@ -1093,22 +1093,45 @@ void ExecutionGraph::populateHbEntries(AdjList<Event, EventHasher> &relation) co
 					edges.push_back(std::make_pair(parentLast, elems[labIdx]));
 			}
 			if (labIdx > thrIdx)
-				edges.push_back(std::make_pair(elems[labIdx - 1], elems[labIdx]));
+				edges.push_back(std::make_pair(elems[labIdx - 1], elems[labIdx])); //po-edge
 			if (auto *rLab = llvm::dyn_cast<ReadLabel>(lab)) {
-				if (!rLab->getRf().isInitializer()) {
-					auto pred = (labIdx > thrIdx) ?
-						elems[labIdx - 1] : Event::getInitializer();
-					auto &v = rLab->getHbView();
-					auto &predV = getEventLabel(pred)->getHbView();
-					for (auto k = 0u; k < v.size(); k++) {
-						if (k != rLab->getThread() &&
-						    v[k] > 0 &&
-						    !predV.contains(Event(k, v[k]))) {
-							auto cndt = getPreviousNonTrivial(Event(k, v[k]).next());
-							if (cndt.isInitializer())
-								continue;
-							edges.push_back(std::make_pair(cndt, rLab->getPos()));
-						}
+				if (!rLab->getRf().isBottom() && !rLab->getRf().isInitializer()) {
+					auto *rfLab = getWriteLabel(rLab->getRf());
+					/* rf-edge */
+					edges.push_back(std::make_pair(rfLab->getPos() , rLab->getPos()));
+					/* fr-edges */
+					auto *cohTracker = llvm::dyn_cast<MOCalculator>(getCoherenceCalculator());
+					if(!rfLab->getPos().isBottom())
+					for(auto it = cohTracker->succ_begin(rfLab->getAddr(), rfLab->getPos()); 
+						it != cohTracker->succ_end(rfLab->getAddr(), rfLab->getPos()); it++){
+						auto *wLab = getWriteLabel(*it);
+						edges.push_back(std::make_pair(rLab->getPos() , wLab->getPos()));
+					}
+					// auto pred = (labIdx > thrIdx) ?
+					// 	elems[labIdx - 1] : Event::getInitializer();
+					// auto &v = rLab->getHbView();
+					// auto &predV = getEventLabel(pred)->getHbView();
+					// for (auto k = 0u; k < v.size(); k++) {
+					// 	if (k != rLab->getThread() &&
+					// 	    v[k] > 0 &&
+					// 	    !predV.contains(Event(k, v[k]))) {
+					// 		auto cndt = getPreviousNonTrivial(Event(k, v[k]).next());
+					// 		if (cndt.isInitializer())
+					// 			continue;
+					// 		edges.push_back(std::make_pair(cndt, rLab->getPos()));
+					// 	}
+					// }
+				}
+			}
+			if (auto *sLab = llvm::dyn_cast<WriteLabel>(lab)) {
+				{
+					/* co-edges */
+					auto *cohTracker = llvm::dyn_cast<MOCalculator>(getCoherenceCalculator());
+					if(!sLab->getPos().isBottom() && !sLab->getPos().isInitializer());
+					for(auto it = cohTracker->succ_begin(sLab->getAddr(), sLab->getPos()); 
+						it != cohTracker->succ_end(sLab->getAddr(), sLab->getPos()); it++){
+						auto *wLab = getWriteLabel(*it);
+						edges.push_back(std::make_pair(sLab->getPos() , wLab->getPos()));
 					}
 				}
 			}

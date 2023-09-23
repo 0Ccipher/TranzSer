@@ -27,20 +27,20 @@ void *writer1(void *arg){
 void *writer2(void *arg){
 	// atomic_store_explicit(&x, 2, memory_order_seq_cst);
 	// atomic_store_explicit(&x, 4, memory_order_seq_cst);
-	// int l1 = atomic_load_explicit(&x, memory_order_seq_cst);
-	// printf("\tl1: %d\t",l1);
-	int ly = 0;
-	ly = atomic_load_explicit(&y, memory_order_seq_cst);
-	printf("\tly2: %d\n",ly);
-	atomic_store_explicit(&x, 5, memory_order_seq_cst);
+	int l1 = atomic_load_explicit(&x, memory_order_seq_cst);
+	printf("\tl1: %d\t",l1);
+	// int ly = 0;
+	// ly = atomic_load_explicit(&y, memory_order_seq_cst);
+	// printf("\tly2: %d\n",ly);
+	// atomic_store_explicit(&x, 5, memory_order_seq_cst);
 	// atomic_store_explicit(&y, 2, memory_order_seq_cst);
   	return NULL;
 }
 
 void *writer3(void *arg){
-	int l2 = 0;
-	l2 = atomic_load_explicit(&w, memory_order_seq_cst);
-	printf("\tlw3: %d\n",l2);
+	// int l2 = 0;
+	// l2 = atomic_load_explicit(&w, memory_order_seq_cst);
+	// printf("\tlw3: %d\n",l2);
   	// atomic_store_explicit(&x, 3, memory_order_seq_cst);
 	atomic_store_explicit(&y, 3, memory_order_seq_cst);	
 	return NULL;

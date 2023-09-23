@@ -1425,7 +1425,9 @@ bool GenMCDriver::ensureConsistentRf(const ReadLabel *rLab, std::vector<Event> &
 //NewSCDPOR
 bool GenMCDriver::getConsistentRfs(const ReadLabel *rLab, std::vector<Event> &rfs)
 {
-	isConsistent(ProgramPoint::step);
+	/* Updateh the hb and cb relations */
+	auto &g = getGraph();
+	g.isConsistent(CheckConsType::full);
 	bool found = false;
 	int scount = rfs.size();
 	auto store1 = rfs[(scount-1)];
@@ -1975,9 +1977,12 @@ void GenMCDriver::visitStore(std::unique_ptr<WriteLabel> wLab, const EventDeps *
 
 	auto &g = getGraph();
 	auto *EE = getEE();
-
+	
 	/* If it's a valid access, track coherence for this location */
 	g.trackCoherenceAtLoc(wLab->getAddr());
+
+	/* Updateh the hb and cb relations */
+	g.isConsistent(CheckConsType::full);
 
 	if (getConf()->helper && g.isRMWStore(&*wLab))
 		annotateStoreHELPER(&*wLab);
@@ -1999,7 +2004,7 @@ void GenMCDriver::visitStore(std::unique_ptr<WriteLabel> wLab, const EventDeps *
 		const_cast<WriteLabel*>(lab)->setVal(getBarrierInitValue(lab->getAddr(), lab->getAccess()));
 	g.getCoherenceCalculator()->addStoreToLoc(lab->getAddr(), lab->getPos(), endO);
 	
-	std::vector<int> mos;
+	// std::vector<int> mos;
 	// TODO:::::::: CO orderings
 	for (auto it = store_begin(g, lab->getAddr()) + begO,
 		  ie = store_begin(g, lab->getAddr()) + endO; it != ie; ++it) {
@@ -2009,11 +2014,11 @@ void GenMCDriver::visitStore(std::unique_ptr<WriteLabel> wLab, const EventDeps *
 			continue;
 
 		/* Push the stack item */
-		if(!isHbBefore(*it, lab->getPos())) /// NEW_SCDPOR
+		if(!isHbBefore(*it, g.getPreviousNonTrivial(lab->getPos()))) /// NEW_SCDPOR
 			if(!inRecoveryMode()){
 				addToWorklist(std::make_unique<WriteRevisit>(
 					      lab->getPos(), std::distance(store_begin(g, lab->getAddr()), it)));
-				mos.push_back(std::distance(store_begin(g, lab->getAddr()), it));
+				// mos.push_back(std::distance(store_begin(g, lab->getAddr()), it));
 			}
 				
 	}
@@ -2669,6 +2674,8 @@ bool GenMCDriver::checkRevBlockHELPER(const WriteLabel *sLab, const std::vector<
 bool GenMCDriver::loadRevisits(const WriteLabel *sLab)
 {
 	auto &g = getGraph();
+	/* Update the hb and cb relations*/
+	g.isConsistent(CheckConsType::full);
 	//TODO: hande the case when the slab is first in MO(after init)
 	auto loads = getRevisitableLoads(sLab);
 	// if (tryOptimizeRevisits(sLab, loads))
