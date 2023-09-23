@@ -924,36 +924,73 @@ const View &ExecutionGraph::getHbPoBefore(Event e) const
 //newscdpor
 bool ExecutionGraph::isFree(Event e)
 {
-	// auto &before = getPorfBefore(e);
-	// Event loade = Event(e);
-	// std::vector<std::pair<int,int>> cb_after;
-	// /* Get cb_after events*/
-	// for (auto i = 0u; i < getNumThreads(); i++) {
-	// 	for (auto j = before[i] + 1u; j < getThreadSize(i); j++) {
-	// 		auto *lab = getEventLabel(Event(i, j));
-	// 		if(!isNonTrivial(lab))
-	// 			continue;
-	// 		if(isCbBefore(loade , lab->getPos()))
-	// 			cb_after.push_back({i, j});
-	// 	}
-	// }
-
-	// for(auto ev : cb_after) {
-	// 	auto *lab = getEventLabel(Event(ev.first , ev.second));
-	// 	if (auto *mLab = llvm::dyn_cast<MemAccessLabel>(lab))
-	// 		/* If mLab or that co-successor of mLab(mLab->Rf) is not punctual then return false  */
-	// 		if(!mLab->wasAddedMax())
-	// 			return false;
-	// 		auto *fri = llvm::dyn_cast<ReadLabel>(lab);
-	// 		auto *sLab = fri ? fri->getRf() : llvm::dyn_cast<ReadLabel>(lab);
-	// 		bool flag = true;
-	// 		for(auto it=succ_begin(sLab->getAddr(), sLab->getPos()); 
-	// 				it != succ_end(sLab->getAddr(), sLab->getPos()), it++){
-	// 					if(!(*it->wasAddedMax()))
-	// 						return false;
-
-	// 		}
-	// }
+	auto &before = getPorfBefore(e);
+	Event loade = Event(e);
+	std::vector<std::pair<int,int>> cb_after;
+	/* Get cb_after events*/
+	for (auto i = 0u; i < getNumThreads(); i++) {
+		for (auto j = before[i] + 1u; j < getThreadSize(i); j++) {
+			auto *lab = getEventLabel(Event(i, j));
+			if(!isNonTrivial(lab))
+				continue;
+			if(isCbBefore(loade , lab->getPos()))
+				cb_after.push_back({i, j});
+		}
+	}
+	// cb_after.push_back({loade.thread , loade.index}); // TOD: should we add this read also for check
+	int a = 10;
+	int b = 100;
+	b = a;
+	a = b;
+	std::vector<Event> temp;
+	std::vector<int> tstamp;
+	for(auto ev : cb_after) {
+		auto *lab = getEventLabel(Event(ev.first , ev.second));
+		if (auto *mLab = llvm::dyn_cast<MemAccessLabel>(lab)){
+		/* If mLab or that co-successor of mLab(mLab->Rf) is not punctual 
+		then return false  */
+		// if(!mLab->wasAddedMax())
+		// 	return true; // this load not free
+		// auto *fri = llvm::dyn_cast<ReadLabel>(mLab);
+		// auto *sLab = fri ? g.getWriteLabel(fri->getRf()) 
+		// 			: llvm::dyn_cast<WriteLabel>(mLab);
+		// for(auto it = succ_begin(sLab->getAddr(), sLab->getPos()); 
+		// 	it != succ_end(sLab->getAddr(), sLab->getPos()); it++){
+		// 		auto *wLab = g.getWriteLabel(*it);
+		// 		if(fri && fri->getStamp() > wLab->getStamp())
+		// 			return true; // this load not free
+		// 		if(!fri && sLab->getStamp() > wLab->getStamp())
+		// 			return true;
+		// }
+			auto mLabView = mLab->getHbView();
+			for(const auto *lab1: labels(*this)){
+				if(auto *m1Lab = llvm::dyn_cast<MemAccessLabel>(lab1)){
+					auto m1LabView = m1Lab->getHbView();
+					if(m1Lab->getPos() == Event(1,1)){
+							temp.push_back(m1Lab->getPos());
+							tstamp.push_back(m1Lab->getStamp());
+					}
+					bool flag1 = mLabView.contains(m1Lab->getPos());
+					if(flag1){
+						if(m1Lab->getStamp() > mLab->getStamp())
+							return false; // this load not free	
+					}
+					flag1 = m1LabView.contains(mLab->getPos());
+					if(flag1)
+						if(mLab->getStamp() > m1Lab->getStamp())
+							return false; // this load not free
+				}
+			}
+									
+		}
+	}
+	a = temp.size();
+	b = tstamp.size();
+	a = b*70;
+	b = a+b+b;
+	a = b*5;
+	b = a+50;
+	a = a + 1 + 1;
 	return true;
 }
 

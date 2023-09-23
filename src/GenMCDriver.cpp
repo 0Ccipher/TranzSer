@@ -2675,9 +2675,9 @@ bool GenMCDriver::loadRevisits(const WriteLabel *sLab)
 	// 	return true;
 
 	// This write and its co-pred are punctual
-	const_cast<WriteLabel *>(sLab)->setAddedMax(true);
+	// const_cast<WriteLabel *>(sLab)->setAddedMax(true);
 	// Make all writes co-after this write are not punctual
-	g.setAddedMaxFalse(sLab);
+	// g.setAddedMaxFalse(sLab);
 
 	/* Get the powerset of the reads and filter out the incosistent ones.
 	   R={r1,r2,r3,r4} is incosistent if r_i~[cb]~r_j for some i and j. 
@@ -2926,10 +2926,10 @@ bool GenMCDriver::revisitRead(const ReadRevisit &ri)
 	//newscdpor 
 	/* Every read-from from load-rule(forward-visit) is punctual*/
 	/* Every backward-visit Read is not punctual */
-	if(auto *fri = llvm::dyn_cast<ForwardRevisit>(&ri))
-		rLab->setAddedMax(true);
-	else
-		rLab->setAddedMax(false);
+	// if(auto *fri = llvm::dyn_cast<ForwardRevisit>(&ri))
+	// 	rLab->setAddedMax(true);
+	// else
+	// 	rLab->setAddedMax(false);
 	// rLab->setAddedMax(fri ? fri->isMaximal() : isCoMaximal(rLab->getAddr(), ri.getRev()));
 
 	GENMC_DEBUG(

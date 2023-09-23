@@ -41,7 +41,7 @@ void *writer3(void *arg){
 	int l2 = 0;
 	l2 = atomic_load_explicit(&w, memory_order_seq_cst);
 	printf("\tlw3: %d\n",l2);
-  	atomic_store_explicit(&x, 3, memory_order_seq_cst);
+  	// atomic_store_explicit(&x, 3, memory_order_seq_cst);
 	atomic_store_explicit(&y, 3, memory_order_seq_cst);	
 	return NULL;
 }
