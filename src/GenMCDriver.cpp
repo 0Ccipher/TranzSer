@@ -1425,9 +1425,7 @@ bool GenMCDriver::ensureConsistentRf(const ReadLabel *rLab, std::vector<Event> &
 //NewSCDPOR
 bool GenMCDriver::getConsistentRfs(const ReadLabel *rLab, std::vector<Event> &rfs)
 {
-	/* Updateh the hb and cb relations */
 	auto &g = getGraph();
-	g.isConsistent(CheckConsType::full);
 	bool found = false;
 	int scount = rfs.size();
 	auto store1 = rfs[(scount-1)];
@@ -1436,6 +1434,11 @@ bool GenMCDriver::getConsistentRfs(const ReadLabel *rLab, std::vector<Event> &rf
 		bool flag = false;
 		for(int i = 0 ; i < scount - 1 ; i++){
 			auto store2 = rfs[i];
+			if(store1.isInitializer() && isHbBefore(store2 , rLab->getPos())){
+				flag = true;
+				break;
+			}
+			if(!store1.isInitializer() && !store2.isInitializer())
 			if(isHbBefore(store1,store2) && isHbBefore(store2 , rLab->getPos())){
 				flag = true;
 				break;
@@ -1863,6 +1866,9 @@ SVal GenMCDriver::visitLoad(std::unique_ptr<ReadLabel> rLab, const EventDeps *de
 	 * consistency checks may be triggered if the access is invalid */
 	g.trackCoherenceAtLoc(rLab->getAddr());
 
+	/* Updateh the hb and cb relations */
+	g.isConsistent(CheckConsType::full);
+
 	rLab->setAnnot(EE->getCurrentAnnotConcretized());
 	updateLabelViews(rLab.get(), deps);
 	auto *lab = g.addReadLabelToGraph(std::move(rLab));
@@ -1899,7 +1905,7 @@ SVal GenMCDriver::visitLoad(std::unique_ptr<ReadLabel> rLab, const EventDeps *de
 	checkReconsiderFaiSpinloop(lab);
 
 	/* Check for races and reading from uninitialized memory */
-	checkForDataRaces(lab);
+	// checkForDataRaces(lab);
 	if (llvm::isa<LockCasReadLabel>(lab))
 		checkLockValidity(lab, stores);
 	if (llvm::isa<BIncFaiReadLabel>(lab))
@@ -1981,9 +1987,6 @@ void GenMCDriver::visitStore(std::unique_ptr<WriteLabel> wLab, const EventDeps *
 	/* If it's a valid access, track coherence for this location */
 	g.trackCoherenceAtLoc(wLab->getAddr());
 
-	/* Updateh the hb and cb relations */
-	g.isConsistent(CheckConsType::full);
-
 	if (getConf()->helper && g.isRMWStore(&*wLab))
 		annotateStoreHELPER(&*wLab);
 	updateLabelViews(wLab.get(), deps);
@@ -1994,6 +1997,9 @@ void GenMCDriver::visitStore(std::unique_ptr<WriteLabel> wLab, const EventDeps *
 		return;
 	}
 
+	/* Updateh the hb and cb relations */
+	g.isConsistent(CheckConsType::full);
+	 
 	/* Find all possible placings in coherence for this store */
 	auto placesRange = g.getCoherentPlacings(lab->getAddr(), lab->getPos(), g.isRMWStore(lab));
 	auto &begO = placesRange.first;
@@ -2014,7 +2020,7 @@ void GenMCDriver::visitStore(std::unique_ptr<WriteLabel> wLab, const EventDeps *
 			continue;
 
 		/* Push the stack item */
-		if(!isHbBefore(*it, g.getPreviousNonTrivial(lab->getPos()))) /// NEW_SCDPOR
+		if(!isHbBefore(*it, lab->getPos())) /// NEW_SCDPOR
 			if(!inRecoveryMode()){
 				addToWorklist(std::make_unique<WriteRevisit>(
 					      lab->getPos(), std::distance(store_begin(g, lab->getAddr()), it)));
@@ -2675,7 +2681,7 @@ bool GenMCDriver::loadRevisits(const WriteLabel *sLab)
 {
 	auto &g = getGraph();
 	/* Update the hb and cb relations*/
-	g.isConsistent(CheckConsType::full);
+	// g.isConsistent(CheckConsType::full);
 	//TODO: hande the case when the slab is first in MO(after init)
 	auto loads = getRevisitableLoads(sLab);
 	// if (tryOptimizeRevisits(sLab, loads))
@@ -2989,6 +2995,7 @@ bool GenMCDriver::restrictAndRevisit(WorkSet::ItemT item)
 		g.changeStoreOffset(wLab->getAddr(), wLab->getPos(), mi->getMOPos());
 		repairDanglingLocks();
 		repairDanglingBarriers();
+		// g.isConsistent(CheckConsType::full);
 		return loadRevisits(wLab); // NEWSC_DPOR
 		// return calcRevisits(wLab); // NEWSC_DPOR
 	} else if (auto *oi = llvm::dyn_cast<OptionalRevisit>(item.get())) {

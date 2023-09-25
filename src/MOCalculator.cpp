@@ -235,7 +235,7 @@ MOCalculator::getConsistentLoadRevisits(const WriteLabel *sLab)
 	}
 
 	/* Get loads which are not cb_before the store slab*/
-	auto ls = g.getConsistentRevisitable(sLab);
+	auto ls = getGraph().getConsistentRevisitable(sLab);
 	
 	/* Remove the loads not reading from pred_store */
 	ls.erase(std::remove_if(ls.begin(), ls.end() , [&](Event e)

@@ -352,7 +352,7 @@ public:
 	virtual std::vector<Event> getRevisitable(const WriteLabel *sLab) const;
 
 	/* Returns a list of loads that can be revisited (storerule)*/
-	virtual std::vector<Event> getConsistentRevisitable(const WriteLabel *sLab) const;
+	virtual std::vector<Event> getConsistentRevisitable(const WriteLabel *sLab);
 
 	/* Returns the first po-predecessor satisfying F */
 	template <typename F>

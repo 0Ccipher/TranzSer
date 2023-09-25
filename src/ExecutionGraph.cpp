@@ -380,7 +380,7 @@ Event ExecutionGraph::getPendingRMW(const WriteLabel *sLab) const
 }
 
 //newscdpor
-std::vector<Event> ExecutionGraph::getConsistentRevisitable(const WriteLabel *sLab) const
+std::vector<Event> ExecutionGraph::getConsistentRevisitable(const WriteLabel *sLab) 
 {
 	auto &before = getPorfBefore(sLab->getPos());
 	auto pendingRMW = getPendingRMW(sLab);
@@ -694,20 +694,20 @@ void ExecutionGraph::doInits(bool full /* = false */)
 	populatePorfEntries(cb);
 	cb.transClosure();
 
-	/* Clear out unused locations */
-	for (auto i = 0u; i < relations.perLoc.size(); i++) {
-		relations.perLoc[i].clear();
-		relsCache.perLoc[i].clear();
-       }
+	// /* Clear out unused locations */
+	// for (auto i = 0u; i < relations.perLoc.size(); i++) {
+	// 	relations.perLoc[i].clear();
+	// 	relsCache.perLoc[i].clear();
+      //  }
 
-	auto &calcs = consistencyCalculators;
-	auto &partial = partialConsCalculators;
-	for (auto i = 0u; i < calcs.size(); i++) {
-		if (!full && std::find(partial.begin(), partial.end(), i) == partial.end())
-			continue;
+	// auto &calcs = consistencyCalculators;
+	// auto &partial = partialConsCalculators;
+	// for (auto i = 0u; i < calcs.size(); i++) {
+	// 	if (!full && std::find(partial.begin(), partial.end(), i) == partial.end())
+	// 		continue;
 
-		calcs[i]->initCalc();
-	}
+	// 	calcs[i]->initCalc();
+	// }
 	return;
 }
 
@@ -827,22 +827,22 @@ bool ExecutionGraph::doFinalConsChecks(bool checkFull /* = false */)
 bool ExecutionGraph::isConsistent(CheckConsType checkT)
 {
 	/* Fastpath: We have cached info or no fixpoint is required */
-	if (getFPStatus() == FS_Done && getFPType() == checkT)
-		return getFPResult().cons;
-	if (checkT == CheckConsType::fast)
-		return true;
+	// if (getFPStatus() == FS_Done && getFPType() == checkT)
+	// 	return getFPResult().cons;
+	// if (checkT == CheckConsType::fast)
+	// 	return true;
 
 	/* Slowpath: Go calculate fixpoint */
 	setFPStatus(FS_InProgress);
 	doInits(checkT == CheckConsType::full);
-	do {
-		setFPResult(doCalcs(checkT == CheckConsType::full));
-		if (!getFPResult().cons)
-			return false;
-	} while (getFPResult().changed);
+	// do {
+	// 	setFPResult(doCalcs(checkT == CheckConsType::full));
+	// 	if (!getFPResult().cons)
+	// 		return false;
+	// } while (getFPResult().changed);
 
-	/* Do final checks, after the fixpoint is over */
-	setFPResult(FixpointResult(false, doFinalConsChecks(checkT == CheckConsType::full)));
+	// /* Do final checks, after the fixpoint is over */
+	// setFPResult(FixpointResult(false, doFinalConsChecks(checkT == CheckConsType::full)));
 	setFPStatus(FS_Done);
 	setFPType(checkT);
 	return getFPResult().cons;
@@ -923,7 +923,15 @@ const View &ExecutionGraph::getHbPoBefore(Event e) const
 
 //newscdpor
 bool ExecutionGraph::isFree(Event e)
-{
+{	
+	auto &hb = relations.global[relationIndex[RelationId::hb]];
+	populateHbEntries(hb);
+	hb.transClosure();
+	/*NEWSC_DPOR*/
+	auto &cb = relations.global[relationIndex[RelationId::cb]];
+	populatePorfEntries(cb);
+	cb.transClosure();
+
 	auto &before = getPorfBefore(e);
 	Event loade = Event(e);
 	std::vector<std::pair<int,int>> cb_after;
@@ -938,59 +946,54 @@ bool ExecutionGraph::isFree(Event e)
 		}
 	}
 	// cb_after.push_back({loade.thread , loade.index}); // TOD: should we add this read also for check
-	int a = 10;
-	int b = 100;
-	b = a;
-	a = b;
 	std::vector<Event> temp;
 	std::vector<int> tstamp;
 	for(auto ev : cb_after) {
 		auto *lab = getEventLabel(Event(ev.first , ev.second));
 		if (auto *mLab = llvm::dyn_cast<MemAccessLabel>(lab)){
-		/* If mLab or that co-successor of mLab(mLab->Rf) is not punctual 
-		then return false  */
-		// if(!mLab->wasAddedMax())
-		// 	return true; // this load not free
-		// auto *fri = llvm::dyn_cast<ReadLabel>(mLab);
-		// auto *sLab = fri ? g.getWriteLabel(fri->getRf()) 
-		// 			: llvm::dyn_cast<WriteLabel>(mLab);
-		// for(auto it = succ_begin(sLab->getAddr(), sLab->getPos()); 
-		// 	it != succ_end(sLab->getAddr(), sLab->getPos()); it++){
-		// 		auto *wLab = g.getWriteLabel(*it);
-		// 		if(fri && fri->getStamp() > wLab->getStamp())
-		// 			return true; // this load not free
-		// 		if(!fri && sLab->getStamp() > wLab->getStamp())
-		// 			return true;
-		// }
-			auto mLabView = mLab->getHbView();
-			for(const auto *lab1: labels(*this)){
-				if(auto *m1Lab = llvm::dyn_cast<MemAccessLabel>(lab1)){
-					auto m1LabView = m1Lab->getHbView();
-					if(m1Lab->getPos() == Event(1,1)){
+			int a11 = 0 , b11 = 0;
+			bool flag11 = false;
+			bool flag111 = false;
+			bool flag1;
+			for (auto i = 0u; i < getNumThreads(); i++){
+				for (auto j = 0u; j < getThreadSize(i); j++){
+					auto *lab1 = getEventLabel(Event(i, j));
+					if(!isNonTrivial(lab))
+						continue;
+					if(auto *m1Lab = llvm::dyn_cast<MemAccessLabel>(lab1)){
+						if(m1Lab->getPos() == Event(1,1)){
 							temp.push_back(m1Lab->getPos());
 							tstamp.push_back(m1Lab->getStamp());
-					}
-					bool flag1 = isHbBefore(m1Lab->getPos() , mLab->getPos());
-					if(flag1){
-						if(m1Lab->getStamp() > mLab->getStamp())
-							return false; // this load not free	
-					}
-					flag1 = isHbBefore(mLab->getPos() , m1Lab->getPos());
-					if(flag1)
-						if(mLab->getStamp() > m1Lab->getStamp())
-							return false; // this load not free
-				}
-			}
+							a11 = m1Lab->getStamp();
+							b11 = mLab->getStamp();
+							flag11 = isHbBefore(m1Lab->getPos() , mLab->getPos());
+							flag111 = isHbBefore(mLab->getPos() , m1Lab->getPos());
+							flag1 = flag11;
+							if(flag11){
+								if(a11 > b11){
+									return false;
+								}
 									
+							}
+							if(flag111){
+								if(b11 > a11){
+									return false;
+								}
+							}
+						}
+						if(isHbBefore(m1Lab->getPos() , mLab->getPos())){
+							if(m1Lab->getStamp() > mLab->getStamp())
+								return false; // this load not free	
+						}
+						if(isHbBefore(mLab->getPos() , m1Lab->getPos())){
+							if(mLab->getStamp() > m1Lab->getStamp())
+								return false;
+						}
+					}
+				}
+			}							
 		}
 	}
-	a = temp.size();
-	b = tstamp.size();
-	a = b*70;
-	b = a+b+b;
-	a = b*5;
-	b = a+50;
-	a = a + 1 + 1;
 	return true;
 }
 
@@ -1095,43 +1098,72 @@ void ExecutionGraph::populateHbEntries(AdjList<Event, EventHasher> &relation) co
 			if (labIdx > thrIdx)
 				edges.push_back(std::make_pair(elems[labIdx - 1], elems[labIdx])); //po-edge
 			if (auto *rLab = llvm::dyn_cast<ReadLabel>(lab)) {
-				if (!rLab->getRf().isBottom() && !rLab->getRf().isInitializer()) {
+				if (!rLab->getRf().isBottom()) {
 					auto *rfLab = getWriteLabel(rLab->getRf());
-					/* rf-edge */
-					edges.push_back(std::make_pair(rfLab->getPos() , rLab->getPos()));
-					/* fr-edges */
-					auto *cohTracker = llvm::dyn_cast<MOCalculator>(getCoherenceCalculator());
-					if(!rfLab->getPos().isBottom())
-					for(auto it = cohTracker->succ_begin(rfLab->getAddr(), rfLab->getPos()); 
-						it != cohTracker->succ_end(rfLab->getAddr(), rfLab->getPos()); it++){
-						auto *wLab = getWriteLabel(*it);
-						edges.push_back(std::make_pair(rLab->getPos() , wLab->getPos()));
+					if(rfLab){
+						/* rf-edge */
+						if(!rfLab->getPos().isBottom() && !rfLab->getPos().isInitializer())
+							edges.push_back(std::make_pair(rfLab->getPos() , rLab->getPos()));
+						/* fr-edges */
+						auto *cohTracker = llvm::dyn_cast<MOCalculator>(getCoherenceCalculator());
+						if(!rfLab->getPos().isBottom())
+						for(auto it = cohTracker->succ_begin(rfLab->getAddr(), rfLab->getPos()); 
+							it != cohTracker->succ_end(rfLab->getAddr(), rfLab->getPos()); it++){
+							auto *wLab = getWriteLabel(*it);
+							if(wLab)
+							edges.push_back(std::make_pair(rLab->getPos() , wLab->getPos()));
+						}
 					}
-					// auto pred = (labIdx > thrIdx) ?
-					// 	elems[labIdx - 1] : Event::getInitializer();
-					// auto &v = rLab->getHbView();
-					// auto &predV = getEventLabel(pred)->getHbView();
-					// for (auto k = 0u; k < v.size(); k++) {
-					// 	if (k != rLab->getThread() &&
-					// 	    v[k] > 0 &&
-					// 	    !predV.contains(Event(k, v[k]))) {
-					// 		auto cndt = getPreviousNonTrivial(Event(k, v[k]).next());
-					// 		if (cndt.isInitializer())
-					// 			continue;
-					// 		edges.push_back(std::make_pair(cndt, rLab->getPos()));
-					// 	}
-					// }
+					if(rLab->getRf().isInitializer()){
+						/* fr-edges */
+						auto *cohTracker = llvm::dyn_cast<MOCalculator>(getCoherenceCalculator());
+						for(auto it = cohTracker->store_begin(rLab->getAddr()); 
+							it != cohTracker->store_end(rLab->getAddr()); it++){
+							auto *wLab = getWriteLabel(*it);
+							if(wLab)
+							edges.push_back(std::make_pair(rLab->getPos() , wLab->getPos()));
+						}
+					}
 				}
+				auto tempedges = edges;
+						auto tempevs = elems;
+						bool flag = false;
+						Event ev;
+						{
+							if(rLab->getPos() == Event(2,2)){
+								ev = rLab->getPos();
+								auto *rfLab = getWriteLabel(rLab->getRf());
+								ev = rLab->getRf();
+								auto *cohTracker = llvm::dyn_cast<MOCalculator>(getCoherenceCalculator());
+								if(rfLab){
+									auto oIt = std::find(cohTracker->store_begin(rfLab->getAddr()), 
+													cohTracker->store_end(rfLab->getAddr()), rfLab->getPos());
+									if(!rfLab->getPos().isBottom());
+									if(oIt != cohTracker->store_end(rfLab->getAddr()))
+									for(auto it = cohTracker->succ_begin(rfLab->getAddr(), rfLab->getPos()); 
+												it != cohTracker->succ_end(rfLab->getAddr(), rfLab->getPos()); it++){
+										auto *wLab = getWriteLabel(*it);
+										if(wLab)
+											tempedges.push_back(std::make_pair(rfLab->getPos() , wLab->getPos()));
+									}
+								}
+								
+							}
+						}
 			}
 			if (auto *sLab = llvm::dyn_cast<WriteLabel>(lab)) {
 				{
 					/* co-edges */
 					auto *cohTracker = llvm::dyn_cast<MOCalculator>(getCoherenceCalculator());
+					auto oIt = std::find(cohTracker->store_begin(sLab->getAddr()), 
+									cohTracker->store_end(sLab->getAddr()), sLab->getPos());
 					if(!sLab->getPos().isBottom() && !sLab->getPos().isInitializer());
+					if(oIt != cohTracker->store_end(sLab->getAddr()))
 					for(auto it = cohTracker->succ_begin(sLab->getAddr(), sLab->getPos()); 
 						it != cohTracker->succ_end(sLab->getAddr(), sLab->getPos()); it++){
 						auto *wLab = getWriteLabel(*it);
-						edges.push_back(std::make_pair(sLab->getPos() , wLab->getPos()));
+						if(wLab)
+							edges.push_back(std::make_pair(sLab->getPos() , wLab->getPos()));
 					}
 				}
 			}
@@ -1640,14 +1672,15 @@ void ExecutionGraph::copyGraphUpToStore(ExecutionGraph &other,  VectorClock &v, 
 	for (auto i = 0u; i < getNumThreads(); i++) {
 		other.addOtherLabelToGraph(std::move(getEventLabel(Event(i, 0))->clone()));
 		for (auto j = 1; j <= v[i]; j++) {
-			if(isCbBefore(readev , Event(i,j)) && readev != Event(i,j)){
+			// auto *evLab = llvm::dyn_cast<MemAccessLabel>(eLab);
+			if(isNonTrivial(getEventLabel(Event(i, j))) && isCbBefore(readev , Event(i,j)) && readev != Event(i,j)){
+				break; /* All events after this j are cb_after readev*/
+			}
+			if (!v.contains(Event(i, j))) {
+				other.addOtherLabelToGraph(
+					EmptyLabel::create(other.nextStamp(), Event(i, j)));
 				continue;
 			}
-			// if (!v.contains(Event(i, j))) {
-			// 	other.addOtherLabelToGraph(
-			// 		EmptyLabel::create(other.nextStamp(), Event(i, j)));
-			// 	continue;
-			// }
 			auto *nLab = other.addOtherLabelToGraph(getEventLabel(Event(i, j))->clone());
 			if (auto *wLab = llvm::dyn_cast<WriteLabel>(nLab)) {
 				auto &readers = (const_cast<WriteLabel *>(wLab)->readerList);
