@@ -647,7 +647,11 @@ bool ExecutionGraph::isHbBefore(Event a, Event b, CheckConsType t /* = fast */)
 
 	/* We have to trigger a calculation */
 	// isConsistent(t);
-	return getGlobalRelation(ExecutionGraph::RelationId::hb)(a, b);
+	auto &temphb = relations.global[relationIndex[RelationId::hb]];
+	int id1 = temphb.ids.at(a);
+	int id2 = temphb.ids.at(b);
+	bool flag = temphb.transC[id1][id2];
+	return flag;
 }
 /*NEWSC_DPOR*/
 bool ExecutionGraph::isCbBefore(Event a, Event b, CheckConsType t /* = fast */)
@@ -922,14 +926,16 @@ const View &ExecutionGraph::getHbPoBefore(Event e) const
 }
 
 //newscdpor
-bool ExecutionGraph::isFree(Event e)
+bool ExecutionGraph::isFree(Event e, const WriteLabel *sLab)
 {	
 	auto &hb = relations.global[relationIndex[RelationId::hb]];
 	populateHbEntries(hb);
 	hb.transClosure();
+	Calculator::GlobalRelation temphb = hb;
 	/*NEWSC_DPOR*/
 	auto &cb = relations.global[relationIndex[RelationId::cb]];
 	populatePorfEntries(cb);
+	Calculator::GlobalRelation tempcb = cb;
 	cb.transClosure();
 
 	auto &before = getPorfBefore(e);
@@ -941,53 +947,47 @@ bool ExecutionGraph::isFree(Event e)
 			auto *lab = getEventLabel(Event(i, j));
 			if(!isNonTrivial(lab))
 				continue;
+			if(Event(i,j) == sLab->getPos()){
+				continue;
+			}
 			if(isCbBefore(loade , lab->getPos()))
 				cb_after.push_back({i, j});
 		}
 	}
 	// cb_after.push_back({loade.thread , loade.index}); // TOD: should we add this read also for check
-	std::vector<Event> temp;
-	std::vector<int> tstamp;
 	for(auto ev : cb_after) {
 		auto *lab = getEventLabel(Event(ev.first , ev.second));
 		if (auto *mLab = llvm::dyn_cast<MemAccessLabel>(lab)){
-			int a11 = 0 , b11 = 0;
-			bool flag11 = false;
-			bool flag111 = false;
-			bool flag1;
+			int id1 , id2;
+			int a11 , b11;
+			bool flagmTom1 , flagm1Tom;
 			for (auto i = 0u; i < getNumThreads(); i++){
 				for (auto j = 0u; j < getThreadSize(i); j++){
 					auto *lab1 = getEventLabel(Event(i, j));
 					if(!isNonTrivial(lab))
 						continue;
 					if(auto *m1Lab = llvm::dyn_cast<MemAccessLabel>(lab1)){
-						if(m1Lab->getPos() == Event(1,1)){
-							temp.push_back(m1Lab->getPos());
-							tstamp.push_back(m1Lab->getStamp());
+						/*Do not track this sLab-BackwardRevisit*/
+						if(m1Lab->getPos() == sLab->getPos()){
+							continue;
+						}
+						{
+							id1 = temphb.ids.at(mLab->getPos());
+							id2 = temphb.ids.at(m1Lab->getPos());
+							flagmTom1 = temphb.transC[id1][id2];
+							flagm1Tom = temphb.transC[id2][id1];
 							a11 = m1Lab->getStamp();
 							b11 = mLab->getStamp();
-							flag11 = isHbBefore(m1Lab->getPos() , mLab->getPos());
-							flag111 = isHbBefore(mLab->getPos() , m1Lab->getPos());
-							flag1 = flag11;
-							if(flag11){
-								if(a11 > b11){
-									return false;
-								}
-									
-							}
-							if(flag111){
+							if(flagmTom1){
 								if(b11 > a11){
 									return false;
 								}
 							}
-						}
-						if(isHbBefore(m1Lab->getPos() , mLab->getPos())){
-							if(m1Lab->getStamp() > mLab->getStamp())
-								return false; // this load not free	
-						}
-						if(isHbBefore(mLab->getPos() , m1Lab->getPos())){
-							if(mLab->getStamp() > m1Lab->getStamp())
-								return false;
+							if(flagm1Tom){
+								if(a11 > b11){
+									return false;
+								}
+							}
 						}
 					}
 				}

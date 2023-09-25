@@ -166,7 +166,7 @@ public:
 	template<typename U, typename Z>
 	friend llvm::raw_ostream& operator<<(llvm::raw_ostream &s, const AdjList<U, Z> &l);
 
-private:
+public:
 	/* Helper for dfs() */
 	template<typename FVB, typename FET, typename FEB,
 		 typename FEF, typename FVE>
@@ -198,7 +198,7 @@ private:
 
 	/* Maintain transitive closure info */
 	bool calculatedTransC = false;
-	std::vector<llvm::BitVector> transC;
+	std::vector<std::vector<int>> transC;
 };
 
 #include "AdjList.tcc"

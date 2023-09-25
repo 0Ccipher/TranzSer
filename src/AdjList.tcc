@@ -31,7 +31,7 @@ void AdjList<T, H>::addNode(T a)
 	inDegree.push_back(0);
 
 	calculatedTransC = false;
-	transC.push_back(llvm::BitVector(id));
+	transC.push_back(std::vector<int>(id,0));
 	return;
 }
 
@@ -43,7 +43,7 @@ void AdjList<T, H>::addEdge(NodeId a, NodeId b)
 		return;
 
 	nodeSucc[a].push_back(b);
-	transC[a].set(b);
+	transC[a][b] = 1;
 	++inDegree[b];
 	calculatedTransC = false;
 	return;
@@ -279,30 +279,15 @@ void AdjList<T, H>::transClosure()
 {
 	if (calculatedTransC)
 		return;
-
-	dfs([&](NodeId i, Timestamp &t, std::vector<NodeStatus> &m,
-		std::vector<NodeId> &p, std::vector<Timestamp> &d,
-		std::vector<Timestamp> &f){ return; }, /* atEntryV */
-	    [&](NodeId i, NodeId j, Timestamp &t, std::vector<NodeStatus> &m,
-		std::vector<NodeId> &p, std::vector<Timestamp> &d,
-		std::vector<Timestamp> &f){ return; }, /* atTreeE */
-	    [&](NodeId i, NodeId j, Timestamp &t, std::vector<NodeStatus> &m,
-		std::vector<NodeId> &p, std::vector<Timestamp> &d,
-		std::vector<Timestamp> &f){ return; }, /* atBackE*/
-	    [&](NodeId i, NodeId j, Timestamp &t, std::vector<NodeStatus> &m,
-		std::vector<NodeId> &p, std::vector<Timestamp> &d,
-		std::vector<Timestamp> &f){ return; }, /* atForwE*/
-	    [&](NodeId i, Timestamp &t, std::vector<NodeStatus> &m,
-		std::vector<NodeId> &p, std::vector<Timestamp> &d,
-		std::vector<Timestamp> &f){
-		    for (auto &j : nodeSucc[i]) {
-			    transC[i] |= transC[j];
-			    transC[i].set(j);
-		    }
-	    }, /* atExitV*/
-	    [&](Timestamp &t, std::vector<NodeStatus> &m,
-		std::vector<NodeId> &p, std::vector<Timestamp> &d,
-		std::vector<Timestamp> &f){ return; }); /* atEnd */
+	int V = elems.size();
+	int i,j,k;
+	for (k = 0; k < V; k++){
+      	for (i = 0; i < V; i++){
+      		for (j = 0; j < V; j++){
+                		transC[i][j] = transC[i][j] || (transC[i][k] && transC[k][j]);
+            }
+        }
+    }
 
 	calculatedTransC = true;
 	return;

@@ -437,7 +437,7 @@ public:
 
 	//newscdpor
 	/* Return true if all the cb_after events are puntcual*/
-	bool isFree(Event e);
+	bool isFree(Event e, const WriteLabel *sLab);
 
 	/* Returns true if a is hb-before b */
 	bool isHbBefore(Event a, Event b, CheckConsType t = CheckConsType::fast);

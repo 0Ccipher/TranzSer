@@ -253,7 +253,7 @@ MOCalculator::getConsistentLoadRevisits(const WriteLabel *sLab)
 	/* Remove the loads which are not free in the ExecutionGraph(storerule) */
 	ls.erase(std::remove_if(ls.begin() , ls.end(), [&](Event e)
 				{
-					auto flag = getGraph().isFree(e);
+					auto flag = getGraph().isFree(e , sLab);
 					return (!flag);
 				}), 
 		ls.end());
