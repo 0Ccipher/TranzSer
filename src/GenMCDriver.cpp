@@ -1425,48 +1425,57 @@ bool GenMCDriver::ensureConsistentRf(const ReadLabel *rLab, std::vector<Event> &
 //NewSCDPOR
 bool GenMCDriver::getConsistentRfs(const ReadLabel *rLab, std::vector<Event> &rfs)
 {
-	auto &g = getGraph();
-	bool found = false;
-	int scount = rfs.size();
-	auto store1 = rfs[(scount-1)];
-	while(scount > 0){
-		found = true;
-		bool flag = false;
-		for(int i = 0 ; i < scount - 1 ; i++){
-			auto store2 = rfs[i];
-			if(store1.isInitializer() && isHbBefore(store2 , rLab->getPos())){
-				flag = true;
-				break;
-			}
-			if(!store1.isInitializer() && !store2.isInitializer())
-			if(isHbBefore(store1,store2) && isHbBefore(store2 , rLab->getPos())){
-				flag = true;
-				break;
-			}
-		}
-		if(flag){
-			found = false;
-			rfs.erase(rfs.end() - 1);
-			BUG_ON(!getConf()->LAPOR && rfs.empty());
-			if(rfs.empty())
-				break;
-
-		}
-		scount--;
-		if(scount > 0)
-			store1 = rfs[(scount-1)];
-	}
-	// while (!found) {
+	bool found = getGraph().getConsistentRfs(rLab,rfs);
+	// auto &g = getGraph();
+	// /* Updateh the hb and cb relations */
+	// g.isConsistent(CheckConsType::full);
+	// auto &temphb = g.relations.global[g.relationIndex[RelationId::hb]];
+	// auto temptemphb = temphb;
+	// bool found = false;
+	// int scount = rfs.size();
+	// auto store1 = rfs[(scount-1)];
+	// while(scount > 0){
 	// 	found = true;
-	// 	auto store = rfs.back();
-	// 	if (isHbBefore(rLab->getPos(),store)) {
+	// 	bool flag = false;
+	// 	int i=0;
+	// 	while(i < rfs.size()){
+	// 		auto store2 = rfs[i];
+	// 		if(store1 == store2) {i++;continue;}
+	// 		if(store1 == Event(0,0) && isHbBefore(store2 , rLab->getPos())){
+	// 			flag = true;
+	// 			break;
+	// 		}
+	// 		if(store1 != Event(0,0) && store2 != Event(0,0)){
+	// 			if(isHbBefore(store1,store2) && isHbBefore(store2 , rLab->getPos())){
+	// 				flag = true;
+	// 				break;
+	// 			}
+	// 		}
+	// 		i++;
+	// 	}
+	// 	if(flag){
 	// 		found = false;
 	// 		rfs.erase(rfs.end() - 1);
 	// 		BUG_ON(!getConf()->LAPOR && rfs.empty());
-	// 		if (rfs.empty())
+	// 		if(rfs.empty())
 	// 			break;
+
 	// 	}
+	// 	scount--;
+	// 	if(scount > 0)
+	// 		store1 = rfs[(scount-1)];
 	// }
+	// // while (!found) {
+	// // 	found = true;
+	// // 	auto store = rfs.back();
+	// // 	if (isHbBefore(rLab->getPos(),store)) {
+	// // 		found = false;
+	// // 		rfs.erase(rfs.end() - 1);
+	// // 		BUG_ON(!getConf()->LAPOR && rfs.empty());
+	// // 		if (rfs.empty())
+	// // 			break;
+	// // 	}
+	// // }
 
 	if (!found) {
 		getEE()->block(BlockageType::Cons);
@@ -1866,12 +1875,13 @@ SVal GenMCDriver::visitLoad(std::unique_ptr<ReadLabel> rLab, const EventDeps *de
 	 * consistency checks may be triggered if the access is invalid */
 	g.trackCoherenceAtLoc(rLab->getAddr());
 
-	/* Updateh the hb and cb relations */
-	g.isConsistent(CheckConsType::full);
-
+	
 	rLab->setAnnot(EE->getCurrentAnnotConcretized());
 	updateLabelViews(rLab.get(), deps);
 	auto *lab = g.addReadLabelToGraph(std::move(rLab));
+
+	// /* Updateh the hb and cb relations */
+	// g.isConsistent(CheckConsType::full);
 
 	if (!isAccessValid(lab)) {
 		visitError(lab->getPos(), Status::VS_AccessNonMalloc);
@@ -2647,10 +2657,10 @@ GenMCDriver::copyGraphTillStore( BackwardRevisit *br, VectorClock *v)
 
 	for (auto *lab : labels(*og)) {
 		/* Set Revisitable to false for the events after the rLab and cb-before  */
-		// if (auto *rLab = llvm::dyn_cast<ReadLabel>(lab)) {
-		// 	if (rLab && prefix.contains(rLab->getPos()))
-		// 		rLab->setRevisitStatus(false);
-		// }
+		if (auto *rLab = llvm::dyn_cast<ReadLabel>(lab)) {
+			if (rLab && prefix.contains(rLab->getPos()))
+				rLab->setRevisitStatus(false);
+		}
 		if (lab->getStamp() > revLab->getStamp())
 			lab->setStamp(og->nextStamp());
 	}
@@ -2700,8 +2710,8 @@ bool GenMCDriver::loadRevisits(const WriteLabel *sLab)
 		BUG_ON(!rLab);
 
 		auto br = constructBackwardRevisit(rLab, sLab);
-		// if (!g.isMaximalExtension(*br))
-		// 	break;
+		if (!g.isMaximalExtension(*br))
+			break;
 
 		/* Optimize handling of lock operations */
 		if (llvm::isa<LockCasReadLabel>(rLab) && llvm::isa<UnlockWriteLabel>(sLab)) {
@@ -2713,11 +2723,11 @@ bool GenMCDriver::loadRevisits(const WriteLabel *sLab)
 		GENMC_DEBUG(checkForDuplicateRevisit(rLab, sLab););
 
 		/* Get the View till this SLab->timestamp */ // TODO: new method
-		auto v = g.getRevisitViewTillStore(*br);
-		// auto v = g.getRevisitView(*br);
+		// auto v = g.getRevisitViewTillStore(*br);
+		auto v = g.getRevisitView(*br);
 		/* Copy the graph -- except the rLab-cb-after events*/ // TODO: new method
-		auto og = copyGraphTillStore(&*br, &*v);
-		// auto og = copyGraph(&*br, &*v);
+		// auto og = copyGraphTillStore(&*br, &*v);
+		auto og = copyGraph(&*br, &*v);
 		auto read = rLab->getPos();
 		auto write = sLab->getPos(); /* prefetch since we are gonna change state */
 
@@ -2935,7 +2945,8 @@ bool GenMCDriver::revisitRead(const ReadRevisit &ri)
 	BUG_ON(!rLab);
 
 	changeRf(rLab->getPos(), ri.getRev());
-	// auto *fri = llvm::dyn_cast<ForwardRevisit>(&ri);
+	auto *fri = llvm::dyn_cast<ForwardRevisit>(&ri);
+	rLab->setAddedMax(fri ? fri->isMaximal() : isCoMaximal(rLab->getAddr(), ri.getRev()));
 	//newscdpor 
 	/* Every read-from from load-rule(forward-visit) is punctual*/
 	/* Every backward-visit Read is not punctual */
@@ -2943,7 +2954,7 @@ bool GenMCDriver::revisitRead(const ReadRevisit &ri)
 	// 	rLab->setAddedMax(true);
 	// else
 	// 	rLab->setAddedMax(false);
-	// rLab->setAddedMax(fri ? fri->isMaximal() : isCoMaximal(rLab->getAddr(), ri.getRev()));
+	
 
 	GENMC_DEBUG(
 		if (getConf()->vLevel >= VerbosityLevel::V2) {
@@ -2993,6 +3004,7 @@ bool GenMCDriver::restrictAndRevisit(WorkSet::ItemT item)
 		auto *wLab = llvm::dyn_cast<WriteLabel>(lab);
 		BUG_ON(!wLab);
 		g.changeStoreOffset(wLab->getAddr(), wLab->getPos(), mi->getMOPos());
+		wLab->setAddedMax(false);
 		repairDanglingLocks();
 		repairDanglingBarriers();
 		// g.isConsistent(CheckConsType::full);

@@ -390,7 +390,8 @@ std::vector<Event> ExecutionGraph::getConsistentRevisitable(const WriteLabel *sL
 		for (auto j = before[i] + 1u; j < getThreadSize(i); j++) {
 			const EventLabel *lab = getEventLabel(Event(i, j));
 			if (auto *rLab = llvm::dyn_cast<ReadLabel>(lab)) {
-				if (rLab->getAddr() == sLab->getAddr())
+				if (rLab->getAddr() == sLab->getAddr() && 
+						rLab->isRevisitable() && rLab->wasAddedMax())
 					loads.push_back(rLab->getPos());
 			}
 		}
@@ -648,6 +649,7 @@ bool ExecutionGraph::isHbBefore(Event a, Event b, CheckConsType t /* = fast */)
 	/* We have to trigger a calculation */
 	// isConsistent(t);
 	auto &temphb = relations.global[relationIndex[RelationId::hb]];
+	auto temptemphb = temphb;
 	int id1 = temphb.ids.at(a);
 	int id2 = temphb.ids.at(b);
 	bool flag = temphb.transC[id1][id2];
@@ -873,6 +875,66 @@ std::vector<Event>
 ExecutionGraph::getConsistentRevisits(const WriteLabel *wLab)
 {
 	return getCoherenceCalculator()->getConsistentLoadRevisits(wLab);
+}
+//newscdpor
+bool ExecutionGraph::getConsistentRfs(const ReadLabel *rLab, std::vector<Event> &rfs){
+	/* Updateh the hb and cb relations */
+	auto &hb = relations.global[relationIndex[RelationId::hb]];
+	populateHbEntries(hb);
+	hb.transClosure();
+	Calculator::GlobalRelation temphb = hb;
+	bool found = false;
+	int scount = rfs.size();
+	auto store1 = rfs[(scount-1)];
+	while(scount > 0){
+		found = true;
+		bool flag = false;
+		int i=0;
+		int store1Id, store2Id, readId;
+		while(i < rfs.size()){
+			auto store2 = rfs[i];
+			if(store1 == store2) {i++;continue;}
+			if(store1 != Event(0,0))
+				store1Id = temphb.ids.at(store1);
+			if(store2 != Event(0,0))
+				store2Id = temphb.ids.at(store2);
+			readId = temphb.ids.at(rLab->getPos());
+			if(store1 == Event(0,0) && temphb.transC[store2Id][readId]){
+				flag = true;
+				break;
+			}
+			if(store1 != Event(0,0) && store2 != Event(0,0)){
+				if(temphb.transC[store1Id][store2Id] && temphb.transC[store2Id][readId]){
+					flag = true;
+					break;
+				}
+			}
+			// if(store1 == Event(0,0) && isHbBefore(store2 , rLab->getPos())){
+			// 	flag = true;
+			// 	break;
+			// }
+			// if(store1 != Event(0,0) && store2 != Event(0,0)){
+			// 	if(isHbBefore(store1,store2) && isHbBefore(store2 , rLab->getPos())){
+			// 		flag = true;
+			// 		break;
+			// 	}
+			// }
+			i++;
+		}
+		if(flag){
+			found = false;
+			rfs.erase(rfs.end() - 1);
+			BUG_ON(rfs.empty());
+			// BUG_ON(!getConf()->LAPOR && rfs.empty());
+			if(rfs.empty())
+				break;
+
+		}
+		scount--;
+		if(scount > 0)
+			store1 = rfs[(scount-1)];
+	}
+	return found;
 }
 
 //newscdpor
@@ -1125,31 +1187,6 @@ void ExecutionGraph::populateHbEntries(AdjList<Event, EventHasher> &relation) co
 						}
 					}
 				}
-				auto tempedges = edges;
-						auto tempevs = elems;
-						bool flag = false;
-						Event ev;
-						{
-							if(rLab->getPos() == Event(2,2)){
-								ev = rLab->getPos();
-								auto *rfLab = getWriteLabel(rLab->getRf());
-								ev = rLab->getRf();
-								auto *cohTracker = llvm::dyn_cast<MOCalculator>(getCoherenceCalculator());
-								if(rfLab){
-									auto oIt = std::find(cohTracker->store_begin(rfLab->getAddr()), 
-													cohTracker->store_end(rfLab->getAddr()), rfLab->getPos());
-									if(!rfLab->getPos().isBottom());
-									if(oIt != cohTracker->store_end(rfLab->getAddr()))
-									for(auto it = cohTracker->succ_begin(rfLab->getAddr(), rfLab->getPos()); 
-												it != cohTracker->succ_end(rfLab->getAddr(), rfLab->getPos()); it++){
-										auto *wLab = getWriteLabel(*it);
-										if(wLab)
-											tempedges.push_back(std::make_pair(rfLab->getPos() , wLab->getPos()));
-									}
-								}
-								
-							}
-						}
 			}
 			if (auto *sLab = llvm::dyn_cast<WriteLabel>(lab)) {
 				{
@@ -1157,7 +1194,7 @@ void ExecutionGraph::populateHbEntries(AdjList<Event, EventHasher> &relation) co
 					auto *cohTracker = llvm::dyn_cast<MOCalculator>(getCoherenceCalculator());
 					auto oIt = std::find(cohTracker->store_begin(sLab->getAddr()), 
 									cohTracker->store_end(sLab->getAddr()), sLab->getPos());
-					if(!sLab->getPos().isBottom() && !sLab->getPos().isInitializer());
+					if(!sLab->getPos().isBottom() && !sLab->getPos().isInitializer())
 					if(oIt != cohTracker->store_end(sLab->getAddr()))
 					for(auto it = cohTracker->succ_begin(sLab->getAddr(), sLab->getPos()); 
 						it != cohTracker->succ_end(sLab->getAddr(), sLab->getPos()); it++){

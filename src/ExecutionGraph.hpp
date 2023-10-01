@@ -599,6 +599,7 @@ public:
 	std::vector<Event> getCoherentRevisits(const WriteLabel *wLab);
 	//newscdpor
 	std::vector<Event> getConsistentRevisits(const WriteLabel *wLab);
+	bool getConsistentRfs(const ReadLabel *rLab, std::vector<Event> &rfs);
 	void setAddedMaxFalse(const WriteLabel *wLab);
 
 

@@ -237,26 +237,65 @@ MOCalculator::getConsistentLoadRevisits(const WriteLabel *sLab)
 	/* Get loads which are not cb_before the store slab*/
 	auto ls = getGraph().getConsistentRevisitable(sLab);
 	
-	/* Remove the loads not reading from pred_store */
-	ls.erase(std::remove_if(ls.begin(), ls.end() , [&](Event e)
-				{
-					auto *rLab = g.getReadLabel(e);
-					bool flag = false;
-					if(offset > 0 && rLab->getRf() != pred_store)
-						flag = true;
-					if(offset == 0 && rLab->getRf() != Event::getInitializer() )
-						flag = true;
-					return flag;
-				}) , 
+	/* If this store is po- and mo-maximal then we are done */
+	if (!supportsOutOfOrder() && isCoMaximal(sLab->getAddr(), sLab->getPos()))
+		return ls;
+
+	/* First, we have to exclude (mo;rf?;hb?;sb)-after reads */
+	auto optRfs = getMOOptRfAfter(sLab);
+	ls.erase(std::remove_if(ls.begin(), ls.end(), [&](Event e)
+				{ const View &before = g.getHbPoBefore(e);
+				  return std::any_of(optRfs.begin(), optRfs.end(),
+					 [&](Event ev)
+					 { return before.contains(ev); });
+				}), ls.end());
+
+	/* If out-of-order event addition is not supported, then we are done
+	 * due to po-maximality */
+	if (!supportsOutOfOrder())
+		return ls;
+		
+		/* Otherwise, we also have to exclude hb-before loads */
+	ls.erase(std::remove_if(ls.begin(), ls.end(), [&](Event e)
+		{ return g.getEventLabel(sLab->getPos())->getHbView().contains(e); }),
 		ls.end());
+
+	/* ...and also exclude (mo^-1; rf?; (hb^-1)?; sb^-1)-after reads in
+	 * the resulting graph */
+	auto &before = g.getPPoRfBefore(sLab->getPos());
+	auto moInvOptRfs = getMOInvOptRfAfter(sLab);
+	ls.erase(std::remove_if(ls.begin(), ls.end(), [&](Event e)
+				{ auto *eLab = g.getEventLabel(e);
+				  auto v = g.getDepViewFromStamp(eLab->getStamp());
+				  v.update(before);
+				  return std::any_of(moInvOptRfs.begin(),
+						     moInvOptRfs.end(),
+						     [&](Event ev)
+						     { return v.contains(ev) &&
+						       g.getHbPoBefore(ev).contains(e); });
+				}),
+		 ls.end());
+
+	// /* Remove the loads not reading from pred_store */
+	// ls.erase(std::remove_if(ls.begin(), ls.end() , [&](Event e)
+	// 			{
+	// 				auto *rLab = g.getReadLabel(e);
+	// 				bool flag = false;
+	// 				if(offset > 0 && rLab->getRf() != pred_store)
+	// 					flag = true;
+	// 				if(offset == 0 && rLab->getRf() != Event::getInitializer() )
+	// 					flag = true;
+	// 				return flag;
+	// 			}) , 
+	// 	ls.end());
 	
-	/* Remove the loads which are not free in the ExecutionGraph(storerule) */
-	ls.erase(std::remove_if(ls.begin() , ls.end(), [&](Event e)
-				{
-					auto flag = getGraph().isFree(e , sLab);
-					return (!flag);
-				}), 
-		ls.end());
+	// /* Remove the loads which are not free in the ExecutionGraph(storerule) */
+	// ls.erase(std::remove_if(ls.begin() , ls.end(), [&](Event e)
+	// 			{
+	// 				auto flag = getGraph().isFree(e , sLab);
+	// 				return (!flag);
+	// 			}), 
+	// 	ls.end());
 	return ls;
 }
 
