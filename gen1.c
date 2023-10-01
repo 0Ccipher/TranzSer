@@ -27,14 +27,14 @@ void *writer1(void *arg){
 
 void *writer2(void *arg){
 	atomic_store_explicit(&y, 2, memory_order_seq_cst);
-	atomic_store_explicit(&z, 2, memory_order_seq_cst);
+	atomic_store_explicit(&z, 1, memory_order_seq_cst);
 	// int l1 = atomic_load_explicit(&x, memory_order_seq_cst);
 	// printf("\tlx2: %d\t",l1);
 	return NULL;
 }
 
 void *writer3(void *arg){
-	atomic_store_explicit(&z, 3, memory_order_seq_cst);
+	atomic_store_explicit(&z, 2, memory_order_seq_cst);
 	int l2 = atomic_load_explicit(&z, memory_order_seq_cst);
 	int l3 = atomic_load_explicit(&x, memory_order_seq_cst);
 	printf("z: %d , x: %d",l2,l3);

@@ -884,56 +884,43 @@ bool ExecutionGraph::getConsistentRfs(const ReadLabel *rLab, std::vector<Event> 
 	hb.transClosure();
 	Calculator::GlobalRelation temphb = hb;
 	bool found = false;
-	int scount = rfs.size();
-	auto store1 = rfs[(scount-1)];
-	while(scount > 0){
+	std::vector<Event> temprfs;
+	for(int i=0 ; i < rfs.size() ; i++){
 		found = true;
 		bool flag = false;
-		int i=0;
+		auto store1 = rfs[i];
 		int store1Id, store2Id, readId;
-		while(i < rfs.size()){
-			auto store2 = rfs[i];
-			if(store1 == store2) {i++;continue;}
+		for(int j=0 ; j < rfs.size() ; j++){
+			auto store2 = rfs[j];
+			if(store1 == store2) continue;
 			if(store1 != Event(0,0))
 				store1Id = temphb.ids.at(store1);
 			if(store2 != Event(0,0))
 				store2Id = temphb.ids.at(store2);
 			readId = temphb.ids.at(rLab->getPos());
 			if(store1 == Event(0,0) && temphb.transC[store2Id][readId]){
-				flag = true;
+				flag = true; //do not consider this store
 				break;
 			}
 			if(store1 != Event(0,0) && store2 != Event(0,0)){
 				if(temphb.transC[store1Id][store2Id] && temphb.transC[store2Id][readId]){
-					flag = true;
+					flag = true;  //do not consider this store
 					break;
 				}
 			}
-			// if(store1 == Event(0,0) && isHbBefore(store2 , rLab->getPos())){
-			// 	flag = true;
-			// 	break;
-			// }
-			// if(store1 != Event(0,0) && store2 != Event(0,0)){
-			// 	if(isHbBefore(store1,store2) && isHbBefore(store2 , rLab->getPos())){
-			// 		flag = true;
-			// 		break;
-			// 	}
-			// }
-			i++;
 		}
-		if(flag){
-			found = false;
-			rfs.erase(rfs.end() - 1);
+		if(!flag){
+			// found = false;
+			temprfs.push_back(store1);
 			BUG_ON(rfs.empty());
 			// BUG_ON(!getConf()->LAPOR && rfs.empty());
 			if(rfs.empty())
 				break;
 
 		}
-		scount--;
-		if(scount > 0)
-			store1 = rfs[(scount-1)];
 	}
+	rfs = std::move(temprfs);
+	BUG_ON(rfs.empty());
 	return found;
 }
 
