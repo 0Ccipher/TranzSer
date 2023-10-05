@@ -919,9 +919,41 @@ bool ExecutionGraph::getConsistentRfs(const ReadLabel *rLab, std::vector<Event> 
 
 		}
 	}
-	rfs = std::move(temprfs);
-	BUG_ON(rfs.empty());
+	std::vector<Event> trfs = temprfs;
+	if(temprfs.empty())
+		abort();
+	rfs = std::move(trfs);
+	// BUG_ON(rfs.empty());
 	return found;
+}
+
+//newscdpor
+void ExecutionGraph::getConsistentLayers(const WriteLabel *wLab, std::vector<std::pair<Event,int>> &stores, 
+															std::pair<int, int> placesRange){
+	auto &hb = relations.global[relationIndex[RelationId::hb]];
+	populateHbEntries(hb);
+	hb.transClosure();
+	Calculator::GlobalRelation temphb = hb;
+	auto *cohTracker = llvm::dyn_cast<MOCalculator>(getCoherenceCalculator());
+	int wLabId = temphb.ids.at(wLab->getPos());
+	auto &begO = placesRange.first;
+	int temp1 = begO;
+	auto &endO = placesRange.second;
+	int temp2 = endO;
+	for (auto it = cohTracker->store_begin(wLab->getAddr()),
+		  ie = cohTracker->store_end(wLab->getAddr()) ; it != ie; ++it) {
+
+		/* We cannot place the write just before the write of an RMW */
+		if (isRMWStore(*it))
+			continue;		
+		int storeId = temphb.ids.at(*it);
+		if(storeId == wLabId) 
+			continue;
+		if(temphb.transC[storeId][wLabId]) continue;
+		/* Push the store */
+		else
+			stores.push_back(std::make_pair(*it, std::distance(cohTracker->store_begin(wLab->getAddr()), it)));
+	}
 }
 
 //newscdpor

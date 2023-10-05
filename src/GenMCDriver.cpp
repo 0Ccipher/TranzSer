@@ -2007,34 +2007,33 @@ void GenMCDriver::visitStore(std::unique_ptr<WriteLabel> wLab, const EventDeps *
 		return;
 	}
 
-	/* Updateh the hb and cb relations */
-	g.isConsistent(CheckConsType::full);
+	// /* Updateh the hb and cb relations */
+	// g.isConsistent(CheckConsType::full);
 	 
 	/* Find all possible placings in coherence for this store */
-	auto placesRange = g.getCoherentPlacings(lab->getAddr(), lab->getPos(), g.isRMWStore(lab));
+	std::pair<int, int> placesRange = g.getCoherentPlacings(lab->getAddr(), lab->getPos(), g.isRMWStore(lab));
 	auto &begO = placesRange.first;
 	auto &endO = placesRange.second;
+
+	std::vector<std::pair<Event,int>> storeLayers;
+	g.getConsistentLayers(lab,storeLayers,placesRange);
 
 	/* It is always consistent to add the store at the end of MO */
 	if (llvm::isa<BIncFaiWriteLabel>(lab) && lab->getVal() == SVal(0))
 		const_cast<WriteLabel*>(lab)->setVal(getBarrierInitValue(lab->getAddr(), lab->getAccess()));
 	g.getCoherenceCalculator()->addStoreToLoc(lab->getAddr(), lab->getPos(), endO);
 	
-	// std::vector<int> mos;
-	// TODO:::::::: CO orderings
-	for (auto it = store_begin(g, lab->getAddr()) + begO,
-		  ie = store_begin(g, lab->getAddr()) + endO; it != ie; ++it) {
+	for (auto it = storeLayers.begin(),
+		  ie = storeLayers.end(); it != ie; ++it) {
 
-		/* We cannot place the write just before the write of an RMW */
-		if (g.isRMWStore(*it))
-			continue;
-
+		// /* We cannot place the write just before the write of an RMW */
+		// if (g.isRMWStore(*it))
+		// 	continue;
+		std::pair<Event,int> spair = *it;
 		/* Push the stack item */
-		if(!isHbBefore(*it, lab->getPos())) /// NEW_SCDPOR
 			if(!inRecoveryMode()){
 				addToWorklist(std::make_unique<WriteRevisit>(
-					      lab->getPos(), std::distance(store_begin(g, lab->getAddr()), it)));
-				// mos.push_back(std::distance(store_begin(g, lab->getAddr()), it));
+					      lab->getPos(), spair.second));
 			}
 				
 	}

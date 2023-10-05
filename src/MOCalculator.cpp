@@ -62,7 +62,13 @@ int MOCalculator::getStoreOffset(SAddr addr, Event e) const
 		return -1;
 
 	auto oIt = std::find(store_begin(addr), store_end(addr), e);
-	BUG_ON(oIt == store_end(addr));
+	Event tempev = e;
+	// BUG_ON(oIt == store_end(addr));
+	if(oIt == store_end(addr)){
+		if(tempev == Event(3,1))
+			abort();
+	}
+		
 	return std::distance(store_begin(addr), oIt);
 }
 

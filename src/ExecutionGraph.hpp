@@ -600,6 +600,8 @@ public:
 	//newscdpor
 	std::vector<Event> getConsistentRevisits(const WriteLabel *wLab);
 	bool getConsistentRfs(const ReadLabel *rLab, std::vector<Event> &rfs);
+	void getConsistentLayers(const WriteLabel *wLab, std::vector<std::pair<Event,int>> &stores, 
+														std::pair<int, int> placesRange);
 	void setAddedMaxFalse(const WriteLabel *wLab);
 
 
