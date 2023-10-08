@@ -2918,7 +2918,8 @@ bool GenMCDriver::revisitRead(const ReadRevisit &ri)
 	BUG_ON(!rLab);
 
 	changeRf(rLab->getPos(), ri.getRev());
-	// auto *fri = llvm::dyn_cast<ForwardRevisit>(&ri);
+	auto *fri = llvm::dyn_cast<ForwardRevisit>(&ri);
+	rLab->setAddedMax(fri ? fri->isMaximal() : isCoMaximal(rLab->getAddr(), ri.getRev()));
 	//newscdpor 
 	/* Every read-from from load-rule(forward-visit) is punctual*/
 	/* Every backward-visit Read is not punctual */
@@ -2926,7 +2927,6 @@ bool GenMCDriver::revisitRead(const ReadRevisit &ri)
 	// 	rLab->setAddedMax(true);
 	// else
 	// 	rLab->setAddedMax(false);
-	// rLab->setAddedMax(fri ? fri->isMaximal() : isCoMaximal(rLab->getAddr(), ri.getRev()));
 
 	GENMC_DEBUG(
 		if (getConf()->vLevel >= VerbosityLevel::V2) {
@@ -2942,8 +2942,8 @@ bool GenMCDriver::revisitRead(const ReadRevisit &ri)
 
 	/* If the revisited label became an RMW, add the store part and revisit */
 	if (auto *sLab = completeRevisitedRMW(rLab))
-		return loadRevisits(sLab);
-		// return calcRevisits(sLab);
+		// return loadRevisits(sLab);
+		return calcRevisits(sLab);
 
 	/* Blocked lock -> prioritize locking thread */
 	repairDanglingLocks();
@@ -2976,10 +2976,11 @@ bool GenMCDriver::restrictAndRevisit(WorkSet::ItemT item)
 		auto *wLab = llvm::dyn_cast<WriteLabel>(lab);
 		BUG_ON(!wLab);
 		g.changeStoreOffset(wLab->getAddr(), wLab->getPos(), mi->getMOPos());
+		wLab->setAddedMax(false);
 		repairDanglingLocks();
 		repairDanglingBarriers();
-		return loadRevisits(wLab); // NEWSC_DPOR
-		// return calcRevisits(wLab); // NEWSC_DPOR
+		// return loadRevisits(wLab); // NEWSC_DPOR
+		return calcRevisits(wLab); // NEWSC_DPOR
 	} else if (auto *oi = llvm::dyn_cast<OptionalRevisit>(item.get())) {
 		auto *oLab = llvm::dyn_cast<OptionalLabel>(lab);
 		--result.exploredBlocked;
