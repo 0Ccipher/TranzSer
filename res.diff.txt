@@ -1,0 +1,1395 @@
+1c1,6
+< 2+2W0000 Forbid : 4
+---
+> # Results of run nidhugg "count-weak-trace" on all C tests.
+> # GenMC (https://plv.mpi-sws.org/genmc):
+>   GenMC v0.9 (commit #75f0fe6)
+>   Built with LLVM 14.0.0 (Release)
+> # Date: 231008-15:22
+> ['./src/genmc', '--mo', '--rc11', '--check-consistency-type=full', '--check-consistency-point=step']2+2W0000 Forbid : 4
+96c101
+< 3.2W+rfi-datas Forbid : 19
+---
+> 3.2W+rfi-datas Forbid : 23
+111,156c116,161
+< 3.LB+addr+addr+po Forbid : 7
+< 3.LB+addr+eieio+po Forbid : 7
+< 3.LB+addr+lwsync+po Forbid : 7
+< 3.LB+addr+po+po Forbid : 7
+< 3.LB+addrs Forbid : 7
+< 3.LB+addr+sync+po Forbid : 7
+< 3.LB+eieio+addr+addr Forbid : 7
+< 3.LB+eieio+addr+po Forbid : 7
+< 3.LB+eieio+eieio+addr Forbid : 7
+< 3.LB+eieio+eieio+lwsync Forbid : 7
+< 3.LB+eieio+eieio+po Forbid : 7
+< 3.LB+eieio+lwsync+addr Forbid : 7
+< 3.LB+eieio+lwsync+lwsync Forbid : 7
+< 3.LB+eieio+lwsync+po Forbid : 7
+< 3.LB+eieio+po+po Forbid : 7
+< 3.LB+eieios Forbid : 7
+< 3.LB+eieio+sync+addr Forbid : 7
+< 3.LB+eieio+sync+lwsync Forbid : 7
+< 3.LB+eieio+sync+po Forbid : 7
+< 3.LB Forbid : 7
+< 3.LB+lwsync+addr+addr Forbid : 7
+< 3.LB+lwsync+addr+po Forbid : 7
+< 3.LB+lwsync+eieio+addr Forbid : 7
+< 3.LB+lwsync+eieio+po Forbid : 7
+< 3.LB+lwsync+lwsync+addr Forbid : 7
+< 3.LB+lwsync+lwsync+po Forbid : 7
+< 3.LB+lwsync+po+po Forbid : 7
+< 3.LB+lwsyncs Forbid : 7
+< 3.LB+lwsync+sync+addr Forbid : 7
+< 3.LB+lwsync+sync+lwsync Forbid : 7
+< 3.LB+lwsync+sync+po Forbid : 7
+< 3.LB+sync+addr+addr Forbid : 7
+< 3.LB+sync+addr+po Forbid : 7
+< 3.LB+sync+eieio+addr Forbid : 7
+< 3.LB+sync+eieio+eieio Forbid : 7
+< 3.LB+sync+eieio+lwsync Forbid : 7
+< 3.LB+sync+eieio+po Forbid : 7
+< 3.LB+sync+lwsync+addr Forbid : 7
+< 3.LB+sync+lwsync+lwsync Forbid : 7
+< 3.LB+sync+lwsync+po Forbid : 7
+< 3.LB+sync+po+po Forbid : 7
+< 3.LB+syncs Forbid : 7
+< 3.LB+sync+sync+addr Forbid : 7
+< 3.LB+sync+sync+eieio Forbid : 7
+< 3.LB+sync+sync+lwsync Forbid : 7
+< 3.LB+sync+sync+po Forbid : 7
+---
+> 3.LB+addr+addr+po Forbid : 9
+> 3.LB+addr+eieio+po Forbid : 9
+> 3.LB+addr+lwsync+po Forbid : 9
+> 3.LB+addr+po+po Forbid : 9
+> 3.LB+addrs Forbid : 9
+> 3.LB+addr+sync+po Forbid : 9
+> 3.LB+eieio+addr+addr Forbid : 9
+> 3.LB+eieio+addr+po Forbid : 9
+> 3.LB+eieio+eieio+addr Forbid : 9
+> 3.LB+eieio+eieio+lwsync Forbid : 9
+> 3.LB+eieio+eieio+po Forbid : 9
+> 3.LB+eieio+lwsync+addr Forbid : 9
+> 3.LB+eieio+lwsync+lwsync Forbid : 9
+> 3.LB+eieio+lwsync+po Forbid : 9
+> 3.LB+eieio+po+po Forbid : 9
+> 3.LB+eieios Forbid : 9
+> 3.LB+eieio+sync+addr Forbid : 9
+> 3.LB+eieio+sync+lwsync Forbid : 9
+> 3.LB+eieio+sync+po Forbid : 9
+> 3.LB Forbid : 9
+> 3.LB+lwsync+addr+addr Forbid : 9
+> 3.LB+lwsync+addr+po Forbid : 9
+> 3.LB+lwsync+eieio+addr Forbid : 9
+> 3.LB+lwsync+eieio+po Forbid : 9
+> 3.LB+lwsync+lwsync+addr Forbid : 9
+> 3.LB+lwsync+lwsync+po Forbid : 9
+> 3.LB+lwsync+po+po Forbid : 9
+> 3.LB+lwsyncs Forbid : 9
+> 3.LB+lwsync+sync+addr Forbid : 9
+> 3.LB+lwsync+sync+lwsync Forbid : 9
+> 3.LB+lwsync+sync+po Forbid : 9
+> 3.LB+sync+addr+addr Forbid : 9
+> 3.LB+sync+addr+po Forbid : 9
+> 3.LB+sync+eieio+addr Forbid : 9
+> 3.LB+sync+eieio+eieio Forbid : 9
+> 3.LB+sync+eieio+lwsync Forbid : 9
+> 3.LB+sync+eieio+po Forbid : 9
+> 3.LB+sync+lwsync+addr Forbid : 9
+> 3.LB+sync+lwsync+lwsync Forbid : 9
+> 3.LB+sync+lwsync+po Forbid : 9
+> 3.LB+sync+po+po Forbid : 9
+> 3.LB+syncs Forbid : 9
+> 3.LB+sync+sync+addr Forbid : 9
+> 3.LB+sync+sync+eieio Forbid : 9
+> 3.LB+sync+sync+lwsync Forbid : 9
+> 3.LB+sync+sync+po Forbid : 9
+233c238
+< Alan00 Forbid : 105
+---
+> Alan00 Forbid : 126
+301c306
+< co8 Forbid : 15
+---
+> co8 Forbid : 29
+304,305c309,310
+< CO-LB+fri+pos-fri Forbid : 5
+< CO-LB Forbid : 4
+---
+> CO-LB+fri+pos-fri Forbid : 6
+> CO-LB Forbid : 5
+316c321
+< CoWW2 Forbid : 16
+---
+> CoWW2 Forbid : 19
+324,327c329,332
+< dd1 Forbid : 27
+< dd2 Forbid : 27
+< dd3 Forbid : 27
+< dd4 Forbid : 27
+---
+> dd1 Forbid : 30
+> dd2 Forbid : 30
+> dd3 Forbid : 30
+> dd4 Forbid : 30
+674c679
+< DETOUR0395 Forbid : 10
+---
+> DETOUR0395 Forbid : 12
+676c681
+< DETOUR0397 Forbid : 76
+---
+> DETOUR0397 Forbid : 98
+680c685
+< DETOUR0401 Forbid : 41
+---
+> DETOUR0401 Forbid : 45
+686c691
+< DETOUR0408 Forbid : 41
+---
+> DETOUR0408 Forbid : 45
+688c693
+< DETOUR0410 Forbid : 312
+---
+> DETOUR0410 Forbid : 364
+694c699
+< DETOUR0416 Forbid : 10
+---
+> DETOUR0416 Forbid : 12
+696c701
+< DETOUR0418 Forbid : 76
+---
+> DETOUR0418 Forbid : 98
+700c705
+< DETOUR0422 Forbid : 41
+---
+> DETOUR0422 Forbid : 45
+706c711
+< DETOUR0429 Forbid : 41
+---
+> DETOUR0429 Forbid : 45
+708c713
+< DETOUR0431 Forbid : 312
+---
+> DETOUR0431 Forbid : 364
+714c719
+< DETOUR0437 Forbid : 10
+---
+> DETOUR0437 Forbid : 12
+716c721
+< DETOUR0439 Forbid : 76
+---
+> DETOUR0439 Forbid : 98
+720c725
+< DETOUR0443 Forbid : 41
+---
+> DETOUR0443 Forbid : 45
+726c731
+< DETOUR0450 Forbid : 41
+---
+> DETOUR0450 Forbid : 45
+728c733
+< DETOUR0452 Forbid : 312
+---
+> DETOUR0452 Forbid : 364
+757,758c762,763
+< DETOUR0483 Forbid : 9
+< DETOUR0484 Forbid : 56
+---
+> DETOUR0483 Forbid : 11
+> DETOUR0484 Forbid : 66
+766c771
+< DETOUR0492 Forbid : 10
+---
+> DETOUR0492 Forbid : 12
+768c773
+< DETOUR0494 Forbid : 76
+---
+> DETOUR0494 Forbid : 98
+772c777
+< DETOUR0498 Forbid : 41
+---
+> DETOUR0498 Forbid : 45
+778c783
+< DETOUR0505 Forbid : 41
+---
+> DETOUR0505 Forbid : 45
+780c785
+< DETOUR0507 Forbid : 312
+---
+> DETOUR0507 Forbid : 364
+1642,1681c1647,1686
+< IRRWIW+addr+eieio Forbid : 21
+< IRRWIW+addr+lwsync Forbid : 21
+< IRRWIW+addr+po Forbid : 21
+< IRRWIW+addrs Forbid : 21
+< IRRWIW+addr+sync Forbid : 21
+< IRRWIW+eieio+addr Forbid : 21
+< IRRWIW+eieio+lwsync Forbid : 21
+< IRRWIW+eieio+po Forbid : 21
+< IRRWIW+eieios Forbid : 21
+< IRRWIW+eieio+sync Forbid : 21
+< IRRWIW Forbid : 21
+< IRRWIW+lwsync+addr Forbid : 21
+< IRRWIW+lwsync+eieio Forbid : 21
+< IRRWIW+lwsync+po Forbid : 21
+< IRRWIW+lwsyncs Forbid : 21
+< IRRWIW+lwsync+sync Forbid : 21
+< IRRWIW+po+addr Forbid : 21
+< IRRWIW+po+eieio Forbid : 21
+< IRRWIW+po+lwsync Forbid : 21
+< IRRWIW+po+sync Forbid : 21
+< IRRWIW+sync+addr Forbid : 21
+< IRRWIW+sync+eieio Forbid : 21
+< IRRWIW+sync+lwsync Forbid : 21
+< IRRWIW+sync+po Forbid : 21
+< IRRWIW+syncs Forbid : 21
+< IRWIW+addr+po Forbid : 27
+< IRWIW+addrs Forbid : 27
+< IRWIW+eieio+addr Forbid : 27
+< IRWIW+eieio+lwsync Forbid : 27
+< IRWIW+eieio+po Forbid : 27
+< IRWIW+eieios Forbid : 27
+< IRWIW Forbid : 27
+< IRWIW+lwsync+addr Forbid : 27
+< IRWIW+lwsync+po Forbid : 27
+< IRWIW+lwsyncs Forbid : 27
+< IRWIW+sync+addr Forbid : 27
+< IRWIW+sync+eieio Forbid : 27
+< IRWIW+sync+lwsync Forbid : 27
+< IRWIW+sync+po Forbid : 27
+< IRWIW+syncs Forbid : 27
+---
+> IRRWIW+addr+eieio Forbid : 24
+> IRRWIW+addr+lwsync Forbid : 24
+> IRRWIW+addr+po Forbid : 24
+> IRRWIW+addrs Forbid : 24
+> IRRWIW+addr+sync Forbid : 24
+> IRRWIW+eieio+addr Forbid : 24
+> IRRWIW+eieio+lwsync Forbid : 24
+> IRRWIW+eieio+po Forbid : 24
+> IRRWIW+eieios Forbid : 24
+> IRRWIW+eieio+sync Forbid : 24
+> IRRWIW Forbid : 24
+> IRRWIW+lwsync+addr Forbid : 24
+> IRRWIW+lwsync+eieio Forbid : 24
+> IRRWIW+lwsync+po Forbid : 24
+> IRRWIW+lwsyncs Forbid : 24
+> IRRWIW+lwsync+sync Forbid : 24
+> IRRWIW+po+addr Forbid : 24
+> IRRWIW+po+eieio Forbid : 24
+> IRRWIW+po+lwsync Forbid : 24
+> IRRWIW+po+sync Forbid : 24
+> IRRWIW+sync+addr Forbid : 24
+> IRRWIW+sync+eieio Forbid : 24
+> IRRWIW+sync+lwsync Forbid : 24
+> IRRWIW+sync+po Forbid : 24
+> IRRWIW+syncs Forbid : 24
+> IRWIW+addr+po Forbid : 30
+> IRWIW+addrs Forbid : 30
+> IRWIW+eieio+addr Forbid : 30
+> IRWIW+eieio+lwsync Forbid : 30
+> IRWIW+eieio+po Forbid : 30
+> IRWIW+eieios Forbid : 30
+> IRWIW Forbid : 30
+> IRWIW+lwsync+addr Forbid : 30
+> IRWIW+lwsync+po Forbid : 30
+> IRWIW+lwsyncs Forbid : 30
+> IRWIW+sync+addr Forbid : 30
+> IRWIW+sync+eieio Forbid : 30
+> IRWIW+sync+lwsync Forbid : 30
+> IRWIW+sync+po Forbid : 30
+> IRWIW+syncs Forbid : 30
+1942c1947
+< j3 Forbid : 63
+---
+> j3 Forbid : 98
+2773,2774c2778,2779
+< m8 Forbid : 27
+< m8s Forbid : 27
+---
+> m8 Forbid : 30
+> m8s Forbid : 30
+2816c2821
+< MOREDETOUR0038 Forbid : 43
+---
+> MOREDETOUR0038 Forbid : 53
+2818c2823
+< MOREDETOUR0040 Forbid : 331
+---
+> MOREDETOUR0040 Forbid : 393
+2829,2830c2834,2835
+< MOREDETOUR0052 Forbid : 79
+< MOREDETOUR0053 Forbid : 46
+---
+> MOREDETOUR0052 Forbid : 97
+> MOREDETOUR0053 Forbid : 62
+2835c2840
+< MOREDETOUR0058 Forbid : 41
+---
+> MOREDETOUR0058 Forbid : 51
+2845,2846c2850,2851
+< MOREDETOUR0068 Forbid : 319
+< MOREDETOUR0069 Forbid : 191
+---
+> MOREDETOUR0068 Forbid : 382
+> MOREDETOUR0069 Forbid : 273
+2851c2856
+< MOREDETOUR0075 Forbid : 36
+---
+> MOREDETOUR0075 Forbid : 42
+2865c2870
+< MOREDETOUR0089 Forbid : 36
+---
+> MOREDETOUR0089 Forbid : 42
+2873c2878
+< MOREDETOUR0097 Forbid : 862
+---
+> MOREDETOUR0097 Forbid : 1216
+2881c2886
+< MOREDETOUR0113 Forbid : 29
+---
+> MOREDETOUR0113 Forbid : 34
+2888,2889c2893,2894
+< MOREDETOUR0121 Forbid : 49
+< MOREDETOUR0122 Forbid : 174
+---
+> MOREDETOUR0121 Forbid : 59
+> MOREDETOUR0122 Forbid : 240
+2891,2893c2896,2898
+< MOREDETOUR0124 Forbid : 49
+< MOREDETOUR0125 Forbid : 29
+< MOREDETOUR0126 Forbid : 744
+---
+> MOREDETOUR0124 Forbid : 59
+> MOREDETOUR0125 Forbid : 34
+> MOREDETOUR0126 Forbid : 1160
+2896,2897c2901,2902
+< MOREDETOUR0129 Forbid : 49
+< MOREDETOUR0130 Forbid : 174
+---
+> MOREDETOUR0129 Forbid : 59
+> MOREDETOUR0130 Forbid : 240
+2899,2901c2904,2906
+< MOREDETOUR0132 Forbid : 49
+< MOREDETOUR0133 Forbid : 29
+< MOREDETOUR0134 Forbid : 744
+---
+> MOREDETOUR0132 Forbid : 59
+> MOREDETOUR0133 Forbid : 34
+> MOREDETOUR0134 Forbid : 1160
+2904,2905c2909,2910
+< MOREDETOUR0137 Forbid : 49
+< MOREDETOUR0138 Forbid : 174
+---
+> MOREDETOUR0137 Forbid : 59
+> MOREDETOUR0138 Forbid : 240
+2907,2909c2912,2914
+< MOREDETOUR0140 Forbid : 49
+< MOREDETOUR0141 Forbid : 29
+< MOREDETOUR0142 Forbid : 744
+---
+> MOREDETOUR0140 Forbid : 59
+> MOREDETOUR0141 Forbid : 34
+> MOREDETOUR0142 Forbid : 1160
+2913c2918
+< MOREDETOUR0146 Forbid : 36
+---
+> MOREDETOUR0146 Forbid : 42
+2917,2920c2922,2925
+< MOREDETOUR0150 Forbid : 124
+< MOREDETOUR0151 Forbid : 124
+< MOREDETOUR0152 Forbid : 124
+< MOREDETOUR0153 Forbid : 124
+---
+> MOREDETOUR0150 FAILURE: nidhugg : -1
+> MOREDETOUR0151 FAILURE: nidhugg : -1
+> MOREDETOUR0152 FAILURE: nidhugg : -1
+> MOREDETOUR0153 FAILURE: nidhugg : -1
+2922c2927
+< MOREDETOUR0155 Forbid : 29
+---
+> MOREDETOUR0155 Forbid : 34
+2926,2927c2931,2932
+< MOREDETOUR0160 Forbid : 122
+< MOREDETOUR0161 Forbid : 29
+---
+> MOREDETOUR0160 Forbid : 160
+> MOREDETOUR0161 Forbid : 34
+2929c2934
+< MOREDETOUR0163 Forbid : 43
+---
+> MOREDETOUR0163 Forbid : 60
+2931c2936
+< MOREDETOUR0165 Forbid : 333
+---
+> MOREDETOUR0165 Forbid : 503
+2936c2941
+< MOREDETOUR0170 Forbid : 56
+---
+> MOREDETOUR0170 Forbid : 66
+2938,2940c2943,2945
+< MOREDETOUR0172 Forbid : 2778
+< MOREDETOUR0173 Forbid : 49
+< MOREDETOUR0174 Forbid : 174
+---
+> MOREDETOUR0172 FAILURE: nidhugg : -1
+> MOREDETOUR0173 Forbid : 59
+> MOREDETOUR0174 Forbid : 240
+2942,2944c2947,2949
+< MOREDETOUR0176 Forbid : 49
+< MOREDETOUR0177 Forbid : 29
+< MOREDETOUR0178 Forbid : 744
+---
+> MOREDETOUR0176 Forbid : 59
+> MOREDETOUR0177 Forbid : 34
+> MOREDETOUR0178 Forbid : 1160
+2947,2953c2952,2958
+< MOREDETOUR0185 Forbid : 79
+< MOREDETOUR0186 Forbid : 79
+< MOREDETOUR0187 Forbid : 79
+< MOREDETOUR0188 Forbid : 79
+< MOREDETOUR0189 Forbid : 46
+< MOREDETOUR0190 Forbid : 46
+< MOREDETOUR0191 Forbid : 46
+---
+> MOREDETOUR0185 FAILURE: nidhugg : -1
+> MOREDETOUR0186 FAILURE: nidhugg : -1
+> MOREDETOUR0187 FAILURE: nidhugg : -1
+> MOREDETOUR0188 FAILURE: nidhugg : -1
+> MOREDETOUR0189 FAILURE: nidhugg : -1
+> MOREDETOUR0190 FAILURE: nidhugg : -1
+> MOREDETOUR0191 FAILURE: nidhugg : -1
+2957c2962
+< MOREDETOUR0195 Forbid : 68
+---
+> MOREDETOUR0195 Forbid : 72
+2959,2962c2964,2967
+< MOREDETOUR0197 Forbid : 41
+< MOREDETOUR0198 Forbid : 41
+< MOREDETOUR0199 Forbid : 41
+< MOREDETOUR0200 Forbid : 41
+---
+> MOREDETOUR0197 FAILURE: nidhugg : -1
+> MOREDETOUR0198 FAILURE: nidhugg : -1
+> MOREDETOUR0199 FAILURE: nidhugg : -1
+> MOREDETOUR0200 FAILURE: nidhugg : -1
+2969c2974
+< MOREDETOUR0207 Forbid : 17
+---
+> MOREDETOUR0207 Forbid : 18
+2971c2976
+< MOREDETOUR0209 Forbid : 123
+---
+> MOREDETOUR0209 Forbid : 212
+2975c2980
+< MOREDETOUR0213 Forbid : 68
+---
+> MOREDETOUR0213 Forbid : 72
+2977,2983c2982,2988
+< MOREDETOUR0215 Forbid : 319
+< MOREDETOUR0216 Forbid : 319
+< MOREDETOUR0217 Forbid : 319
+< MOREDETOUR0218 Forbid : 319
+< MOREDETOUR0219 Forbid : 191
+< MOREDETOUR0220 Forbid : 191
+< MOREDETOUR0221 Forbid : 191
+---
+> MOREDETOUR0215 FAILURE: nidhugg : -1
+> MOREDETOUR0216 FAILURE: nidhugg : -1
+> MOREDETOUR0217 FAILURE: nidhugg : -1
+> MOREDETOUR0218 FAILURE: nidhugg : -1
+> MOREDETOUR0219 FAILURE: nidhugg : -1
+> MOREDETOUR0220 FAILURE: nidhugg : -1
+> MOREDETOUR0221 FAILURE: nidhugg : -1
+2988,3032c2993,3037
+< MOREDETOUR0226 Forbid : 68
+< MOREDETOUR0231 Forbid : 36
+< MOREDETOUR0232 Forbid : 36
+< MOREDETOUR0233 Forbid : 36
+< MOREDETOUR0234 Forbid : 31
+< MOREDETOUR0235 Forbid : 31
+< MOREDETOUR0236 Forbid : 38
+< MOREDETOUR0237 Forbid : 31
+< MOREDETOUR0238 Forbid : 152
+< MOREDETOUR0239 Forbid : 31
+< MOREDETOUR0240 Forbid : 31
+< MOREDETOUR0241 Forbid : 31
+< MOREDETOUR0242 Forbid : 38
+< MOREDETOUR0243 Forbid : 31
+< MOREDETOUR0244 Forbid : 152
+< MOREDETOUR0245 Forbid : 31
+< MOREDETOUR0246 Forbid : 31
+< MOREDETOUR0247 Forbid : 31
+< MOREDETOUR0248 Forbid : 38
+< MOREDETOUR0249 Forbid : 31
+< MOREDETOUR0250 Forbid : 152
+< MOREDETOUR0251 Forbid : 31
+< MOREDETOUR0252 Forbid : 61
+< MOREDETOUR0253 Forbid : 61
+< MOREDETOUR0254 Forbid : 61
+< MOREDETOUR0255 Forbid : 61
+< MOREDETOUR0256 Forbid : 36
+< MOREDETOUR0257 Forbid : 36
+< MOREDETOUR0258 Forbid : 36
+< MOREDETOUR0259 Forbid : 31
+< MOREDETOUR0260 Forbid : 31
+< MOREDETOUR0261 Forbid : 31
+< MOREDETOUR0262 Forbid : 38
+< MOREDETOUR0263 Forbid : 31
+< MOREDETOUR0264 Forbid : 273
+< MOREDETOUR0265 Forbid : 31
+< MOREDETOUR0266 Forbid : 31
+< MOREDETOUR0267 Forbid : 38
+< MOREDETOUR0268 Forbid : 31
+< MOREDETOUR0269 Forbid : 152
+< MOREDETOUR0270 Forbid : 31
+< MOREDETOUR0271 Forbid : 862
+< MOREDETOUR0272 Forbid : 862
+< MOREDETOUR0273 Forbid : 862
+< MOREDETOUR0277 Forbid : 94
+---
+> MOREDETOUR0226 Forbid : 72
+> MOREDETOUR0231 FAILURE: nidhugg : -1
+> MOREDETOUR0232 FAILURE: nidhugg : -1
+> MOREDETOUR0233 FAILURE: nidhugg : -1
+> MOREDETOUR0234 FAILURE: nidhugg : -1
+> MOREDETOUR0235 FAILURE: nidhugg : -1
+> MOREDETOUR0236 FAILURE: nidhugg : -1
+> MOREDETOUR0237 FAILURE: nidhugg : -1
+> MOREDETOUR0238 FAILURE: nidhugg : -1
+> MOREDETOUR0239 FAILURE: nidhugg : -1
+> MOREDETOUR0240 FAILURE: nidhugg : -1
+> MOREDETOUR0241 FAILURE: nidhugg : -1
+> MOREDETOUR0242 FAILURE: nidhugg : -1
+> MOREDETOUR0243 FAILURE: nidhugg : -1
+> MOREDETOUR0244 FAILURE: nidhugg : -1
+> MOREDETOUR0245 FAILURE: nidhugg : -1
+> MOREDETOUR0246 FAILURE: nidhugg : -1
+> MOREDETOUR0247 FAILURE: nidhugg : -1
+> MOREDETOUR0248 FAILURE: nidhugg : -1
+> MOREDETOUR0249 FAILURE: nidhugg : -1
+> MOREDETOUR0250 FAILURE: nidhugg : -1
+> MOREDETOUR0251 FAILURE: nidhugg : -1
+> MOREDETOUR0252 FAILURE: nidhugg : -1
+> MOREDETOUR0253 FAILURE: nidhugg : -1
+> MOREDETOUR0254 FAILURE: nidhugg : -1
+> MOREDETOUR0255 FAILURE: nidhugg : -1
+> MOREDETOUR0256 FAILURE: nidhugg : -1
+> MOREDETOUR0257 FAILURE: nidhugg : -1
+> MOREDETOUR0258 FAILURE: nidhugg : -1
+> MOREDETOUR0259 FAILURE: nidhugg : -1
+> MOREDETOUR0260 FAILURE: nidhugg : -1
+> MOREDETOUR0261 FAILURE: nidhugg : -1
+> MOREDETOUR0262 FAILURE: nidhugg : -1
+> MOREDETOUR0263 FAILURE: nidhugg : -1
+> MOREDETOUR0264 FAILURE: nidhugg : -1
+> MOREDETOUR0265 FAILURE: nidhugg : -1
+> MOREDETOUR0266 FAILURE: nidhugg : -1
+> MOREDETOUR0267 FAILURE: nidhugg : -1
+> MOREDETOUR0268 FAILURE: nidhugg : -1
+> MOREDETOUR0269 FAILURE: nidhugg : -1
+> MOREDETOUR0270 FAILURE: nidhugg : -1
+> MOREDETOUR0271 FAILURE: nidhugg : -1
+> MOREDETOUR0272 FAILURE: nidhugg : -1
+> MOREDETOUR0273 FAILURE: nidhugg : -1
+> MOREDETOUR0277 Forbid : 128
+3037,3041c3042,3046
+< MOREDETOUR0282 Forbid : 150
+< MOREDETOUR0283 Forbid : 586
+< MOREDETOUR0284 Forbid : 150
+< MOREDETOUR0285 Forbid : 94
+< MOREDETOUR0286 Forbid : 2534
+---
+> MOREDETOUR0282 Forbid : 201
+> MOREDETOUR0283 Forbid : 1257
+> MOREDETOUR0284 Forbid : 201
+> MOREDETOUR0285 Forbid : 128
+> MOREDETOUR0286 Forbid : 5260
+3044,3048c3049,3053
+< MOREDETOUR0289 Forbid : 150
+< MOREDETOUR0290 Forbid : 586
+< MOREDETOUR0291 Forbid : 150
+< MOREDETOUR0292 Forbid : 94
+< MOREDETOUR0293 Forbid : 2534
+---
+> MOREDETOUR0289 Forbid : 201
+> MOREDETOUR0290 Forbid : 1257
+> MOREDETOUR0291 Forbid : 201
+> MOREDETOUR0292 Forbid : 128
+> MOREDETOUR0293 Forbid : 5260
+3051,3055c3056,3060
+< MOREDETOUR0296 Forbid : 150
+< MOREDETOUR0297 Forbid : 586
+< MOREDETOUR0298 Forbid : 150
+< MOREDETOUR0299 Forbid : 94
+< MOREDETOUR0300 Forbid : 2534
+---
+> MOREDETOUR0296 Forbid : 201
+> MOREDETOUR0297 Forbid : 1257
+> MOREDETOUR0298 Forbid : 201
+> MOREDETOUR0299 Forbid : 128
+> MOREDETOUR0300 Forbid : 5260
+3058c3063
+< MOREDETOUR0303 Forbid : 108
+---
+> MOREDETOUR0303 Forbid : 144
+3061c3066
+< MOREDETOUR0306 Forbid : 94
+---
+> MOREDETOUR0306 Forbid : 128
+3064,3065c3069,3070
+< MOREDETOUR0310 Forbid : 460
+< MOREDETOUR0312 Forbid : 150
+---
+> MOREDETOUR0310 Forbid : 1052
+> MOREDETOUR0312 FAILURE: nidhugg : -1
+3067,3069c3072,3074
+< MOREDETOUR0314 Forbid : 1277
+< MOREDETOUR0315 Forbid : 94
+< MOREDETOUR0316 Forbid : 210
+---
+> MOREDETOUR0314 FAILURE: nidhugg : -1
+> MOREDETOUR0315 Forbid : 128
+> MOREDETOUR0316 Forbid : 304
+3071,3075c3076,3080
+< MOREDETOUR0318 Forbid : 150
+< MOREDETOUR0319 Forbid : 586
+< MOREDETOUR0320 Forbid : 150
+< MOREDETOUR0321 Forbid : 94
+< MOREDETOUR0322 Forbid : 2534
+---
+> MOREDETOUR0318 Forbid : 201
+> MOREDETOUR0319 Forbid : 1257
+> MOREDETOUR0320 Forbid : 201
+> MOREDETOUR0321 Forbid : 128
+> MOREDETOUR0322 Forbid : 5260
+3078,3079c3083,3084
+< MOREDETOUR0326 Forbid : 79
+< MOREDETOUR0327 Forbid : 46
+---
+> MOREDETOUR0326 Forbid : 97
+> MOREDETOUR0327 Forbid : 62
+3083,3084c3088,3089
+< MOREDETOUR0331 Forbid : 113
+< MOREDETOUR0332 Forbid : 41
+---
+> MOREDETOUR0331 Forbid : 129
+> MOREDETOUR0332 Forbid : 51
+3089c3094
+< MOREDETOUR0337 Forbid : 390
+---
+> MOREDETOUR0337 Forbid : 528
+3093,3095c3098,3100
+< MOREDETOUR0341 Forbid : 113
+< MOREDETOUR0342 Forbid : 319
+< MOREDETOUR0343 Forbid : 191
+---
+> MOREDETOUR0341 Forbid : 129
+> MOREDETOUR0342 Forbid : 382
+> MOREDETOUR0343 Forbid : 273
+3099,3102c3104,3107
+< MOREDETOUR0347 Forbid : 113
+< MOREDETOUR0349 Forbid : 36
+< MOREDETOUR0350 Forbid : 38
+< MOREDETOUR0351 Forbid : 38
+---
+> MOREDETOUR0347 Forbid : 129
+> MOREDETOUR0349 Forbid : 42
+> MOREDETOUR0350 Forbid : 68
+> MOREDETOUR0351 Forbid : 68
+3104,3106c3109,3111
+< MOREDETOUR0353 Forbid : 239
+< MOREDETOUR0354 Forbid : 38
+< MOREDETOUR0355 Forbid : 38
+---
+> MOREDETOUR0353 Forbid : 381
+> MOREDETOUR0354 Forbid : 68
+> MOREDETOUR0355 Forbid : 68
+3108,3110c3113,3115
+< MOREDETOUR0357 Forbid : 239
+< MOREDETOUR0358 Forbid : 38
+< MOREDETOUR0359 Forbid : 38
+---
+> MOREDETOUR0357 Forbid : 381
+> MOREDETOUR0358 Forbid : 68
+> MOREDETOUR0359 Forbid : 68
+3112c3117
+< MOREDETOUR0361 Forbid : 239
+---
+> MOREDETOUR0361 Forbid : 381
+3114c3119
+< MOREDETOUR0363 Forbid : 36
+---
+> MOREDETOUR0363 Forbid : 42
+3117,3119c3122,3124
+< MOREDETOUR0366 Forbid : 798
+< MOREDETOUR0367 Forbid : 38
+< MOREDETOUR0368 Forbid : 38
+---
+> MOREDETOUR0366 Forbid : 1056
+> MOREDETOUR0367 Forbid : 68
+> MOREDETOUR0368 Forbid : 68
+3121,3122c3126,3127
+< MOREDETOUR0370 Forbid : 239
+< MOREDETOUR0371 Forbid : 862
+---
+> MOREDETOUR0370 Forbid : 381
+> MOREDETOUR0371 Forbid : 1216
+3127c3132
+< MOREDETOUR0376 Forbid : 636
+---
+> MOREDETOUR0376 Forbid : 642
+3134c3139
+< MOREDETOUR0383 Forbid : 636
+---
+> MOREDETOUR0383 Forbid : 642
+3145c3150
+< MOREDETOUR0396 Forbid : 43
+---
+> MOREDETOUR0396 Forbid : 49
+3147c3152
+< MOREDETOUR0398 Forbid : 331
+---
+> MOREDETOUR0398 Forbid : 378
+3155c3160
+< MOREDETOUR0406 Forbid : 636
+---
+> MOREDETOUR0406 Forbid : 642
+3187c3192
+< MOREDETOUR0438 Forbid : 636
+---
+> MOREDETOUR0438 Forbid : 642
+3191,3192c3196,3197
+< MOREDETOUR0443 Forbid : 49
+< MOREDETOUR0444 Forbid : 174
+---
+> MOREDETOUR0443 Forbid : 67
+> MOREDETOUR0444 Forbid : 272
+3194,3196c3199,3201
+< MOREDETOUR0446 Forbid : 49
+< MOREDETOUR0447 Forbid : 29
+< MOREDETOUR0448 Forbid : 744
+---
+> MOREDETOUR0446 Forbid : 67
+> MOREDETOUR0447 Forbid : 37
+> MOREDETOUR0448 Forbid : 1380
+3199,3200c3204,3205
+< MOREDETOUR0451 Forbid : 49
+< MOREDETOUR0452 Forbid : 174
+---
+> MOREDETOUR0451 Forbid : 67
+> MOREDETOUR0452 Forbid : 272
+3202,3204c3207,3209
+< MOREDETOUR0454 Forbid : 49
+< MOREDETOUR0455 Forbid : 29
+< MOREDETOUR0456 Forbid : 744
+---
+> MOREDETOUR0454 Forbid : 67
+> MOREDETOUR0455 Forbid : 37
+> MOREDETOUR0456 Forbid : 1380
+3208c3213
+< MOREDETOUR0460 Forbid : 36
+---
+> MOREDETOUR0460 Forbid : 50
+3217c3222
+< MOREDETOUR0469 Forbid : 36
+---
+> MOREDETOUR0469 Forbid : 50
+3221,3223c3226,3228
+< MOREDETOUR0474 Forbid : 122
+< MOREDETOUR0475 Forbid : 29
+< MOREDETOUR0476 Forbid : 29
+---
+> MOREDETOUR0474 Forbid : 176
+> MOREDETOUR0475 Forbid : 37
+> MOREDETOUR0476 Forbid : 37
+3225c3230
+< MOREDETOUR0478 Forbid : 43
+---
+> MOREDETOUR0478 Forbid : 67
+3227c3232
+< MOREDETOUR0480 Forbid : 333
+---
+> MOREDETOUR0480 Forbid : 571
+3232c3237
+< MOREDETOUR0485 Forbid : 56
+---
+> MOREDETOUR0485 Forbid : 70
+3234,3236c3239,3241
+< MOREDETOUR0487 Forbid : 2778
+< MOREDETOUR0488 Forbid : 49
+< MOREDETOUR0489 Forbid : 174
+---
+> MOREDETOUR0487 FAILURE: nidhugg : -1
+> MOREDETOUR0488 Forbid : 67
+> MOREDETOUR0489 Forbid : 272
+3238,3240c3243,3245
+< MOREDETOUR0491 Forbid : 49
+< MOREDETOUR0492 Forbid : 29
+< MOREDETOUR0493 Forbid : 744
+---
+> MOREDETOUR0491 Forbid : 67
+> MOREDETOUR0492 Forbid : 37
+> MOREDETOUR0493 Forbid : 1380
+3248c3253
+< MOREDETOUR0501 Forbid : 144
+---
+> MOREDETOUR0501 Forbid : 278
+3260c3265
+< MOREDETOUR0513 Forbid : 144
+---
+> MOREDETOUR0513 Forbid : 278
+3272c3277
+< MOREDETOUR0525 Forbid : 49
+---
+> MOREDETOUR0525 Forbid : 67
+3278c3283
+< MOREDETOUR0531 Forbid : 174
+---
+> MOREDETOUR0531 Forbid : 272
+3285c3290
+< MOREDETOUR0538 Forbid : 49
+---
+> MOREDETOUR0538 Forbid : 67
+3287c3292
+< MOREDETOUR0540 Forbid : 29
+---
+> MOREDETOUR0540 Forbid : 37
+3294c3299
+< MOREDETOUR0547 Forbid : 744
+---
+> MOREDETOUR0547 Forbid : 1380
+3300,3302c3305,3307
+< MOREDETOUR0553 Forbid : 150
+< MOREDETOUR0554 Forbid : 586
+< MOREDETOUR0555 Forbid : 150
+---
+> MOREDETOUR0553 Forbid : 156
+> MOREDETOUR0554 Forbid : 602
+> MOREDETOUR0555 Forbid : 156
+3304c3309
+< MOREDETOUR0557 Forbid : 2534
+---
+> MOREDETOUR0557 Forbid : 2612
+3307,3309c3312,3314
+< MOREDETOUR0560 Forbid : 150
+< MOREDETOUR0561 Forbid : 586
+< MOREDETOUR0562 Forbid : 150
+---
+> MOREDETOUR0560 Forbid : 156
+> MOREDETOUR0561 Forbid : 602
+> MOREDETOUR0562 Forbid : 156
+3311c3316
+< MOREDETOUR0564 Forbid : 2534
+---
+> MOREDETOUR0564 Forbid : 2612
+3322c3327
+< MOREDETOUR0577 Forbid : 150
+---
+> MOREDETOUR0577 Forbid : 184
+3324c3329
+< MOREDETOUR0579 Forbid : 1277
+---
+> MOREDETOUR0579 Forbid : 1547
+3328,3330c3333,3335
+< MOREDETOUR0583 Forbid : 150
+< MOREDETOUR0584 Forbid : 586
+< MOREDETOUR0585 Forbid : 150
+---
+> MOREDETOUR0583 Forbid : 156
+> MOREDETOUR0584 Forbid : 602
+> MOREDETOUR0585 Forbid : 156
+3332c3337
+< MOREDETOUR0587 Forbid : 2534
+---
+> MOREDETOUR0587 Forbid : 2612
+3346c3351
+< MOREDETOUR0601 Forbid : 150
+---
+> MOREDETOUR0601 Forbid : 156
+3349c3354
+< MOREDETOUR0604 Forbid : 586
+---
+> MOREDETOUR0604 Forbid : 602
+3355c3360
+< MOREDETOUR0610 Forbid : 150
+---
+> MOREDETOUR0610 Forbid : 156
+3364c3369
+< MOREDETOUR0619 Forbid : 2534
+---
+> MOREDETOUR0619 Forbid : 2612
+3372c3377
+< MOREDETOUR0628 Forbid : 636
+---
+> MOREDETOUR0628 Forbid : 678
+3379c3384
+< MOREDETOUR0635 Forbid : 636
+---
+> MOREDETOUR0635 Forbid : 678
+3386c3391
+< MOREDETOUR0642 Forbid : 636
+---
+> MOREDETOUR0642 Forbid : 678
+3396c3401
+< MOREDETOUR0654 Forbid : 43
+---
+> MOREDETOUR0654 Forbid : 63
+3398c3403
+< MOREDETOUR0656 Forbid : 331
+---
+> MOREDETOUR0656 Forbid : 481
+3406c3411
+< MOREDETOUR0664 Forbid : 636
+---
+> MOREDETOUR0664 Forbid : 678
+3409,3410c3414,3415
+< MOREDETOUR0668 Forbid : 260
+< MOREDETOUR0669 Forbid : 184
+---
+> MOREDETOUR0668 Forbid : 310
+> MOREDETOUR0669 Forbid : 280
+3415c3420
+< MOREDETOUR0674 Forbid : 130
+---
+> MOREDETOUR0674 Forbid : 160
+3425,3426c3430,3431
+< MOREDETOUR0684 Forbid : 1085
+< MOREDETOUR0685 Forbid : 764
+---
+> MOREDETOUR0684 Forbid : 1343
+> MOREDETOUR0685 Forbid : 1298
+3431c3436
+< MOREDETOUR0691 Forbid : 124
+---
+> MOREDETOUR0691 Forbid : 160
+3445c3450
+< MOREDETOUR0705 Forbid : 124
+---
+> MOREDETOUR0705 Forbid : 160
+3453,3455c3458,3460
+< MOREDETOUR0713 Forbid : 3392
+< MOREDETOUR0714 Forbid : 49
+< MOREDETOUR0715 Forbid : 174
+---
+> MOREDETOUR0713 Forbid : 6816
+> MOREDETOUR0714 Forbid : 67
+> MOREDETOUR0715 Forbid : 272
+3457,3459c3462,3464
+< MOREDETOUR0717 Forbid : 49
+< MOREDETOUR0718 Forbid : 29
+< MOREDETOUR0719 Forbid : 744
+---
+> MOREDETOUR0717 Forbid : 67
+> MOREDETOUR0718 Forbid : 37
+> MOREDETOUR0719 Forbid : 1380
+3462,3463c3467,3468
+< MOREDETOUR0722 Forbid : 49
+< MOREDETOUR0723 Forbid : 174
+---
+> MOREDETOUR0722 Forbid : 67
+> MOREDETOUR0723 Forbid : 272
+3465,3467c3470,3472
+< MOREDETOUR0725 Forbid : 49
+< MOREDETOUR0726 Forbid : 29
+< MOREDETOUR0727 Forbid : 744
+---
+> MOREDETOUR0725 Forbid : 67
+> MOREDETOUR0726 Forbid : 37
+> MOREDETOUR0727 Forbid : 1380
+3470,3471c3475,3476
+< MOREDETOUR0730 Forbid : 49
+< MOREDETOUR0731 Forbid : 174
+---
+> MOREDETOUR0730 Forbid : 67
+> MOREDETOUR0731 Forbid : 272
+3473,3475c3478,3480
+< MOREDETOUR0733 Forbid : 49
+< MOREDETOUR0734 Forbid : 29
+< MOREDETOUR0735 Forbid : 744
+---
+> MOREDETOUR0733 Forbid : 67
+> MOREDETOUR0734 Forbid : 37
+> MOREDETOUR0735 Forbid : 1380
+3479c3484
+< MOREDETOUR0739 Forbid : 36
+---
+> MOREDETOUR0739 Forbid : 50
+3488c3493
+< MOREDETOUR0748 Forbid : 36
+---
+> MOREDETOUR0748 Forbid : 50
+3492,3493c3497,3498
+< MOREDETOUR0753 Forbid : 122
+< MOREDETOUR0754 Forbid : 29
+---
+> MOREDETOUR0753 Forbid : 176
+> MOREDETOUR0754 Forbid : 37
+3495c3500
+< MOREDETOUR0756 Forbid : 43
+---
+> MOREDETOUR0756 Forbid : 67
+3497c3502
+< MOREDETOUR0758 Forbid : 333
+---
+> MOREDETOUR0758 Forbid : 571
+3502c3507
+< MOREDETOUR0763 Forbid : 56
+---
+> MOREDETOUR0763 Forbid : 70
+3504,3506c3509,3511
+< MOREDETOUR0765 Forbid : 2778
+< MOREDETOUR0766 Forbid : 49
+< MOREDETOUR0767 Forbid : 174
+---
+> MOREDETOUR0765 FAILURE: nidhugg : -1
+> MOREDETOUR0766 Forbid : 67
+> MOREDETOUR0767 Forbid : 272
+3508,3510c3513,3515
+< MOREDETOUR0769 Forbid : 49
+< MOREDETOUR0770 Forbid : 29
+< MOREDETOUR0771 Forbid : 744
+---
+> MOREDETOUR0769 Forbid : 67
+> MOREDETOUR0770 Forbid : 37
+> MOREDETOUR0771 Forbid : 1380
+3513,3519c3518,3524
+< MOREDETOUR0778 Forbid : 260
+< MOREDETOUR0779 Forbid : 260
+< MOREDETOUR0780 Forbid : 260
+< MOREDETOUR0781 Forbid : 260
+< MOREDETOUR0782 Forbid : 184
+< MOREDETOUR0783 Forbid : 184
+< MOREDETOUR0784 Forbid : 184
+---
+> MOREDETOUR0778 Forbid : 310
+> MOREDETOUR0779 Forbid : 310
+> MOREDETOUR0780 Forbid : 310
+> MOREDETOUR0781 Forbid : 310
+> MOREDETOUR0782 Forbid : 280
+> MOREDETOUR0783 Forbid : 280
+> MOREDETOUR0784 Forbid : 280
+3525,3528c3530,3533
+< MOREDETOUR0790 Forbid : 130
+< MOREDETOUR0791 Forbid : 130
+< MOREDETOUR0792 Forbid : 130
+< MOREDETOUR0793 Forbid : 130
+---
+> MOREDETOUR0790 Forbid : 160
+> MOREDETOUR0791 Forbid : 160
+> MOREDETOUR0792 Forbid : 160
+> MOREDETOUR0793 Forbid : 160
+3537c3542
+< MOREDETOUR0802 Forbid : 302
+---
+> MOREDETOUR0802 Forbid : 570
+3543,3549c3548,3554
+< MOREDETOUR0808 Forbid : 1085
+< MOREDETOUR0809 Forbid : 1085
+< MOREDETOUR0810 Forbid : 1085
+< MOREDETOUR0811 Forbid : 1085
+< MOREDETOUR0812 Forbid : 764
+< MOREDETOUR0813 Forbid : 764
+< MOREDETOUR0814 Forbid : 764
+---
+> MOREDETOUR0808 Forbid : 1343
+> MOREDETOUR0809 Forbid : 1343
+> MOREDETOUR0810 Forbid : 1343
+> MOREDETOUR0811 Forbid : 1343
+> MOREDETOUR0812 Forbid : 1298
+> MOREDETOUR0813 Forbid : 1298
+> MOREDETOUR0814 Forbid : 1298
+3555,3557c3560,3562
+< MOREDETOUR0824 Forbid : 124
+< MOREDETOUR0825 Forbid : 124
+< MOREDETOUR0826 Forbid : 124
+---
+> MOREDETOUR0824 Forbid : 160
+> MOREDETOUR0825 Forbid : 160
+> MOREDETOUR0826 Forbid : 160
+3580,3582c3585,3587
+< MOREDETOUR0849 Forbid : 124
+< MOREDETOUR0850 Forbid : 124
+< MOREDETOUR0851 Forbid : 124
+---
+> MOREDETOUR0849 Forbid : 160
+> MOREDETOUR0850 Forbid : 160
+> MOREDETOUR0851 Forbid : 160
+3588c3593
+< MOREDETOUR0857 Forbid : 720
+---
+> MOREDETOUR0857 Forbid : 1000
+3595,3600c3600,3605
+< MOREDETOUR0864 Forbid : 3392
+< MOREDETOUR0865 Forbid : 3392
+< MOREDETOUR0866 Forbid : 3392
+< MOREDETOUR0867 Forbid : 150
+< MOREDETOUR0868 Forbid : 586
+< MOREDETOUR0869 Forbid : 150
+---
+> MOREDETOUR0864 Forbid : 6816
+> MOREDETOUR0865 Forbid : 6816
+> MOREDETOUR0866 Forbid : 6816
+> MOREDETOUR0867 Forbid : 156
+> MOREDETOUR0868 Forbid : 602
+> MOREDETOUR0869 Forbid : 156
+3602c3607
+< MOREDETOUR0871 Forbid : 2534
+---
+> MOREDETOUR0871 Forbid : 2612
+3605,3607c3610,3612
+< MOREDETOUR0874 Forbid : 150
+< MOREDETOUR0875 Forbid : 586
+< MOREDETOUR0876 Forbid : 150
+---
+> MOREDETOUR0874 Forbid : 156
+> MOREDETOUR0875 Forbid : 602
+> MOREDETOUR0876 Forbid : 156
+3609c3614
+< MOREDETOUR0878 Forbid : 2534
+---
+> MOREDETOUR0878 Forbid : 2612
+3612,3614c3617,3619
+< MOREDETOUR0881 Forbid : 150
+< MOREDETOUR0882 Forbid : 586
+< MOREDETOUR0883 Forbid : 150
+---
+> MOREDETOUR0881 Forbid : 156
+> MOREDETOUR0882 Forbid : 602
+> MOREDETOUR0883 Forbid : 156
+3616c3621
+< MOREDETOUR0885 Forbid : 2534
+---
+> MOREDETOUR0885 Forbid : 2612
+3626c3631
+< MOREDETOUR0897 Forbid : 150
+---
+> MOREDETOUR0897 Forbid : 184
+3628c3633
+< MOREDETOUR0899 Forbid : 1277
+---
+> MOREDETOUR0899 Forbid : 1547
+3632,3634c3637,3639
+< MOREDETOUR0903 Forbid : 150
+< MOREDETOUR0904 Forbid : 586
+< MOREDETOUR0905 Forbid : 150
+---
+> MOREDETOUR0903 Forbid : 156
+> MOREDETOUR0904 Forbid : 602
+> MOREDETOUR0905 Forbid : 156
+3636c3641
+< MOREDETOUR0907 Forbid : 2534
+---
+> MOREDETOUR0907 Forbid : 2612
+3639,3640c3644,3645
+< MOREDETOUR0911 Forbid : 260
+< MOREDETOUR0912 Forbid : 184
+---
+> MOREDETOUR0911 Forbid : 310
+> MOREDETOUR0912 Forbid : 280
+3645c3650
+< MOREDETOUR0917 Forbid : 130
+---
+> MOREDETOUR0917 Forbid : 160
+3655,3656c3660,3661
+< MOREDETOUR0927 Forbid : 1085
+< MOREDETOUR0928 Forbid : 764
+---
+> MOREDETOUR0927 Forbid : 1343
+> MOREDETOUR0928 Forbid : 1298
+3661c3666
+< MOREDETOUR0934 Forbid : 124
+---
+> MOREDETOUR0934 Forbid : 160
+3675c3680
+< MOREDETOUR0948 Forbid : 124
+---
+> MOREDETOUR0948 Forbid : 160
+3683c3688
+< MOREDETOUR0956 Forbid : 3392
+---
+> MOREDETOUR0956 Forbid : 6816
+5255c5260
+< rfe004 Forbid : 27
+---
+> rfe004 Forbid : 30
+5523c5528
+< safe004 Forbid : 45
+---
+> safe004 Forbid : 57
+5536c5541
+< safe017 Forbid : 21
+---
+> safe017 Forbid : 24
+5545c5550
+< safe027 Forbid : 21
+---
+> safe027 Forbid : 24
+5618c5623
+< safe107 Forbid : 45
+---
+> safe107 Forbid : 57
+5628c5633
+< safe117 Forbid : 21
+---
+> safe117 Forbid : 24
+5637c5642
+< safe127 Forbid : 21
+---
+> safe127 Forbid : 24
+5700c5705
+< safe194 Forbid : 45
+---
+> safe194 Forbid : 57
+5707c5712
+< safe201 Forbid : 21
+---
+> safe201 Forbid : 24
+5716c5721
+< safe211 Forbid : 21
+---
+> safe211 Forbid : 24
+5723c5728
+< safe218 Forbid : 27
+---
+> safe218 Forbid : 30
+5738c5743
+< safe233 Forbid : 21
+---
+> safe233 Forbid : 24
+5762c5767
+< safe258 Forbid : 21
+---
+> safe258 Forbid : 24
+5773c5778
+< safe269 Forbid : 45
+---
+> safe269 Forbid : 57
+5779c5784
+< safe275 Forbid : 41
+---
+> safe275 Forbid : 52
+5784c5789
+< safe280 Forbid : 39
+---
+> safe280 Forbid : 54
+5799c5804
+< safe295 Forbid : 21
+---
+> safe295 Forbid : 25
+5802c5807
+< safe298 Forbid : 48
+---
+> safe298 Forbid : 108
+5804c5809
+< safe300 Forbid : 60
+---
+> safe300 Forbid : 240
+5806c5811
+< safe302 Forbid : 22
+---
+> safe302 Forbid : 50
+6035,6036c6040,6041
+< safe534 Forbid : 87
+< safe535 Forbid : 41
+---
+> safe534 Forbid : 111
+> safe535 Forbid : 52
+6062,6064c6067,6069
+< safe561 Forbid : 56
+< safe562 Forbid : 13
+< safe563 Forbid : 31
+---
+> safe561 FAILURE: nidhugg : -1
+> safe562 FAILURE: nidhugg : -1
+> safe563 FAILURE: nidhugg : -1
+6066,6067c6071,6072
+< safe565 Forbid : 7
+< safe566 Forbid : 15
+---
+> safe565 Forbid : 9
+> safe566 Forbid : 29
+7224c7229
+< WRR+2W+addr-fri-rfi-addr+rfi-data Forbid : 9
+---
+> WRR+2W+addr-fri-rfi-addr+rfi-data Forbid : 10
+7228c7233
+< WRR+2W+addr+rfi-data Forbid : 9
+---
+> WRR+2W+addr+rfi-data Forbid : 10
+7237c7242
+< WRR+2W+lwsync+rfi-data Forbid : 9
+---
+> WRR+2W+lwsync+rfi-data Forbid : 10
+7246c7251
+< WRR+2W+sync+rfi-data Forbid : 9
+---
+> WRR+2W+sync+rfi-data Forbid : 10
+7258c7263
+< WRW+2W+addr+rfi-data Forbid : 12
+---
+> WRW+2W+addr+rfi-data Forbid : 13
+7260c7265
+< WRW+2W+data+rfi-data Forbid : 12
+---
+> WRW+2W+data+rfi-data Forbid : 13
+7270c7275
+< WRW+2W+lwsync+rfi-data Forbid : 12
+---
+> WRW+2W+lwsync+rfi-data Forbid : 13
+7279c7284
+< WRW+2W+sync+rfi-data Forbid : 12
+---
+> WRW+2W+sync+rfi-data Forbid : 13
+7660,7663c7665,7668
+< Z6.1+rfi-data+rfi-data+addr Forbid : 14
+< Z6.1+rfi-data+rfi-data+data Forbid : 14
+< Z6.1+rfi-data+rfi-data+lwsync Forbid : 14
+< Z6.1+rfi-data+rfi-data+sync Forbid : 14
+---
+> Z6.1+rfi-data+rfi-data+addr Forbid : 17
+> Z6.1+rfi-data+rfi-data+data Forbid : 17
+> Z6.1+rfi-data+rfi-data+lwsync Forbid : 17
+> Z6.1+rfi-data+rfi-data+sync Forbid : 17
+7767,7782c7772,7787
+< Z6.2+rfi-data+addr+addr Forbid : 10
+< Z6.2+rfi-data+addr+data Forbid : 10
+< Z6.2+rfi-data+addr+lwsync Forbid : 10
+< Z6.2+rfi-data+addr+sync Forbid : 10
+< Z6.2+rfi-data+data+addr Forbid : 10
+< Z6.2+rfi-data+data+data Forbid : 10
+< Z6.2+rfi-data+data+lwsync Forbid : 10
+< Z6.2+rfi-data+data+sync Forbid : 10
+< Z6.2+rfi-data+lwsync+addr Forbid : 10
+< Z6.2+rfi-data+lwsync+data Forbid : 10
+< Z6.2+rfi-data+lwsync+lwsync Forbid : 10
+< Z6.2+rfi-data+lwsync+sync Forbid : 10
+< Z6.2+rfi-data+sync+addr Forbid : 10
+< Z6.2+rfi-data+sync+data Forbid : 10
+< Z6.2+rfi-data+sync+lwsync Forbid : 10
+< Z6.2+rfi-data+sync+sync Forbid : 10
+---
+> Z6.2+rfi-data+addr+addr Forbid : 12
+> Z6.2+rfi-data+addr+data Forbid : 12
+> Z6.2+rfi-data+addr+lwsync Forbid : 12
+> Z6.2+rfi-data+addr+sync Forbid : 12
+> Z6.2+rfi-data+data+addr Forbid : 12
+> Z6.2+rfi-data+data+data Forbid : 12
+> Z6.2+rfi-data+data+lwsync Forbid : 12
+> Z6.2+rfi-data+data+sync Forbid : 12
+> Z6.2+rfi-data+lwsync+addr Forbid : 12
+> Z6.2+rfi-data+lwsync+data Forbid : 12
+> Z6.2+rfi-data+lwsync+lwsync Forbid : 12
+> Z6.2+rfi-data+lwsync+sync Forbid : 12
+> Z6.2+rfi-data+sync+addr Forbid : 12
+> Z6.2+rfi-data+sync+data Forbid : 12
+> Z6.2+rfi-data+sync+lwsync Forbid : 12
+> Z6.2+rfi-data+sync+sync Forbid : 12
+8063,8064c8068,8069
+< # Total number of traces: 244400
+< # Total running time: 741.60 s
+---
+> # Total number of traces: 280060
+> # Total running time: 605.36 s

@@ -6,7 +6,7 @@
                   "type": "cppdbg",
                   "request": "launch",
                   "program": "${workspaceFolder}/src/genmc",
-                  "args": ["--mo","--schedule-policy=ltr","--check-consistency-point=step","--check-consistency-type=full", "gen1.c"],
+                  "args": ["--mo","--rc11","--schedule-policy=ltr","--check-consistency-point=step","--check-consistency-type=full", "gen1.c"],
                   "stopAtEntry": false,
                   "cwd": "${workspaceFolder}",
                   "environment": [],
