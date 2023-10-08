@@ -1427,47 +1427,42 @@ bool GenMCDriver::getConsistentRfs(const ReadLabel *rLab, std::vector<Event> &rf
 {
 	isConsistent(ProgramPoint::step);
 	bool found = false;
-	int scount = rfs.size();
-	auto store1 = rfs[(scount-1)];
-	while(scount > 0){
+	std::vector<Event> temprfs;
+	for(int i=0 ; i < rfs.size() ; i++){
 		found = true;
 		bool flag = false;
-		for(int i = 0 ; i < scount - 1 ; i++){
-			auto store2 = rfs[i];
-			if(isHbBefore(store1,store2) && isHbBefore(store2 , rLab->getPos())){
-				flag = true;
+		auto store1 = rfs[i];
+		int store1Id, store2Id, readId;
+		for(int j=0 ; j < rfs.size() ; j++){
+			auto store2 = rfs[j];
+			if(store1 == store2) continue;
+			if(store1 == Event(0,0) && isHbBefore(store2,rLab->getPos())){
+				flag = true; //do not consider this store
 				break;
 			}
+			if(store1 != Event(0,0) && store2 != Event(0,0)){
+				if(isHbBefore(store1,store2) && isHbBefore(store2,rLab->getPos())){
+					flag = true;  //do not consider this store
+					break;
+				}
+			}
 		}
-		if(flag){
-			found = false;
-			rfs.erase(rfs.end() - 1);
-			BUG_ON(!getConf()->LAPOR && rfs.empty());
+		if(!flag){
+			// found = false;
+			temprfs.push_back(store1);
+			BUG_ON(rfs.empty());
+			// BUG_ON(!getConf()->LAPOR && rfs.empty());
 			if(rfs.empty())
 				break;
 
 		}
-		scount--;
-		if(scount > 0)
-			store1 = rfs[(scount-1)];
 	}
-	// while (!found) {
-	// 	found = true;
-	// 	auto store = rfs.back();
-	// 	if (isHbBefore(rLab->getPos(),store)) {
-	// 		found = false;
-	// 		rfs.erase(rfs.end() - 1);
-	// 		BUG_ON(!getConf()->LAPOR && rfs.empty());
-	// 		if (rfs.empty())
-	// 			break;
-	// 	}
-	// }
-
-	if (!found) {
-		getEE()->block(BlockageType::Cons);
-		return false;
-	}
-	return true;
+	std::vector<Event> trfs = temprfs;
+	// if(temprfs.empty())
+	// 	abort();
+	rfs = std::move(trfs);
+	BUG_ON(rfs.empty());
+	return found;
 }
 
 bool GenMCDriver::ensureConsistentStore(const WriteLabel *wLab)
@@ -2019,7 +2014,7 @@ void GenMCDriver::visitStore(std::unique_ptr<WriteLabel> wLab, const EventDeps *
 	}
 
 	/* If the graph is not consistent (e.g., w/ LAPOR) stop the exploration */
-	// bool cons = ensureConsistentStore(lab);
+	bool cons = ensureConsistentStore(lab);
 
 	GENMC_DEBUG(
 		if (getConf()->vLevel >= VerbosityLevel::V3) {
@@ -2028,13 +2023,14 @@ void GenMCDriver::visitStore(std::unique_ptr<WriteLabel> wLab, const EventDeps *
 		}
 	);
 
-	// if (!inRecoveryMode() && !inReplay())
-	// 	calcRevisits(lab);
 	if (!inRecoveryMode() && !inReplay())
-		loadRevisits(lab);
+		calcRevisits(lab);
+	// if (!inRecoveryMode() && !inReplay())
+	// 	loadRevisits(lab);
 
 	// if (!cons)
 	// 	return;
+	BUG_ON(!cons); //new_scdpor: every step is conisistent
 
 	checkReconsiderFaiSpinloop(lab);
 	if (llvm::isa<HelpedCasWriteLabel>(lab))
