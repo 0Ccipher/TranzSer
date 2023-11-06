@@ -386,7 +386,7 @@ Interpreter::Interpreter(std::unique_ptr<Module> M, std::unique_ptr<ModuleInfo> 
 	: ExecutionEngine(std::move(M)), MI(std::move(MI)), driver(driver) {
 
   memset(&dynState.ExitValue.Untyped, 0, sizeof(dynState.ExitValue.Untyped));
-
+  AtomicFunctionCall = -1;//newscdpor
   // Initialize the "backend"
   initializeExecutionEngine();
   initializeExternalFunctions();

@@ -4581,7 +4581,13 @@ void Interpreter::callFunction(Function *F, const std::vector<GenericValue> &Arg
     callInternalFunction(F, ArgVals, specialDeps);
     return;
   }
-
+  
+  //newscdpor
+  if(F->getName().str().find("__VERIFIER_atomic_") == 0){
+    if(AtomicFunctionCall < 0){
+      AtomicFunctionCall = ECStack().size();
+    } // else we are already inside an atomic function call
+  }
   assert(!specialDeps);
   assert((ECStack().empty() || !&ECStack().back().Caller ||
 	  ECStack().back().Caller.arg_size() == ArgVals.size()) &&
@@ -4692,6 +4698,18 @@ void Interpreter::run()
 		llvm::ExecutionContext &SF = ECStack().back();
 		llvm::Instruction &I = *SF.CurInst++;
 		visit(I);
+		/* Atomic function? */
+		if(0 <= AtomicFunctionCall){
+			/* We have entered an atomic function.
+			* Keep executing until we exit it.
+			*/
+			while(AtomicFunctionCall < int(ECStack().size())){
+				ExecutionContext &SF = ECStack().back();  // Current stack frame
+				Instruction &I = *SF.CurInst++;         // Increment before execute
+				visit(I);
+			}
+			AtomicFunctionCall = -1;
+		}
 	}
 	return;
 }

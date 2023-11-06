@@ -308,6 +308,15 @@ protected:
   /* (Composition) pointer to the driver */
   GenMCDriver *driver;
 
+  //newscdpor
+  /* AtomicFunctionCall usually holds a negative value. However, while
+   * we are executing inside an atomic function (one with a name
+   * starting with "__VERIFIER_atomic_"), AtomicFunctionCall will hold
+   * the index in ECStack of the stack frame of the outermost,
+   * currently executing, atomic function.
+   */
+  int AtomicFunctionCall;
+
   /* Whether the driver should be called on system errors */
   bool stopOnSystemErrors;
 

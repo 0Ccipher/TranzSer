@@ -8061,4 +8061,4 @@ Z6.5+sync+sync+lwsync Forbid : 7
 Z6.5+sync+sync+po Forbid : 7
 Z6.5+sync+sync+rfi-addr Forbid : 10
 # Total number of traces: 244400
-# Total running time: 604.37 s
+# Total running time: 417.14 s
