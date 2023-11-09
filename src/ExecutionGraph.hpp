@@ -28,6 +28,7 @@
 #include "DepInfo.hpp"
 #include "Error.hpp"
 #include "Event.hpp"
+#include "Transaction.hpp"
 #include "EventLabel.hpp"
 #include "Revisit.hpp"
 #include "VectorClock.hpp"
@@ -57,6 +58,7 @@ class ExecutionGraph {
 public:
 	using Thread = std::vector<std::unique_ptr<EventLabel> >;
 	using ThreadList = std::vector<Thread>;
+	using TransactionList = std::vector<Transaction>;
 
 private:
 	using FixpointResult = Calculator::CalculationResult;

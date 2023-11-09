@@ -84,6 +84,7 @@ libgenmc_a_SOURCES = \
   WBCalculator.cpp WBCalculator.hpp \
   ThreadPinner.cpp ThreadPinner.hpp \
   ThreadPool.cpp ThreadPool.hpp \
+  Transaction.cpp Transaction.hpp \
   WorkSet.hpp WorkSet.cpp \
   value_ptr.hpp \
   VectorClock.hpp VectorClock.cpp \
