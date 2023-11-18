@@ -18,6 +18,9 @@
  * Author: Michalis Kokologiannakis <michalis@mpi-sws.org>
  */
 
+/*
+	Omkar: Added the transaction related stuff
+*/
 #ifndef __EVENT_HPP__
 #define __EVENT_HPP__
 
@@ -27,9 +30,11 @@
 struct Event {
 	int thread;
 	int index;
+	int transaction;
 
 	Event() : thread(-17), index(-17) {};
 	Event(int t, int e) : thread(t), index(e) {};
+	Event(int t, int tr, int e) : thread(t), transaction(tr), index(e) {};
 
 	static Event getInitializer() { return Event(0, 0); };
 	static Event getBottom() { return Event(-42, -42); };

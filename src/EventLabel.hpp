@@ -17,6 +17,9 @@
  *
  * Author: Michalis Kokologiannakis <michalis@mpi-sws.org>
  */
+/*
+	Omkar: Added the transaction related stuff
+*/
 
 #ifndef __EVENTLABEL_HPP__
 #define __EVENTLABEL_HPP__
@@ -125,6 +128,8 @@ public:
 		EL_DskOpen,
 		EL_RCULockLKMM,
 		EL_RCUUnlockLKMM,
+		EL_TrBegin,
+		EL_TrEnd,
 	};
 
 protected:
@@ -158,6 +163,9 @@ public:
 
 	/* Returns the thread of this label in the execution graph */
 	int getThread() const { return position.thread; }
+
+	/* Returns the transaction of this label in the execution graph */
+	int getTransaction() const { return position.transaction; }
 
 	/* Methods that get/set the vector clocks for this label. */
 	const View& getHbView() const { return hbView; }
@@ -303,6 +311,59 @@ private:
 	/* View indicating a _subset_ of the events that must have
 	 * persisted before the access */
 	DepView pbView;
+};
+
+/*******************************************************************************
+ **                            TrBeginLabel Class
+ ******************************************************************************/
+
+/* A TrBegin label. Records the start of a transaction */
+class TrBeginLabel : public EventLabel {
+
+public:
+	TrBeginLabel(unsigned int st, Event pos)
+		: EventLabel(EL_TrBegin, st, llvm::AtomicOrdering::NotAtomic, pos) {}
+	TrBeginLabel(Event pos)
+		: EventLabel(EL_TrBegin, llvm::AtomicOrdering::NotAtomic, pos) {}
+
+	template<typename... Ts>
+	static std::unique_ptr<TrBeginLabel> create(Ts&&... params) {
+		return std::make_unique<TrBeginLabel>(std::forward<Ts>(params)...);
+	}
+
+	std::unique_ptr<EventLabel> clone() const override {
+		return std::make_unique<TrBeginLabel>(*this);
+	}
+
+	static bool classof(const EventLabel *lab) { return classofKind(lab->getKind()); }
+	static bool classofKind(EventLabelKind k) { return k == EL_TrBegin; }
+};
+
+
+/*******************************************************************************
+ **                            TrEndLabel Class
+ ******************************************************************************/
+
+/* A TrEnd label. Records the end of a transaction */
+class TrEndLabel : public EventLabel {
+
+public:
+	TrEndLabel(unsigned int st, Event pos)
+		: EventLabel(EL_TrEnd, st, llvm::AtomicOrdering::NotAtomic, pos) {}
+	TrEndLabel(Event pos)
+		: EventLabel(EL_TrEnd, llvm::AtomicOrdering::NotAtomic, pos) {}
+
+	template<typename... Ts>
+	static std::unique_ptr<TrEndLabel> create(Ts&&... params) {
+		return std::make_unique<TrEndLabel>(std::forward<Ts>(params)...);
+	}
+
+	std::unique_ptr<EventLabel> clone() const override {
+		return std::make_unique<TrEndLabel>(*this);
+	}
+
+	static bool classof(const EventLabel *lab) { return classofKind(lab->getKind()); }
+	static bool classofKind(EventLabelKind k) { return k == EL_TrEnd; }
 };
 
 
