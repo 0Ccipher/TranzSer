@@ -24,17 +24,18 @@
 #ifndef __EVENT_HPP__
 #define __EVENT_HPP__
 
+#include "Transaction.hpp"
 #include <llvm/ADT/Hashing.h>
 #include <llvm/Support/raw_ostream.h>
 
 struct Event {
 	int thread;
 	int index;
-	int transaction;
+	Transaction transaction;
 
 	Event() : thread(-17), index(-17) {};
 	Event(int t, int e) : thread(t), index(e) {};
-	Event(int t, int tr, int e) : thread(t), transaction(tr), index(e) {};
+	Event(int t, int e, Transaction tr) : thread(t), index(e), transaction(tr) {};
 
 	static Event getInitializer() { return Event(0, 0); };
 	static Event getBottom() { return Event(-42, -42); };
