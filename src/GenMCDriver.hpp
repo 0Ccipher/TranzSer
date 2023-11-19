@@ -293,6 +293,15 @@ public:
 	void
 	visitRCUSyncLKMM(std::unique_ptr<RCUSyncLabelLKMM> lab);
 
+
+	//newscdpor
+	/* TrBegin interpreted */
+	void visitTrBegin(std::unique_ptr<TrBeginLabel> beginLab);
+
+	/* TrEnd interpreted */
+	void visitTrEnd(std::unique_ptr<TrEndLabel> endLab);
+
+
 	/* This method either blocks the offending thread (e.g., if the
 	 * execution is invalid), or aborts the exploration */
 	void visitError(Event pos, Status r, const std::string &err = std::string(),

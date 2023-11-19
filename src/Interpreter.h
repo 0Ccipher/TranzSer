@@ -169,6 +169,7 @@ public:
 	llvm::ExecutionContext initSF;
 	std::unordered_map<const void *, llvm::GenericValue> tls;
 	unsigned int globalInstructions;
+  unsigned int globalTransactions;
 	unsigned int globalInstSnap;
 	BlockageType blocked;
 	MyRNG rng;
@@ -194,12 +195,12 @@ protected:
 	friend class Interpreter;
 
 	Thread(llvm::Function *F, int id)
-		: id(id), parentId(-1), threadFun(F), initSF(), globalInstructions(0),
+		: id(id), parentId(-1), threadFun(F), initSF(), globalInstructions(0), globalTransactions(0),
 		  blocked(BlockageType::NotBlocked), rng(seed) {}
 
 	Thread(llvm::Function *F, SVal arg, int id, int pid, const llvm::ExecutionContext &SF)
 		: id(id), parentId(pid), threadFun(F), threadArg(arg),
-		  initSF(SF), globalInstructions(0), blocked(BlockageType::NotBlocked), rng(seed) {}
+		  initSF(SF), globalInstructions(0), globalTransactions(0), blocked(BlockageType::NotBlocked), rng(seed) {}
 };
 
 llvm::raw_ostream& operator<<(llvm::raw_ostream &s, const Thread &thr);
@@ -442,7 +443,16 @@ public:
 	  auto &thr = getCurThr();
 	  return Event(thr.id, --thr.globalInstructions);
   };
-
+  Transaction currTran() const {return Transaction(getCurThr().id, getCurThr().globalTransactions);};
+  Transaction nextTran() const { return currTran().next(); };
+  Transaction incTran() {
+      auto &thr = getCurThr();
+      return Transaction(thr.id, ++thr.globalTransactions);
+  };
+  Transaction decTran() {
+    auto &thr = getCurThr();
+    return Transaction(thr.id, --thr.globalTransactions);
+  };
   /* Query interpreter's state */
   ProgramState getProgramState() const { return dynState.programState; }
   ExecutionState getExecState() const { return dynState.execState; }

@@ -4,7 +4,6 @@
 
 #ifndef __Transaction_HPP__
 #define __Transaction_HPP__
-
 #include <llvm/ADT/Hashing.h>
 #include <llvm/Support/raw_ostream.h>
 
@@ -85,7 +84,4 @@ struct TransactionHasher {
 	}
 };
 
-class Transactions{
-
-};
 #endif /* __Transaction_HPP__ */
