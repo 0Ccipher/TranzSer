@@ -30,6 +30,7 @@
 #include "LKMMDriver.hpp"
 #include "RC11Driver.hpp"
 #include "PLAINSCDriver.hpp"
+#include "TranDriver.hpp"
 #include <llvm/IR/Module.h>
 
 class DriverFactory {
@@ -57,6 +58,9 @@ class DriverFactory {
 			break;
 		case ModelType::plainsc:
 			driver = new PLAINSCDriver(std::move(conf), std::forward<Ts>(params)...);
+			break;
+		case ModelType::transc:
+			driver = new TranDriver(std::move(conf), std::forward<Ts>(params)...);
 			break;
 		default:
 			BUG();

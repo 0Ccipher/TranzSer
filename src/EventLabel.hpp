@@ -25,6 +25,7 @@
 #define __EVENTLABEL_HPP__
 
 #include "Event.hpp"
+#include "Transaction.hpp"
 #include "EventAttr.hpp"
 #include "value_ptr.hpp"
 #include "DepView.hpp"
@@ -165,7 +166,7 @@ public:
 	int getThread() const { return position.thread; }
 
 	/* Returns the transaction of this label in the execution graph */
-	int getTransaction() const { return position.transaction; }
+	Transaction getTransaction() const { return position.transaction; }
 
 	/* Methods that get/set the vector clocks for this label. */
 	const View& getHbView() const { return hbView; }

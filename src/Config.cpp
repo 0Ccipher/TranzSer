@@ -294,6 +294,9 @@ void printVersion(llvm::raw_ostream &s)
 void Config::checkConfigOptions() const
 {
 	/* Check exploration options */
+	if(clModelType == ModelType::transc && clCoherenceType == CoherenceType::wb){
+		WARN("SC Transactions can only be used with -mo, not -wb. \n");
+	}
 	if(clModelType == ModelType::plainsc && clCoherenceType == CoherenceType::wb){
 		WARN("Plain SC can only be used with -mo, not -wb. \n");
 	}
