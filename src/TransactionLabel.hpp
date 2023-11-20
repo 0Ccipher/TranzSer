@@ -74,9 +74,6 @@ public:
 
 	virtual ~Transactions() = default;
 
-	/* Returns a clone object (virtual to allow deep copying from base) */
-	virtual std::unique_ptr<Transactions> clone() const = 0;
-
 	friend llvm::raw_ostream& operator<<(llvm::raw_ostream& rhs,
 					     const Transactions &tr);
 

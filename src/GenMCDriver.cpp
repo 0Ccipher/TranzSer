@@ -1533,7 +1533,15 @@ int GenMCDriver::getSymmetricTidSR(int thread, Event parent, llvm::Function *thr
 			return i;
 	return -1;
 }
-
+//newscdpor
+void GenMCDriver::visitTrBegin(std::unique_ptr<TrBeginLabel> beginLab , Transaction tr){
+	auto &g = getGraph();
+	//updateLabelViews(tcLab.get(), deps);
+	beginLab->getPos().transaction = tr;
+	auto *lab = g.addOtherLabelToGraph(std::move(beginLab));
+	//add new Transaction
+	g.addNewTransaction(tr , lab->getPos());
+}
 int GenMCDriver::visitThreadCreate(std::unique_ptr<ThreadCreateLabel> tcLab, const EventDeps *deps,
 				   llvm::Function *calledFun, SVal arg, const llvm::ExecutionContext &SF)
 {

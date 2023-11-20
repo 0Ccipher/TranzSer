@@ -4576,6 +4576,7 @@ Interpreter::translateExternalCallArgs(Function *F, const std::vector<GenericVal
 void Interpreter::callFunction(Function *F, const std::vector<GenericValue> &ArgVals,
 			       const std::unique_ptr<EventDeps> &specialDeps)
 {
+  
   /* Special handling for internal calls */
   if (isInternalCall(F)) {
     callInternalFunction(F, ArgVals, specialDeps);
@@ -4700,6 +4701,7 @@ void Interpreter::run()
 		visit(I);
 		/* Atomic function? */
 		if(0 <= AtomicFunctionCall){
+			driver->visitTrBegin(TrBeginLabel::create(nextPos()) , nextTran());
 			/* We have entered an atomic function.
 			* Keep executing until we exit it.
 			*/

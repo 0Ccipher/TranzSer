@@ -296,10 +296,10 @@ public:
 
 	//newscdpor
 	/* TrBegin interpreted */
-	void visitTrBegin(std::unique_ptr<TrBeginLabel> beginLab);
+	void visitTrBegin(std::unique_ptr<TrBeginLabel> beginLab , Transaction tr);
 
 	/* TrEnd interpreted */
-	void visitTrEnd(std::unique_ptr<TrEndLabel> endLab);
+	void visitTrEnd(std::unique_ptr<TrEndLabel> endLab, Transaction tr);
 
 
 	/* This method either blocks the offending thread (e.g., if the

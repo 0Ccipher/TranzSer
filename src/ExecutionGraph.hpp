@@ -28,7 +28,7 @@
 #include "DepInfo.hpp"
 #include "Error.hpp"
 #include "Event.hpp"
-#include "Transaction.hpp"
+#include "TransactionLabel.hpp"
 #include "EventLabel.hpp"
 #include "Revisit.hpp"
 #include "VectorClock.hpp"
@@ -58,7 +58,7 @@ class ExecutionGraph {
 public:
 	using Thread = std::vector<std::unique_ptr<EventLabel> >;
 	using ThreadList = std::vector<Thread>;
-	using TransactionList = std::vector<Transaction>;
+	using TransactionList = std::vector<Transactions>;
 
 private:
 	using FixpointResult = Calculator::CalculationResult;
@@ -125,6 +125,9 @@ public:
 
 	/* Creates a new thread in the execution graph */
 	inline void addNewThread() { events.push_back({}); };
+
+	/* Creates a new transaction in the execution graph */
+	void addNewTransaction(Transaction tr, Event be) { transactions.push_back(Transactions(tr,be)); };
 
 	/* Pers: Add/remove a thread for the recovery procedure */
 	inline void addRecoveryThread() {
@@ -705,6 +708,9 @@ protected:
 private:
 	/* A collection of threads and the events for each threads */
 	ThreadList events;
+
+	/* A collection of transactions*/
+	TransactionList transactions;
 
 	/* The next available timestamp */
 	unsigned int timestamp;

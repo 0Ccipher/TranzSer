@@ -498,7 +498,6 @@ GenericValue
 Interpreter::runFunction(Function *F,
                          ArrayRef<GenericValue> ArgValues) {
   assert (F && "Function *F was null at entry to run()");
-
   // Set up the function call.
   setupFunctionCall(F, ArgValues);
 
