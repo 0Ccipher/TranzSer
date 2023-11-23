@@ -93,6 +93,7 @@
             "filesystem": "cpp",
             "locale": "cpp",
             "__split_buffer": "cpp",
-            "__nullptr": "cpp"
+            "__nullptr": "cpp",
+            "*.def": "cpp"
       }
 }

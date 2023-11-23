@@ -1830,6 +1830,7 @@ void Interpreter::visitCallInstWrapper(CallInstWrapper CS) {
   // and treat it as a function pointer.
   GenericValue SRC = getOperandValue(SF.Caller.getCalledOperand(), SF);
   auto specialDeps = updateFunArgDeps(getCurThr().id, (Function *) GVTOP(SRC));
+  WARN(((Function*)GVTOP(SRC))->getName().str() + " 1833 Execution.cpp \n");
   callFunction((Function*)GVTOP(SRC), ArgVals, specialDeps);
   updateInternalFunRetDeps(getCurThr().id, (Function *) GVTOP(SRC), &CS);
 }
@@ -4576,7 +4577,7 @@ Interpreter::translateExternalCallArgs(Function *F, const std::vector<GenericVal
 void Interpreter::callFunction(Function *F, const std::vector<GenericValue> &ArgVals,
 			       const std::unique_ptr<EventDeps> &specialDeps)
 {
-  
+  WARN(F->getName().str() + " 4580 Execution.cpp\n");
   /* Special handling for internal calls */
   if (isInternalCall(F)) {
     callInternalFunction(F, ArgVals, specialDeps);
@@ -4585,6 +4586,7 @@ void Interpreter::callFunction(Function *F, const std::vector<GenericValue> &Arg
   
   //newscdpor
   if(F->getName().str().find("__VERIFIER_atomic_") == 0){
+	WARN(F->getName().str() + " 4589 Execution.cpp\n");
     if(AtomicFunctionCall < 0){
       AtomicFunctionCall = ECStack().size();
     } // else we are already inside an atomic function call
@@ -4602,6 +4604,7 @@ void Interpreter::callFunction(Function *F, const std::vector<GenericValue> &Arg
   // Special handling for external functions.
   if (F->isDeclaration()) {
     auto translated = translateExternalCallArgs(F, ArgVals);
+    WARN(F->getName().str() + " 4604 Execution.cpp\n");
     auto Result = callExternalFunction (F, translated);
     // Simulate a 'ret' instruction of the appropriate type.
     popStackAndReturnValueToCaller (F->getReturnType (), Result);
@@ -4698,6 +4701,7 @@ void Interpreter::run()
 		driver->handleExecutionInProgress();
 		llvm::ExecutionContext &SF = ECStack().back();
 		llvm::Instruction &I = *SF.CurInst++;
+		std::string str = I.getOpcodeName();
 		visit(I);
 		/* Atomic function? */
 		if(0 <= AtomicFunctionCall){

@@ -224,7 +224,6 @@ static bool ffiInvoke(RawFunc Fn, Function *F,
   ffi_cif cif;
   FunctionType *FTy = F->getFunctionType();
   const unsigned NumArgs = F->arg_size();
-
   // TODO: We don't have type information about the remaining arguments, because
   // this information is never passed into ExecutionEngine::runFunction().
   if (ArgVals.size() > NumArgs && F->isVarArg()) {
@@ -287,8 +286,10 @@ static bool ffiInvoke(RawFunc Fn, Function *F,
 GenericValue
 Interpreter::callExternalFunction(Function *F,
 				  const std::vector<GenericValue> &ArgVals) {
+  WARN(F->getName().str() + " 289 ExternalFunction.cpp\n");
+  if(F->getName().str() == "atomic_t1") abort();
+  if(F->getName().str() == "atomic_t3") abort();
   TheInterpreter = this;
-
   FunctionsLock->LLVM_SYS_MUTEX_LOCK_FN();
 
   // Do a lookup to see if the function is in our cache... this should just be a
@@ -326,7 +327,7 @@ Interpreter::callExternalFunction(Function *F,
     errs() << "Tried to execute an unknown external function: "
       << *F->getType() << " __main\n";
   else
-    report_fatal_error("Tried to execute an unknown external function: " +
+    report_fatal_error("Tried to execute an unknown external function: 327 ExternalFunction.cpp " +
                        F->getName());
 #ifndef USE_LIBFFI
   errs() << "Recompiling LLVM with --enable-libffi might help.\n";

@@ -56,7 +56,6 @@ buildCompilationArgs(const std::shared_ptr<const Config> &conf)
 	args += " -S -emit-llvm";
 	args += " -o " + getOutFilename(conf);
 	args += " " + conf->inputFile;
-
 	return args;
 }
 

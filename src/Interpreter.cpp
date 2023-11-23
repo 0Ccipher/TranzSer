@@ -500,7 +500,6 @@ Interpreter::runFunction(Function *F,
   assert (F && "Function *F was null at entry to run()");
   // Set up the function call.
   setupFunctionCall(F, ArgValues);
-
   // Start executing the function.
   run();
 
