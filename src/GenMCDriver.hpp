@@ -297,7 +297,6 @@ public:
 	//newscdpor
 	/* TrBegin interpreted */
 	void visitTrBegin(std::unique_ptr<TrBeginLabel> beginLab , Transaction tr);
-
 	/* TrEnd interpreted */
 	void visitTrEnd(std::unique_ptr<TrEndLabel> endLab, Transaction tr);
 

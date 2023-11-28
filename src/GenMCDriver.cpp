@@ -1037,6 +1037,8 @@ bool GenMCDriver::checkForMemoryRaces(const FreeLabel *fLab)
  */
 void GenMCDriver::checkForDataRaces(const MemAccessLabel *lab)
 {
+	//newscdpor
+	return;
 	if (getConf()->disableRaceDetection)
 		return;
 
@@ -1542,6 +1544,16 @@ void GenMCDriver::visitTrBegin(std::unique_ptr<TrBeginLabel> beginLab , Transact
 	//add new Transaction
 	g.addNewTransaction(tr , lab->getPos());
 }
+
+void GenMCDriver::visitTrEnd(std::unique_ptr<TrEndLabel> endLab , Transaction tr){
+	auto &g = getGraph();
+	//updateLabelViews(tcLab.get(), deps);
+	endLab->getPos().transaction = tr;
+	auto *lab = g.addOtherLabelToGraph(std::move(endLab));
+	//add new Transaction
+	// g.addNewTransaction(tr , lab->getPos());
+}
+
 int GenMCDriver::visitThreadCreate(std::unique_ptr<ThreadCreateLabel> tcLab, const EventDeps *deps,
 				   llvm::Function *calledFun, SVal arg, const llvm::ExecutionContext &SF)
 {
@@ -1916,11 +1928,11 @@ SVal GenMCDriver::visitLoad(std::unique_ptr<ReadLabel> rLab, const EventDeps *de
 		visitBlock(BlockLabel::create(lab->getPos().next(), BlockageType::Barrier));
 
 	/* Push all the other alternatives choices to the Stack (many maximals for wb) */
-	std::for_each(stores.begin(), stores.end() - 1, [&](const Event &s){
-		auto status = llvm::isa<MOCalculator>(g.getCoherenceCalculator()) ? false :
-			isCoMaximal(lab->getAddr(), s, true); /* MO messes with the status */
-		addToWorklist(std::make_unique<ForwardRevisit>(lab->getPos(), s, status));
-	});
+	// std::for_each(stores.begin(), stores.end() - 1, [&](const Event &s){
+	// 	auto status = llvm::isa<MOCalculator>(g.getCoherenceCalculator()) ? false :
+	// 		isCoMaximal(lab->getAddr(), s, true); /* MO messes with the status */
+	// 	addToWorklist(std::make_unique<ForwardRevisit>(lab->getPos(), s, status));
+	// });
 	return retVal;
 }
 
@@ -2002,24 +2014,24 @@ void GenMCDriver::visitStore(std::unique_ptr<WriteLabel> wLab, const EventDeps *
 		const_cast<WriteLabel*>(lab)->setVal(getBarrierInitValue(lab->getAddr(), lab->getAccess()));
 	g.getCoherenceCalculator()->addStoreToLoc(lab->getAddr(), lab->getPos(), endO);
 	
-	std::vector<int> mos;
-	// TODO:::::::: CO orderings
-	for (auto it = store_begin(g, lab->getAddr()) + begO,
-		  ie = store_begin(g, lab->getAddr()) + endO; it != ie; ++it) {
+	// std::vector<int> mos;
+	// // TODO:::::::: CO orderings
+	// for (auto it = store_begin(g, lab->getAddr()) + begO,
+	// 	  ie = store_begin(g, lab->getAddr()) + endO; it != ie; ++it) {
 
-		/* We cannot place the write just before the write of an RMW */
-		if (g.isRMWStore(*it))
-			continue;
+	// 	/* We cannot place the write just before the write of an RMW */
+	// 	if (g.isRMWStore(*it))
+	// 		continue;
 
-		/* Push the stack item */
-		if(!isHbBefore(*it, lab->getPos())) /// NEW_SCDPOR
-			if(!inRecoveryMode()){
-				addToWorklist(std::make_unique<WriteRevisit>(
-					      lab->getPos(), std::distance(store_begin(g, lab->getAddr()), it)));
-				mos.push_back(std::distance(store_begin(g, lab->getAddr()), it));
-			}
+	// 	/* Push the stack item */
+	// 	if(!isHbBefore(*it, lab->getPos())) /// NEW_SCDPOR
+	// 		if(!inRecoveryMode()){
+	// 			addToWorklist(std::make_unique<WriteRevisit>(
+	// 				      lab->getPos(), std::distance(store_begin(g, lab->getAddr()), it)));
+	// 			mos.push_back(std::distance(store_begin(g, lab->getAddr()), it));
+	// 		}
 				
-	}
+	// }
 
 	/* If the graph is not consistent (e.g., w/ LAPOR) stop the exploration */
 	bool cons = ensureConsistentStore(lab);
@@ -2031,8 +2043,8 @@ void GenMCDriver::visitStore(std::unique_ptr<WriteLabel> wLab, const EventDeps *
 		}
 	);
 
-	if (!inRecoveryMode() && !inReplay())
-		calcRevisits(lab);
+	// if (!inRecoveryMode() && !inReplay())
+	// 	calcRevisits(lab);
 	// if (!inRecoveryMode() && !inReplay())
 	// 	loadRevisits(lab);
 

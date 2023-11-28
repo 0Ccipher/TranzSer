@@ -443,8 +443,10 @@ public:
 	  auto &thr = getCurThr();
 	  return Event(thr.id, --thr.globalInstructions);
   };
+  Event currTransaction() const {return Event(getCurThr().id, getCurThr().globalTransactions);};
+  Event nextTransaction() const { return currTransaction().next(); };
   Transaction currTran() const {return Transaction(getCurThr().id, getCurThr().globalTransactions);};
-  Transaction nextTran() const { return currTran().next(); };
+  Transaction nextTran()  { incTran(); return currTran().next(); };
   Transaction incTran() {
       auto &thr = getCurThr();
       return Transaction(thr.id, ++thr.globalTransactions);

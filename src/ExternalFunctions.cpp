@@ -286,9 +286,6 @@ static bool ffiInvoke(RawFunc Fn, Function *F,
 GenericValue
 Interpreter::callExternalFunction(Function *F,
 				  const std::vector<GenericValue> &ArgVals) {
-  WARN(F->getName().str() + " 289 ExternalFunction.cpp\n");
-  if(F->getName().str() == "atomic_t1") abort();
-  if(F->getName().str() == "atomic_t3") abort();
   TheInterpreter = this;
   FunctionsLock->LLVM_SYS_MUTEX_LOCK_FN();
 
@@ -327,7 +324,7 @@ Interpreter::callExternalFunction(Function *F,
     errs() << "Tried to execute an unknown external function: "
       << *F->getType() << " __main\n";
   else
-    report_fatal_error("Tried to execute an unknown external function: 327 ExternalFunction.cpp " +
+    report_fatal_error("Tried to execute an unknown external function: " +
                        F->getName());
 #ifndef USE_LIBFFI
   errs() << "Recompiling LLVM with --enable-libffi might help.\n";

@@ -106,6 +106,8 @@ public:
 			VISIT_LABEL(DskOpen);
 			VISIT_LABEL(RCULock, LKMM);
 			VISIT_LABEL(RCUUnlock, LKMM);
+			VISIT_LABEL(TrBegin);
+			VISIT_LABEL(TrEnd);
 		default:
 			BUG();
 		}
@@ -182,6 +184,10 @@ public:
 	void visitDskOpenLabel(const DskOpenLabel &lab) { return DELEGATE_LABEL(EventLabel); }
 	void visitRCULockLabelLKMM(const RCULockLabelLKMM &lab) { return DELEGATE_LABEL(EventLabel); }
 	void visitRCUUnlockLabelLKMM(const RCUUnlockLabelLKMM &lab) { return DELEGATE_LABEL(EventLabel); }
+
+	//newscdpor
+	void visitTrBeginLabel(const TrBeginLabel &lab) { return DELEGATE_LABEL(EventLabel); }
+	void visitTrEndLabel(const TrEndLabel &lab) { return DELEGATE_LABEL(EventLabel); }
 
 	/*
 	 * If none of the above matched, propagate to the next level.
