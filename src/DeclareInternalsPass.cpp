@@ -58,6 +58,8 @@ bool DeclareInternalsPass::runOnModule(Module &M)
 				    {Type::getInt1Ty(M.getContext())});
 	modified |= declareInternal(M, "__VERIFIER_faiZNE_spin_end", Type::getVoidTy(M.getContext()), {});
 	modified |= declareInternal(M, "__VERIFIER_lockZNE_spin_end", Type::getVoidTy(M.getContext()), {});
+	//newscdpo
+	modified |= declareInternal(M, "__VERIFIER_TrBegin", Type::getVoidTy(M.getContext()), {});
 	return modified;
 }
 

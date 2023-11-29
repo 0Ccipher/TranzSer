@@ -4583,14 +4583,14 @@ void Interpreter::callFunction(Function *F, const std::vector<GenericValue> &Arg
   }
   
   //newscdpor
-   if(F->getName().str().find("TrBegin") == 0){
-	WARN(F->getName().str() + " TrBegin Execution.cpp\n");
+   if(F->getName().str().find("__VERIFIER_TrBegin") == 0){
+	WARN(F->getName().str() + "4587 Execution.cpp\n");
+	driver->visitTrBegin(TrBeginLabel::create(nextPos()) , nextTran());
   }
   if(F->getName().str().find("__VERIFIER_atomic_") == 0){
 	WARN(F->getName().str() + " 4590 Execution.cpp\n");
     if(AtomicFunctionCall < 0){
       AtomicFunctionCall = ECStack().size();
-	// driver->visitTrBegin(TrBeginLabel::create(nextPos()) , nextTran());
     } // else we are already inside an atomic function call
   }
   assert(!specialDeps);
