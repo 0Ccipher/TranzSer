@@ -151,10 +151,10 @@ llvm::raw_ostream& operator<<(llvm::raw_ostream& s,
 		s << "RCU_SYNC";
 		break;
 	case EventLabel::EL_TrBegin:
-		s << "Begin Transaction";
+		s << "BEGIN_TRANSACTION";
 		break;
 	case EventLabel::EL_TrEnd:
-		s << "End Transaction";
+		s << "END_TRANSACTION";
 		break;
 	default:
 		PRINT_BUGREPORT_INFO_ONCE("print-label-type",

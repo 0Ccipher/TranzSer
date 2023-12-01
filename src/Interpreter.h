@@ -743,6 +743,9 @@ private:  // Helper functions
   DECLARE_CUSTOM_OPCODE(AssertFail);
   DECLARE_CUSTOM_OPCODE(OptBegin);
   DECLARE_CUSTOM_OPCODE(LoopBegin);
+  //newscdpor
+  DECLARE_CUSTOM_OPCODE(TrBegin);
+  DECLARE_CUSTOM_OPCODE(TrEnd);
   DECLARE_CUSTOM_OPCODE(RecAssertFail);
   DECLARE_CUSTOM_OPCODE(SpinStart);
   DECLARE_CUSTOM_OPCODE(SpinEnd);

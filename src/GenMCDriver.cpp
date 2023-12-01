@@ -1536,21 +1536,32 @@ int GenMCDriver::getSymmetricTidSR(int thread, Event parent, llvm::Function *thr
 	return -1;
 }
 //newscdpor
-void GenMCDriver::visitTrBegin(std::unique_ptr<TrBeginLabel> beginLab , Transaction tr){
+void GenMCDriver::visitTrBegin(std::unique_ptr<TrBeginLabel> lab){
+	if (isExecutionDrivenByGraph())
+		return;
+
+	updateLabelViews(lab.get(), nullptr);
 	auto &g = getGraph();
 	auto *EE = getEE();
 	//updateLabelViews(tcLab.get(), deps);
-	beginLab->getPos().transaction = tr;
-	auto *lab = g.addOtherLabelToGraph(std::move(beginLab));
+	// beginLab->getPos().transaction = tr;
+	Transaction tr(lab->getThread() , EE->getCurThr().globalTransactions);
+	EE->incTran();
+	lab->getPos().transaction = tr;
+	g.addOtherLabelToGraph(std::move(lab));
 	//add new Transaction
 	g.addNewTransaction(tr , Event(tr.thread , EE->getCurThr().globalInstructions));
 }
 
-void GenMCDriver::visitTrEnd(std::unique_ptr<TrEndLabel> endLab , Transaction tr){
+void GenMCDriver::visitTrEnd(std::unique_ptr<TrEndLabel> lab){
+	if (isExecutionDrivenByGraph())
+		return;
+
+	updateLabelViews(lab.get(), nullptr);
 	auto &g = getGraph();
 	//updateLabelViews(tcLab.get(), deps);
-	endLab->getPos().transaction = tr;
-	// auto *lab = g.addOtherLabelToGraph(std::move(endLab));
+	// endLab->getPos().transaction = tr;
+	g.addOtherLabelToGraph(std::move(lab));
 	//add new Transaction
 	// g.addNewTransaction(tr , lab->getPos());
 }

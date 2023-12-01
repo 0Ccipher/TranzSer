@@ -296,9 +296,9 @@ public:
 
 	//newscdpor
 	/* TrBegin interpreted */
-	void visitTrBegin(std::unique_ptr<TrBeginLabel> beginLab , Transaction tr);
+	void visitTrBegin(std::unique_ptr<TrBeginLabel> lab);
 	/* TrEnd interpreted */
-	void visitTrEnd(std::unique_ptr<TrEndLabel> endLab, Transaction tr);
+	void visitTrEnd(std::unique_ptr<TrEndLabel> lab);
 
 
 	/* This method either blocks the offending thread (e.g., if the

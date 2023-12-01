@@ -256,6 +256,9 @@ void TranDriver::updateLabelViews(EventLabel *lab, const EventDeps *deps) /* dep
 	case EventLabel::EL_DskOpen:
 	case EventLabel::EL_HelpingCas:
 	case EventLabel::EL_HpProtect:
+	//newscdpor
+	case EventLabel::EL_TrBegin:
+	case EventLabel::EL_TrEnd:
 		calcBasicViews(lab);
 		break;
 	case EventLabel::EL_SmpFenceLKMM:

@@ -24,6 +24,9 @@
 #include "Error.hpp"
 
 const std::unordered_map<std::string, InternalFunctions> internalFunNames = {
+	//newscdpor
+	{"__VERIFIER_Transaction_begin", InternalFunctions::FN_TrBegin},
+	{"__VERIFIER_Transaction_end", InternalFunctions::FN_TrEnd},
 	{"__VERIFIER_assert_fail", InternalFunctions::FN_AssertFail},
 	{"__VERIFIER_opt_begin", InternalFunctions::FN_OptBegin},
 	{"__VERIFIER_loop_begin", InternalFunctions::FN_LoopBegin},

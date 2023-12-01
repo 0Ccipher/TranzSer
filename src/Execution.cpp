@@ -2838,6 +2838,18 @@ void Interpreter::callLoopBegin(Function *F, const std::vector<GenericValue> &Ar
 {
 	driver->visitLoopBegin(LoopBeginLabel::create(nextPos()));
 }
+//newscdpor
+void Interpreter::callTrBegin(Function *F, const std::vector<GenericValue> &ArgVals,
+				const std::unique_ptr<EventDeps> &specialDeps)
+{
+	driver->visitTrBegin(TrBeginLabel::create(nextPos()));
+}
+
+void Interpreter::callTrEnd(Function *F, const std::vector<GenericValue> &ArgVals,
+				const std::unique_ptr<EventDeps> &specialDeps)
+{
+	driver->visitTrEnd(TrEndLabel::create(nextPos()));
+}
 
 void Interpreter::callSpinStart(Function *F, const std::vector<GenericValue> &ArgVals,
 				const std::unique_ptr<EventDeps> &specialDeps)
@@ -4496,6 +4508,9 @@ void Interpreter::callInternalFunction(Function *F, const std::vector<GenericVal
 		CALL_INTERNAL_FUNCTION(AssertFail);
 		CALL_INTERNAL_FUNCTION(OptBegin);
 		CALL_INTERNAL_FUNCTION(LoopBegin);
+		//newscdpor
+		CALL_INTERNAL_FUNCTION(TrBegin);
+		CALL_INTERNAL_FUNCTION(TrEnd);
 		CALL_INTERNAL_FUNCTION(SpinStart);
 		CALL_INTERNAL_FUNCTION(SpinEnd);
 		CALL_INTERNAL_FUNCTION(FaiZNESpinEnd);
@@ -4582,11 +4597,11 @@ void Interpreter::callFunction(Function *F, const std::vector<GenericValue> &Arg
     return;
   }
   
-  //newscdpor
-   if(F->getName().str().find("__VERIFIER_TrBegin") == 0){
-	WARN(F->getName().str() + "4587 Execution.cpp\n");
-	driver->visitTrBegin(TrBeginLabel::create(nextPos()) , nextTran());
-  }
+//   //newscdpor
+//    if(F->getName().str().find("__VERIFIER_TrBegin") == 0){
+// 	WARN(F->getName().str() + "4587 Execution.cpp\n");
+// 	driver->visitTrBegin(TrBeginLabel::create(nextPos()) , nextTran());
+//   }
   if(F->getName().str().find("__VERIFIER_atomic_") == 0){
 	WARN(F->getName().str() + " 4590 Execution.cpp\n");
     if(AtomicFunctionCall < 0){
