@@ -165,9 +165,6 @@ public:
 	/* Returns the thread of this label in the execution graph */
 	int getThread() const { return position.thread; }
 
-	/* Returns the transaction of this label in the execution graph */
-	Transaction getTransaction() const { return position.transaction; }
-
 	/* Methods that get/set the vector clocks for this label. */
 	const View& getHbView() const { return hbView; }
 	const View& getPorfView() const { return porfView; }
@@ -238,6 +235,10 @@ public:
 	friend llvm::raw_ostream& operator<<(llvm::raw_ostream& rhs,
 					     const EventLabel &lab);
 
+	//newscdpor
+	void setTransaction(Transaction tr) {transaction = tr;}
+	Transaction getTransaction() { return transaction;}
+
 private:
 	/* Discriminator enum for LLVM-style RTTI */
 	const EventLabelKind kind;
@@ -250,6 +251,9 @@ private:
 
 	/* Position of this label within the execution graph (thread, index) */
 	const Event position;
+
+	/*Transaction, if label is inside transaction*/
+	Transaction transaction;
 
 	/* Events that are hb-before this label */
 	View hbView;

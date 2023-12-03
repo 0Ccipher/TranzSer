@@ -9,7 +9,7 @@ atomic_int x,y,z,dummy;
 int a1 = 0, a2 =0;
 
 void __VERIFIER_Transaction_begin();
-__VERIFIER_Transaction_end();
+void __VERIFIER_Transaction_end();
 
 void TrEnd(){
 	printf("End Transaction\n");
@@ -25,10 +25,10 @@ int __VERIFIER_atomic_t1(){
 	// int r1 = atomic_load_explicit(&arr[1], memory_order_seq_cst);
 	// printf("finished t1\n");
 	// TrEnd();
-	int i=0;
-	for (; i <= 2; i++){
-		printf("hello\n");
-	}
+	// int i=0;
+	// for (; i <= 2; i++){
+	// 	printf("hello\n");
+	// }
 	atomic_store_explicit(&x, 4, memory_order_seq_cst);
 	__VERIFIER_Transaction_end();
 	return 1;
@@ -60,7 +60,7 @@ void *thr1(void *arg){
 void *thr2(void *arg){
 	atomic_store_explicit(&dummy, 1, memory_order_seq_cst);
 	a2 = __VERIFIER_atomic_t2();
-	// a1 = __VERIFIER_atomic_t1();
+	a1 = __VERIFIER_atomic_t1();
 	return NULL;
 
 }
@@ -73,8 +73,8 @@ int main(int argc, char *argv[]){
 	pthread_join(t2,NULL);
 
 	// __VERIFIER_atomic_t2();
-	// abort();
-	assert(0);
+	abort();
+	// assert(0);
 	return 0;
 }
 

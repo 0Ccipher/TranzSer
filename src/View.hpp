@@ -23,6 +23,7 @@
 
 #include "Error.hpp"
 #include "Event.hpp"
+#include "Transaction.hpp"
 #include "VectorClock.hpp"
 #include <llvm/ADT/IndexedMap.h>
 #include <llvm/Support/raw_ostream.h>

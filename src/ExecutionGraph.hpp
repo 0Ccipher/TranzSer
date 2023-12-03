@@ -666,6 +666,15 @@ public:
 	/* Overloaded operators */
 	friend llvm::raw_ostream& operator<<(llvm::raw_ostream &s, const ExecutionGraph &g);
 
+	//newscdpor
+	bool isInsideTransaction(){ return insideTransaction;}
+
+	void setInsideTransaction(bool value) { insideTransaction = value;}
+
+	Transaction getCurTransaction() { if(insideTransaction) return currentTransaction; return Transaction();}
+
+	void setCurTransaction(Transaction tr) {currentTransaction = tr;}
+
 protected:
 	void enableBAM() { bam = true; }
 
@@ -711,6 +720,12 @@ private:
 
 	/* A collection of transactions*/
 	TransactionList transactions;
+
+	/*True if inside a transaction*/
+	bool insideTransaction;
+
+	/*if insideTransaction then gives current transaction*/
+	Transaction currentTransaction;
 
 	/* The next available timestamp */
 	unsigned int timestamp;
