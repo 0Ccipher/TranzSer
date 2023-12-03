@@ -1543,16 +1543,15 @@ void GenMCDriver::visitTrBegin(std::unique_ptr<TrBeginLabel> lab){
 	updateLabelViews(lab.get(), nullptr);
 	auto &g = getGraph();
 	auto *EE = getEE();
-	//updateLabelViews(tcLab.get(), deps);
-	// beginLab->getPos().transaction = tr;
+	
 	Transaction tr(lab->getThread() , EE->getCurThr().globalTransactions);
 	EE->incTran();
 	lab->setTransaction(tr);
-	g.addOtherLabelToGraph(std::move(lab));
-	//add new Transaction
-	g.addNewTransaction(tr , Event(tr.thread , EE->getCurThr().globalInstructions));
+	
 	g.setInsideTransaction(true);
 	g.setCurTransaction(tr);
+	g.addNewTransaction(std::make_unique<Transactions>(tr , Event(tr.thread , EE->getCurThr().globalInstructions)));
+	g.addOtherLabelToGraph(std::move(lab));
 }
 
 void GenMCDriver::visitTrEnd(std::unique_ptr<TrEndLabel> lab){
@@ -1895,8 +1894,13 @@ SVal GenMCDriver::visitLoad(std::unique_ptr<ReadLabel> rLab, const EventDeps *de
 
 	rLab->setAnnot(EE->getCurrentAnnotConcretized());
 	updateLabelViews(rLab.get(), deps);
-	if(g.isInsideTransaction())
+	if(g.isInsideTransaction()){
 		rLab->setTransaction(g.getCurTransaction());
+		auto *tran = g.getTransaction(g.getCurTransaction());
+		if(!tran->isLoadPresent(rLab->getAddr()))
+			tran->addLoad(rLab->getAddr() , rLab->getPos());
+	}
+		
 	auto *lab = g.addReadLabelToGraph(std::move(rLab));
 
 	if (!isAccessValid(lab)) {
@@ -2016,8 +2020,11 @@ void GenMCDriver::visitStore(std::unique_ptr<WriteLabel> wLab, const EventDeps *
 	if (getConf()->helper && g.isRMWStore(&*wLab))
 		annotateStoreHELPER(&*wLab);
 	updateLabelViews(wLab.get(), deps);
-	if(g.isInsideTransaction())
+	if(g.isInsideTransaction()){
 		wLab->setTransaction(g.getCurTransaction());
+		auto *tran = g.getTransaction(g.getCurTransaction());
+		tran->addStore(wLab->getAddr() , wLab->getPos());
+	}
 	auto *lab = g.addWriteLabelToGraph(std::move(wLab));
 
 	if (!isAccessValid(lab)) {

@@ -58,7 +58,8 @@ class ExecutionGraph {
 public:
 	using Thread = std::vector<std::unique_ptr<EventLabel> >;
 	using ThreadList = std::vector<Thread>;
-	using TransactionList = std::vector<Transactions>;
+	using TransactionsPerThread = std::vector<std::unique_ptr<Transactions> >;
+	using TransactionList = std::vector<TransactionsPerThread>;
 
 private:
 	using FixpointResult = Calculator::CalculationResult;
@@ -124,18 +125,17 @@ public:
 	}
 
 	/* Creates a new thread in the execution graph */
-	inline void addNewThread() { events.push_back({}); };
-
-	/* Creates a new transaction in the execution graph */
-	void addNewTransaction(Transaction tr, Event be) { transactions.push_back(Transactions(tr,be)); };
+	inline void addNewThread() { events.push_back({}); transactions.push_back({}); };
 
 	/* Pers: Add/remove a thread for the recovery procedure */
 	inline void addRecoveryThread() {
 		recoveryTID = events.size();
 		events.push_back({});
+		transactions.push_back({});
 	};
 	inline void delRecoveryThread() {
 		events.pop_back();
+		transactions.pop_back();
 		recoveryTID = -1;
 	};
 
@@ -674,6 +674,17 @@ public:
 	Transaction getCurTransaction() { if(insideTransaction) return currentTransaction; return Transaction();}
 
 	void setCurTransaction(Transaction tr) {currentTransaction = tr;}
+
+	/* Creates a new transaction in the execution graph */
+	void addNewTransaction(std::unique_ptr<Transactions> tr);
+
+	/*get the transaction(label) in the position denoted by tr */
+	const Transactions *getTransaction(Transaction tr) const {
+		return transactions[tr.thread][tr.index].get();
+	}
+	Transactions *getTransaction(Transaction tr) {
+		return const_cast<Transactions *>(static_cast<const ExecutionGraph&>(*this).getTransaction(tr));
+	}
 
 protected:
 	void enableBAM() { bam = true; }

@@ -12,3 +12,8 @@ void Transactions::addStore(SAddr addr, Event store){
 void Transactions::addLoad(SAddr addr, Event load){
 	reads[addr] = load;
 }
+
+bool Transactions::isLoadPresent(SAddr addr){
+	if(reads.count(addr) == 0) return false;
+	return true;
+}

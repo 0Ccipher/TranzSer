@@ -37,6 +37,7 @@ ExecutionGraph::ExecutionGraph(unsigned maxSize /* UINT_MAX */)
 {
 	/* Create an entry for main() and push the "initializer" label */
 	events.push_back({});
+	transactions.push_back({});
 	addOtherLabelToGraph( std::unique_ptr<ThreadStartLabel>(
 				     new ThreadStartLabel(
 					     0, llvm::AtomicOrdering::Acquire,
@@ -499,6 +500,17 @@ const EventLabel *ExecutionGraph::addOtherLabelToGraph(std::unique_ptr<EventLabe
 	return getEventLabel(pos);
 }
 
+//newscdpor
+void ExecutionGraph::addNewTransaction(std::unique_ptr<Transactions> tr)
+{	
+	auto pos = tr->getPos();
+	if (pos.index < transactions[pos.thread].size()) {
+		transactions[pos.thread][pos.index] = std::move(tr);
+	} else {
+		transactions[pos.thread].push_back(std::move(tr));
+	}
+	BUG_ON(pos.index > transactions[pos.thread].size());
+}
 
 /************************************************************
  ** Calculation of [(po U rf)*] predecessors and successors

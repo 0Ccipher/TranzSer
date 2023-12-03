@@ -19,6 +19,9 @@ int __VERIFIER_atomic_t1(){
 	__VERIFIER_Transaction_begin();
 	atomic_store_explicit(&z, 1, memory_order_seq_cst);
 	int r1 = atomic_load_explicit(&z, memory_order_seq_cst);
+	r1 = atomic_load_explicit(&z, memory_order_seq_cst);
+	r1 = atomic_load_explicit(&z, memory_order_seq_cst);
+	r1 = atomic_load_explicit(&z, memory_order_seq_cst);
 	printf("z1: %d\n",r1);
 	atomic_store_explicit(&x, 1, memory_order_seq_cst);
 	atomic_store_explicit(&x, 2, memory_order_seq_cst);
@@ -73,7 +76,7 @@ int main(int argc, char *argv[]){
 	pthread_join(t2,NULL);
 
 	// __VERIFIER_atomic_t2();
-	// abort();
+	abort();
 	// assert(0);
 	return 0;
 }

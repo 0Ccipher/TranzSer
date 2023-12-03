@@ -24,16 +24,12 @@
 
 class Transactions{
 
-protected:
-	/* ExecutionGraph needs to be a friend to call the constructors */
-	friend class ExecutionGraph;
-	friend class DepExecutionGraph;
+public:
 
 	Transactions(unsigned int s, Transaction tr, Event be) : stamp(s), position(tr), beginEvent(be) {}
 	Transactions(Transaction tr, Event be)
 		: stamp(0), position(tr) , beginEvent(be) {}
 
-public:
 	/* Getter/setter for the stamp in an execution graph*/
 	unsigned int getStamp() const { return stamp; }
 	void setStamp(unsigned int s) { stamp = s; }
@@ -55,6 +51,7 @@ public:
 
 	/* Add the load*/
 	void addLoad(SAddr addr, Event load);
+	bool isLoadPresent(SAddr addr);
 
 	/* Methods that get/set the vector clocks for this label. */
 	const View& getHbView() const { return hbView; }
