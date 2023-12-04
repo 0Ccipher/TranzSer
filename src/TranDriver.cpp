@@ -8,6 +8,7 @@
 #include "ExecutionGraph.hpp"
 #include "GraphIterators.hpp"
 #include "PSCCalculator.hpp"
+#include "TranSCCalculator.hpp"
 #include "PersistencyChecker.hpp"
 
 TranDriver::TranDriver(std::shared_ptr<const Config> conf, std::unique_ptr<llvm::Module> mod,
@@ -16,9 +17,11 @@ TranDriver::TranDriver(std::shared_ptr<const Config> conf, std::unique_ptr<llvm:
 {
 	auto &g = getGraph();
 
-	/* Tran requires the calculation of PSC */
 	g.addCalculator(std::make_unique<PSCCalculator>(g),
 			ExecutionGraph::RelationId::psc, false);
+
+	g.addCalculator(std::make_unique<TranSCCalculator>(g),
+			ExecutionGraph::RelationId::TranSC, false);
 	return;
 }
 

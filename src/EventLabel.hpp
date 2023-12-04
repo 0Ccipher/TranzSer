@@ -237,7 +237,7 @@ public:
 
 	//newscdpor
 	void setTransaction(Transaction tr) {transaction = tr;}
-	Transaction getTransaction() { return transaction;}
+	Transaction getTransaction() const{ return transaction;}
 
 private:
 	/* Discriminator enum for LLVM-style RTTI */

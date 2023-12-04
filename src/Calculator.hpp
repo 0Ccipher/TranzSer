@@ -61,6 +61,9 @@ public:
 	using GlobalRelation = AdjList<Event, EventHasher>;
 	using PerLocRelation = std::unordered_map<SAddr, GlobalRelation>;
 
+	//newscdpor
+	using GlobalTranRelation = AdjList<Transaction, TransactionHasher>;
+
 	/* Constructor */
 	Calculator(ExecutionGraph &g) : execGraph(g) {}
 

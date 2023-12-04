@@ -94,6 +94,8 @@
             "locale": "cpp",
             "__split_buffer": "cpp",
             "__nullptr": "cpp",
-            "*.def": "cpp"
-      }
+            "*.def": "cpp",
+            "*.inc": "cpp"
+      },
+      "C_Cpp.errorSquiggles": "enabled"
 }

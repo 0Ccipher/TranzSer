@@ -48,10 +48,13 @@ public:
 
 	/* Add the store*/
 	void addStore(SAddr addr, Event store);
+	bool isStorePresent(SAddr addr) const;
+	Event getStore(SAddr addr) const;
 
 	/* Add the load*/
 	void addLoad(SAddr addr, Event load);
-	bool isLoadPresent(SAddr addr);
+	bool isLoadPresent(SAddr addr) const;
+	Event getLoad(SAddr addr) const;
 
 	/* Methods that get/set the vector clocks for this label. */
 	const View& getHbView() const { return hbView; }

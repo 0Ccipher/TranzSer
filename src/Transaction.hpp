@@ -16,9 +16,11 @@ struct Transaction {
 
 	static Transaction getInitializer() { return Transaction(0, 0); };
 	static Transaction getBottom() { return Transaction(-42, -42); };
+	static Transaction getInvalid() { return Transaction(-17, -17); };
 
 	bool isInitializer() const { return *this == getInitializer(); };
 	bool isBottom() const { return *this == getBottom(); };
+	bool isInvalid() const { return *this == getInvalid(); };
 
 	Transaction prev() const { return Transaction(thread, index-1); };
 	Transaction next() const { return Transaction(thread, index+1); };

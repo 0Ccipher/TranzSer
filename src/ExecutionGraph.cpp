@@ -37,6 +37,7 @@ ExecutionGraph::ExecutionGraph(unsigned maxSize /* UINT_MAX */)
 {
 	/* Create an entry for main() and push the "initializer" label */
 	events.push_back({});
+	//newscdpor
 	transactions.push_back({});
 	addOtherLabelToGraph( std::unique_ptr<ThreadStartLabel>(
 				     new ThreadStartLabel(
@@ -527,6 +528,14 @@ void ExecutionGraph::addCalculator(std::unique_ptr<Calculator> cc, RelationId r,
 
 	/* Add a matrix for this relation */
 	auto relSize = 0u;
+	if(r == RelationId::TranSC){
+		relSize = relations.globalTran.size();
+		relations.globalTran.push_back(Calculator::GlobalTranRelation());
+		/* Update indices trackers */
+		calculatorIndex[r] = calcSize;
+		relationIndex[r] = relSize;
+		return;
+	}
 	if (perLoc) {
 		relSize = relations.perLoc.size();
 		relations.perLoc.push_back(Calculator::PerLocRelation());
@@ -552,6 +561,13 @@ Calculator::PerLocRelation& ExecutionGraph::getPerLocRelation(RelationId id)
 {
 	BUG_ON(relationIndex.count(id) == 0);
 	return relations.perLoc[relationIndex[id]];
+}
+
+//newscdpor
+Calculator::GlobalTranRelation& ExecutionGraph::getGlobalTranRelation(RelationId id)
+{
+	BUG_ON(relationIndex.count(id) == 0);
+	return relations.globalTran[relationIndex[id]];
 }
 
 Calculator::GlobalRelation& ExecutionGraph::getCachedGlobalRelation(RelationId id)
@@ -1721,6 +1737,22 @@ ExecutionGraph::getSCs() const
 			fcs.push_back(lab->getPos());
 	}
 	return std::make_pair(scs,fcs);
+}
+
+std::pair<std::vector<Event>, std::vector<Transaction> >
+ExecutionGraph::getSCEventsTransactions() const
+{
+	std::vector<Event> scs;
+	std::vector<Transaction> sctrans;
+
+	for (const auto *lab : labels(*this)) {
+		if (lab->isSC() && !isRMWLoad(lab))
+			scs.push_back(lab->getPos());
+	}
+	for(const auto *trans : alltransactions(*this)){
+		sctrans.push_back(trans->getPos());
+	}
+	return std::make_pair(scs,sctrans);
 }
 
 

@@ -73,6 +73,7 @@ private:
 
 		std::vector<Calculator::GlobalRelation> global;
 		std::vector<Calculator::PerLocRelation> perLoc;
+		std::vector<Calculator::GlobalTranRelation> globalTran;
 
 		FixpointStatus fixStatus;
 		FixpointResult fixResult;
@@ -85,7 +86,7 @@ public:
 
 	/* Different relations that might exist in the graph */
 	enum class RelationId {
-		hb, co, lb, psc, ar, prop, ar_lkmm, pb, rcu_link, rcu, rcu_fence, xb, cb/*capture po-rf*/
+		hb, co, lb, psc, ar, prop, ar_lkmm, pb, rcu_link, rcu, rcu_fence, xb, cb, TranSC,
 	};
 
 protected:
@@ -103,6 +104,11 @@ public:
 	using reverse_iterator = ThreadList::reverse_iterator;
 	using const_reverse_iterator = ThreadList::const_reverse_iterator;
 
+	using tran_iterator = TransactionList::iterator;
+	using const_tran_iterator = TransactionList::const_iterator;
+	using reverse_tran_iterator = TransactionList::reverse_iterator;
+	using const_reverse_tran_iterator = TransactionList::const_reverse_iterator;
+
 	iterator begin() { return events.begin(); };
 	iterator end() { return events.end(); };
 	const_iterator begin() const { return events.begin(); };
@@ -114,6 +120,17 @@ public:
 	const_reverse_iterator rend()   const { return events.rend(); };
 
 
+	tran_iterator  tran_begin() { return transactions.begin(); };
+	tran_iterator tran_end() { return transactions.end(); };
+	const_tran_iterator tran_begin() const { return transactions.begin(); };
+	const_tran_iterator tran_end() const { return transactions.end(); };
+
+	reverse_tran_iterator rtran_begin() { return transactions.rbegin(); };
+	reverse_tran_iterator rtran_end()   { return transactions.rend(); };
+	const_reverse_tran_iterator rtran_begin() const { return transactions.rbegin(); };
+	const_reverse_tran_iterator rtran_end()   const { return transactions.rend(); };
+
+
 	/* Thread-related methods */
 
 	/* Returns a list of the threads in the graph */
@@ -122,6 +139,13 @@ public:
 	}
 	inline ThreadList &getThreadList() {
 		return const_cast<ThreadList &>(static_cast<const ExecutionGraph &>(*this).getThreadList());
+	}
+	/*List of transactions*/
+	inline const TransactionList &getThreadTranList() const {
+		return transactions;
+	}
+	inline TransactionList &getThreadTranList() {
+		return const_cast<TransactionList &>(static_cast<const ExecutionGraph &>(*this).getThreadTranList());
 	}
 
 	/* Creates a new thread in the execution graph */
@@ -148,6 +172,7 @@ public:
 
 	/* Returns the size of the thread tid */
 	inline unsigned int getThreadSize(int tid) const { return events[tid].size(); };
+	inline unsigned int getThreadTranSize(int tid) const { return transactions[tid].size(); };
 
 	/* Returns true if the thread tid is empty */
 	inline bool isThreadEmpty(int tid) const { return getThreadSize(tid) == 0; };
@@ -398,6 +423,8 @@ public:
 	/* Returns a reference to the specified relation matrix */
 	Calculator::GlobalRelation& getGlobalRelation(RelationId id);
 	Calculator::PerLocRelation& getPerLocRelation(RelationId id);
+	//newscdpor
+	Calculator::GlobalTranRelation& getGlobalTranRelation(RelationId id);
 
 	/* Returns a reference to the cached version of the
 	 * specified relation matrix */
@@ -686,6 +713,7 @@ public:
 		return const_cast<Transactions *>(static_cast<const ExecutionGraph&>(*this).getTransaction(tr));
 	}
 
+	std::pair<std::vector<Event>, std::vector<Transaction> > getSCEventsTransactions() const;
 protected:
 	void enableBAM() { bam = true; }
 

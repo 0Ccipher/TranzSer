@@ -76,8 +76,8 @@ int main(int argc, char *argv[]){
 	pthread_join(t2,NULL);
 
 	// __VERIFIER_atomic_t2();
-	abort();
-	// assert(0);
+	// abort();
+	assert(0);
 	return 0;
 }
 

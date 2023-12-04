@@ -87,6 +87,7 @@ libgenmc_a_SOURCES = \
   TranDriver.cpp TranDriver.hpp \
   Transaction.cpp Transaction.hpp \
   TransactionLabel.cpp TransactionLabel.hpp \
+  TranSCCalculator.cpp TranSCCalculator.hpp \
   WorkSet.hpp WorkSet.cpp \
   value_ptr.hpp \
   VectorClock.hpp VectorClock.cpp \

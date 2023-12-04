@@ -1,0 +1,370 @@
+/*
+ Omkar
+ */
+
+#include "TranSCCalculator.hpp"
+#include "Error.hpp"
+#include "ExecutionGraph.hpp"
+#include "GraphIterators.hpp"
+#include "WBCalculator.hpp"
+
+std::vector<SAddr> TranSCCalculator::getDoubleLocs() const
+{
+	auto &g = getGraph();
+	std::vector<SAddr> singles, doubles;
+
+	for (auto i = 0u; i < g.getNumThreads(); i++) {
+		for (auto j = 1u; j < g.getThreadSize(i); j++) { /* Do not consider thread inits */
+			const EventLabel *lab = g.getEventLabel(Event(i, j));
+			if (!llvm::isa<MemAccessLabel>(lab))
+				continue;
+
+			auto *mLab = static_cast<const MemAccessLabel *>(lab);
+			if (std::find(doubles.begin(), doubles.end(),
+				      mLab->getAddr()) != doubles.end())
+				continue;
+			if (std::find(singles.begin(), singles.end(),
+				      mLab->getAddr()) != singles.end()) {
+				singles.erase(std::remove(singles.begin(),
+							  singles.end(),
+							  mLab->getAddr()),
+					      singles.end());
+				doubles.push_back(mLab->getAddr());
+			} else {
+				singles.push_back(mLab->getAddr());
+			}
+		}
+	}
+	return doubles;
+}
+
+
+std::vector<Transaction> TranSCCalculator::calcSCSuccs(const std::vector<Event> &fcs,
+					       const Event e) const
+{
+	auto &g = getGraph();
+	const EventLabel *lab = g.getEventLabel(e);
+
+	if (g.isRMWLoad(lab))
+		return {};
+	if (lab->isSC()){
+		if(lab->getTransaction().isInvalid())
+			return {};
+		return {lab->getTransaction()};
+	}
+	return {};
+}
+
+std::vector<Transaction> TranSCCalculator::calcSCPreds(const std::vector<Event> &fcs,
+					       const Event e) const
+{
+	auto &g = getGraph();
+	const EventLabel *lab = g.getEventLabel(e);
+
+	if (g.isRMWLoad(lab))
+		return {};
+	if (lab->isSC()){
+		if(lab->getTransaction().isInvalid())
+			return {};
+		return {lab->getTransaction()};
+	}
+	return {};
+}
+
+std::vector<Transaction> TranSCCalculator::calcRfSCSuccs(const std::vector<Event> &fcs,
+						 const Event ev) const
+{
+	auto &g = getGraph();
+	const EventLabel *lab = g.getEventLabel(ev);
+	std::vector<Transaction> rfs;
+
+	BUG_ON(!llvm::isa<WriteLabel>(lab));
+	auto *wLab = static_cast<const WriteLabel *>(lab);
+	for (const auto &e : wLab->getReadersList()) {
+		auto succs = calcSCSuccs(fcs, e);
+		rfs.insert(rfs.end(), succs.begin(), succs.end());
+	}
+	return rfs;
+}
+
+void TranSCCalculator::addRbEdges(const std::vector<Event> &fcs,
+				const std::vector<Transaction> &moAfter,
+				const std::vector<Transaction> &moRfAfter,
+				Calculator::GlobalTranRelation &matrix,
+				const Event &ev) const
+{
+	auto &g = getGraph();
+	const EventLabel *lab = g.getEventLabel(ev);
+
+	BUG_ON(!llvm::isa<WriteLabel>(lab));
+	auto *wLab = static_cast<const WriteLabel *>(lab);
+	for (const auto &e : wLab->getReadersList()) {
+		auto preds = calcSCPreds(fcs, e);
+		matrix.addEdgesFromTo(preds, moAfter);        /* Base/fence: Adds rb-edges */
+	}
+	return;
+}
+
+void TranSCCalculator::addMoRfEdges(const std::vector<Event> &fcs,
+				  const std::vector<Transaction> &moAfter,
+				  const std::vector<Transaction> &moRfAfter,
+				  Calculator::GlobalTranRelation &matrix,
+				  const Event &ev) const
+{
+	auto &g = getGraph();
+	auto preds = calcSCPreds(fcs, ev);
+	auto rfs = calcRfSCSuccs(fcs, ev);
+
+	matrix.addEdgesFromTo(preds, moAfter);        /* Base/fence:  Adds mo-edges */
+	matrix.addEdgesFromTo(preds, rfs);            /* Base/fence:  Adds rf-edges (hb_loc) */
+	return;
+}
+
+/*
+ * addSCEcosLoc - Helper function that calculates a part of TranSC_base and TranSC_fence
+ *
+ * For TranSC_base and TranSC_fence, it adds co, rb, and hb_loc edges. The
+ * procedure for co and rb is straightforward: at each point, we only
+ * need to keep a list of all the co-after writes that are either SC,
+ * or can reach an SC fence. For hb_loc, however, we only consider
+ * rf-edges because the other cases are implicitly covered (sb, co, etc).
+ *
+ * For TranSC_fence only, it adds (co;rf)- and (rb;rf)-edges. Simple cases like
+ * co, rf, and rb are covered by TranSC_base, and all other combinations with
+ * more than one step either do not compose, or lead to an already added
+ * single-step relation (e.g, (rf;rb) => co, (rb;co) => rb)
+ */
+void TranSCCalculator::addSCEcosLoc(const std::vector<Event> &fcs,
+				 Calculator::GlobalRelation &coMatrix,
+				 Calculator::GlobalTranRelation &TranSCMatrix) const
+{
+	auto &g = getGraph();
+	auto &stores = coMatrix.getElems();
+	for (auto i = 0u; i < stores.size(); i++) {
+
+		/*
+		 * Calculate which of the stores are co-after the current
+		 * write, and then collect co-after and (co;rf)-after SC successors
+		 */
+		std::vector<Transaction> coAfter, coRfAfter;
+		for (auto j = 0u; j < stores.size(); j++) {
+			const EventLabel *labi = g.getEventLabel(stores[i]);
+			const EventLabel *labj = g.getEventLabel(stores[j]);
+			auto storeiTran = labi->getTransaction();
+			auto storejTran = labj->getTransaction();
+			if(!storeiTran.isInvalid() && !storejTran.isInvalid())
+			if(storeiTran != storejTran)
+			if (coMatrix(i, j)) {
+				auto succs = calcSCSuccs(fcs, stores[j]);
+				coAfter.insert(coAfter.end(), succs.begin(), succs.end());
+			}
+		}
+
+		/* Then, add the proper edges to TranSC using co-after and (co;rf)-after successors */
+		addRbEdges(fcs, coAfter, coRfAfter, TranSCMatrix, stores[i]); // (fr)
+		addMoRfEdges(fcs, coAfter, coRfAfter, TranSCMatrix, stores[i]); //(co-rf)
+	}
+}
+
+/*
+ * Adds sb as well as [Esc];sb_(<>loc);hb;sb_(<>loc);[Esc] edges. The first
+ * part of this function is common for TranSC_base and TranSC_fence, while the second
+ * part of this function is not triggered for fences (these edges are covered in
+ * addSCEcos()).
+ */
+void TranSCCalculator::addSbHbEdges(Calculator::GlobalTranRelation &matrix) const
+{
+	auto &g = getGraph();
+	auto &hbRelation = g.getGlobalRelation(ExecutionGraph::RelationId::hb);
+
+	auto accesses = g.getSCEventsTransactions();
+	auto &scs = accesses.first;
+	for (auto i = 0u; i < scs.size(); i++) {
+		for (auto j = 0u; j < scs.size(); j++) {
+			if (i == j)
+				continue;
+			const EventLabel *eiLab = g.getEventLabel(scs[i]);
+			const EventLabel *ejLab = g.getEventLabel(scs[j]);
+
+			/* Adds sb-edges (po)*/
+			if (eiLab->getThread() == ejLab->getThread()) {
+				if(!eiLab->getTransaction().isInvalid() && !ejLab->getTransaction().isInvalid())
+				if(eiLab->getTransaction() != ejLab->getTransaction())
+				if (eiLab->getIndex() < ejLab->getIndex())
+					matrix.addEdge(eiLab->getTransaction(), ejLab->getTransaction());
+				continue;
+			}
+
+			/* TranSC_base: Adds [Esc];sb_(<>loc);hb;sb_(<>loc);[Esc] edges.
+			 * We do need to consider the [Fsc];hb? cases, since these
+			 * will be covered by addSCEcos(). (More speficically, from
+			 * the rf/hb_loc case in addMoRfEdges().)  */
+			// const EventLabel *ejPrevLab = g.getPreviousNonEmptyLabel(ejLab);
+			// if (!llvm::isa<MemAccessLabel>(ejPrevLab) ||
+			//     !llvm::isa<MemAccessLabel>(ejLab) ||
+			//     !llvm::isa<MemAccessLabel>(eiLab))
+			// 	continue;
+
+			// if (eiLab->getPos() == g.getLastThreadEvent(eiLab->getThread()))
+			// 	continue;
+
+			// auto *ejPrevMLab = static_cast<const MemAccessLabel *>(ejPrevLab);
+			// auto *ejMLab = static_cast<const MemAccessLabel *>(ejLab);
+			// auto *eiMLab = static_cast<const MemAccessLabel *>(eiLab);
+
+			// if (ejPrevMLab->getAddr() != ejMLab->getAddr()) {
+			// 	Event next = eiMLab->getPos().next();
+			// 	const EventLabel *eiNextLab = g.getEventLabel(next);
+			// 	if (auto *eiNextMLab =
+			// 	    llvm::dyn_cast<MemAccessLabel>(eiNextLab)) {
+			// 		if (eiMLab->getAddr() != eiNextMLab->getAddr() &&
+			// 		    hbRelation(eiNextMLab->getPos(), ejPrevMLab->getPos()))
+			// 			matrix.addEdge(eiLab->getTransaction(), ejLab->getTransaction());
+			// 	}
+			// }
+		}
+	}
+	return;
+}
+
+void TranSCCalculator::addInitEdges(const std::vector<Event> &fcs,
+				  Calculator::GlobalTranRelation &matrix) const
+{
+	auto &g = getGraph();
+	for (auto i = 0u; i < g.getNumThreads(); i++) {
+		for (auto j = 0u; j < g.getThreadSize(i); j++) {
+			const EventLabel *lab = g.getEventLabel(Event(i, j));
+			/* Consider only reads that read from the initializer write */
+			if (!llvm::isa<ReadLabel>(lab) || g.isRMWLoad(lab))
+				continue;
+			auto *rLab = static_cast<const ReadLabel *>(lab);
+			if (!rLab->getRf().isInitializer())
+				continue;
+			/*Ensure that the event is from a transaction*/
+			if(rLab->getTransaction().isInvalid())
+				continue;
+			/*Ensure that the read event is present in transactions.reads
+			  That is, we consider the edges incoming/outgoing due the first 
+			  on the respective address from the repective transaction*/
+			auto *rLabTrans = g.getTransaction(rLab->getTransaction());
+			BUG_ON(rLabTrans->isLoadPresent(rLab->getAddr()));
+			if(rLab->getPos() != rLabTrans->getLoad(rLab->getAddr()))
+				continue;
+			auto preds = calcSCPreds(fcs, rLab->getPos());
+			for (const auto &w : stores(g, rLab->getAddr())) {
+				/* Can be casted to WriteLabel by construction */
+				auto *wLab = g.getWriteLabel(w);
+				auto wSuccs = calcSCSuccs(fcs, w);
+				matrix.addEdgesFromTo(preds, wSuccs); /* Adds rb-edges (fr)*/
+			}
+		}
+	}
+	return;
+}
+
+void TranSCCalculator::addSCEcos(const std::vector<Event> &fcs,
+			      const std::vector<SAddr> &scLocs,
+			      Calculator::GlobalTranRelation &matrix) const
+{
+	auto &g = getGraph();
+	auto &coRelation = g.getPerLocRelation(ExecutionGraph::RelationId::co);
+
+	for (auto loc : scLocs)
+		addSCEcosLoc(fcs, coRelation[loc], matrix);
+	return;
+}
+
+void TranSCCalculator::calcTranSCRelation()
+{
+	auto &g = getGraph();
+	auto &TranSCRelation = g.getGlobalTranRelation(ExecutionGraph::RelationId::TranSC);
+
+	/* Collect all SC events (except for RMW loads) */
+	auto accesses = g.getSCEventsTransactions();
+	/*All events(mem)*/
+	auto &scs = accesses.first;
+	/*All Transactions*/
+	auto &sctrans = accesses.second; 
+	std::vector<Event> fcs;
+
+	/* If there are no SC events, it is a valid execution */
+	if (scs.empty())
+		return;
+
+	/* Add edges from the initializer write (special case) */
+	addInitEdges(fcs, TranSCRelation);
+	/* Add sb and sb_(<>loc);hb;sb_(<>loc) edges (+ Fsc;hb;Fsc) */
+	addSbHbEdges(TranSCRelation);
+
+	/*
+	 * Collect memory locations with more than one SC accesses
+	 * and add the rest of TranSC_base and TranSC_fence
+	 */
+	addSCEcos(fcs, getDoubleLocs(), TranSCRelation);
+	TranSCRelation.transClosure();
+	return;
+}
+
+Calculator::CalculationResult TranSCCalculator::addTranSCConstraints()
+{
+	auto &g = getGraph();
+	auto &coRelation = g.getPerLocRelation(ExecutionGraph::RelationId::co);
+	auto &TranSCRelation = g.getGlobalTranRelation(ExecutionGraph::RelationId::TranSC);
+	Calculator::CalculationResult result;
+
+	// if (auto *wbCoh = llvm::dyn_cast<WBCalculator>(
+	// 	    g.getCoherenceCalculator())) {
+	// 	for (auto &coLoc : coRelation)
+	// 		result |= wbCoh->calcWbRelation(coLoc.first, coLoc.second,
+	// 						TranSCRelation, [&](Event e)
+	// 						{ return g.getEventLabel(e)->isSC() &&
+	// 							 !g.isRMWLoad(e); });
+	// }
+	return result;
+}
+
+void TranSCCalculator::initCalc()
+{
+	auto &g = getGraph();
+	auto &TranSCRelation = g.getGlobalTranRelation(ExecutionGraph::RelationId::TranSC);
+
+	/* Collect all SC events (except for RMW loads) */
+	auto accesses = getGraph().getSCEventsTransactions();
+
+	TranSCRelation = Calculator::GlobalTranRelation(accesses.second);
+	return;
+}
+
+Calculator::CalculationResult TranSCCalculator::doCalc()
+{
+	auto &g = getGraph();
+	auto &hbRelation = g.getGlobalRelation(ExecutionGraph::RelationId::hb);
+	auto &TranSCRelation = g.getGlobalTranRelation(ExecutionGraph::RelationId::TranSC);
+	auto &coRelation = g.getPerLocRelation(ExecutionGraph::RelationId::co);
+
+	hbRelation.transClosure();
+	if (!hbRelation.isIrreflexive())
+		return Calculator::CalculationResult(false, false);
+	calcTranSCRelation();
+	if (!TranSCRelation.isIrreflexive())
+		return Calculator::CalculationResult(false, false);
+
+	auto result = addTranSCConstraints();
+	if (!result.cons)
+		return Calculator::CalculationResult(result.changed, false);
+	for (auto &coLoc : coRelation)
+		coLoc.second.transClosure();
+
+	/* Check that co is acyclic */
+	for (auto &coLoc : coRelation) {
+		if (!coLoc.second.isIrreflexive())
+		return Calculator::CalculationResult(result.changed, false);
+	}
+	return Calculator::CalculationResult(result.changed, true);
+}
+
+void TranSCCalculator::removeAfter(const VectorClock &preds)
+{
+	/* We do not track anything specific for TranSC */
+	return;
+}
