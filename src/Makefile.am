@@ -88,6 +88,7 @@ libgenmc_a_SOURCES = \
   Transaction.cpp Transaction.hpp \
   TransactionLabel.cpp TransactionLabel.hpp \
   TranSCCalculator.cpp TranSCCalculator.hpp \
+  GraphTrasactionIterators.hpp \
   WorkSet.hpp WorkSet.cpp \
   value_ptr.hpp \
   VectorClock.hpp VectorClock.cpp \

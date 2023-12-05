@@ -26,6 +26,7 @@
 #include "GenMCDriver.hpp"
 #include "Interpreter.h"
 #include "GraphIterators.hpp"
+#include "GraphTransactionIterators.hpp"
 #include "LabelVisitor.hpp"
 #include "Parser.hpp"
 #include "SExprVisitor.hpp"

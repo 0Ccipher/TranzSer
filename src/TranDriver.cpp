@@ -7,6 +7,7 @@
 #include "Interpreter.h"
 #include "ExecutionGraph.hpp"
 #include "GraphIterators.hpp"
+#include "GraphTransactionIterators.hpp"
 #include "PSCCalculator.hpp"
 #include "TranSCCalculator.hpp"
 #include "PersistencyChecker.hpp"
@@ -20,8 +21,8 @@ TranDriver::TranDriver(std::shared_ptr<const Config> conf, std::unique_ptr<llvm:
 	g.addCalculator(std::make_unique<PSCCalculator>(g),
 			ExecutionGraph::RelationId::psc, false);
 
-	g.addCalculator(std::make_unique<TranSCCalculator>(g),
-			ExecutionGraph::RelationId::TranSC, false);
+	// g.addCalculator(std::make_unique<TranSCCalculator>(g),
+	// 		ExecutionGraph::RelationId::TranSC, false);
 	return;
 }
 

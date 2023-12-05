@@ -141,11 +141,11 @@ public:
 		return const_cast<ThreadList &>(static_cast<const ExecutionGraph &>(*this).getThreadList());
 	}
 	/*List of transactions*/
-	inline const TransactionList &getThreadTranList() const {
+	inline const TransactionList &getTransactionList() const {
 		return transactions;
 	}
-	inline TransactionList &getThreadTranList() {
-		return const_cast<TransactionList &>(static_cast<const ExecutionGraph &>(*this).getThreadTranList());
+	inline TransactionList &getTransactionList() {
+		return const_cast<TransactionList &>(static_cast<const ExecutionGraph &>(*this).getTransactionList());
 	}
 
 	/* Creates a new thread in the execution graph */

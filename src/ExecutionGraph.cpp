@@ -21,6 +21,7 @@
 #include "config.h"
 #include "ExecutionGraph.hpp"
 #include "GraphIterators.hpp"
+#include "GraphTransactionIterators.hpp"
 #include "LBCalculatorLAPOR.hpp"
 #include "MOCalculator.hpp"
 #include "Parser.hpp"

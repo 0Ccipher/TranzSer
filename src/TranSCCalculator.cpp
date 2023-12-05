@@ -6,6 +6,7 @@
 #include "Error.hpp"
 #include "ExecutionGraph.hpp"
 #include "GraphIterators.hpp"
+#include "GraphTransactionIterators.hpp"
 #include "WBCalculator.hpp"
 
 std::vector<SAddr> TranSCCalculator::getDoubleLocs() const

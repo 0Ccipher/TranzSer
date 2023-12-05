@@ -11,17 +11,10 @@ int a1 = 0, a2 =0;
 void __VERIFIER_Transaction_begin();
 void __VERIFIER_Transaction_end();
 
-void TrEnd(){
-	printf("End Transaction\n");
-}
-
 int __VERIFIER_atomic_t1(){
 	__VERIFIER_Transaction_begin();
 	atomic_store_explicit(&z, 1, memory_order_seq_cst);
 	int r1 = atomic_load_explicit(&z, memory_order_seq_cst);
-	r1 = atomic_load_explicit(&z, memory_order_seq_cst);
-	r1 = atomic_load_explicit(&z, memory_order_seq_cst);
-	r1 = atomic_load_explicit(&z, memory_order_seq_cst);
 	printf("z1: %d\n",r1);
 	atomic_store_explicit(&x, 1, memory_order_seq_cst);
 	atomic_store_explicit(&x, 2, memory_order_seq_cst);
@@ -61,9 +54,8 @@ void *thr1(void *arg){
 }
 
 void *thr2(void *arg){
-	atomic_store_explicit(&dummy, 1, memory_order_seq_cst);
-	a2 = __VERIFIER_atomic_t2();
-	a1 = __VERIFIER_atomic_t1();
+	// a2 = __VERIFIER_atomic_t2();
+	// a1 = __VERIFIER_atomic_t1();
 	return NULL;
 
 }
