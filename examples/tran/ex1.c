@@ -21,11 +21,11 @@ int __VERIFIER_atomic_t1(){
 	// int r1 = atomic_load_explicit(&arr[1], memory_order_seq_cst);
 	// printf("finished t1\n");
 	// TrEnd();
-	// int i=0;
-	// for (; i <= 2; i++){
-	// 	printf("hello\n");
-	// }
-	// atomic_store_explicit(&x, 4, memory_order_seq_cst);
+	int i=0;
+	for (; i <= 2; i++){
+		printf("hello\n");
+	}
+	atomic_store_explicit(&x, 4, memory_order_seq_cst);
 	__VERIFIER_Transaction_end();
 	return 1;
 }
@@ -33,14 +33,14 @@ int __VERIFIER_atomic_t1(){
 int __VERIFIER_atomic_t2(){
 	__VERIFIER_Transaction_begin();
 	int r1 = 0;
-	// atomic_store_explicit(&y, 1, memory_order_seq_cst);
+	atomic_store_explicit(&y, 1, memory_order_seq_cst);
 	atomic_store_explicit(&x, 3, memory_order_seq_cst);
-	// atomic_store_explicit(&x, 4, memory_order_seq_cst);
-	// atomic_store_explicit(&x, 5, memory_order_seq_cst);
+	atomic_store_explicit(&x, 4, memory_order_seq_cst);
+	atomic_store_explicit(&x, 5, memory_order_seq_cst);
 	// atomic_store_explicit(&arr[1], 1, memory_order_seq_cst);
 	r1 = atomic_load_explicit(&x, memory_order_seq_cst);
 	printf("x2: %d\n",r1);
-	// r1 = atomic_load_explicit(&x, memory_order_seq_cst);
+	r1 = atomic_load_explicit(&x, memory_order_seq_cst);
 	__VERIFIER_Transaction_end();
 	return r1;
  }
@@ -70,7 +70,7 @@ int main(int argc, char *argv[]){
 	pthread_join(t2,NULL);
 
 	// __VERIFIER_atomic_t2();
-	abort();
+	// abort();
 	// assert(0);
 	return 0;
 }

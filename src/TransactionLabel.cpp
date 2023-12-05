@@ -29,6 +29,12 @@ Event Transactions::getLoad(SAddr addr) const{
 	return Event(-42,-42);
 }
 
+Event Transactions::getStore(SAddr addr) const{
+	if(isStorePresent(addr))
+		return stores.at(addr);
+	return Event(-42,-42);
+}
+
 std::vector<Event> Transactions::getLoads() const{
 	std::vector<Event> loads;
 	for(auto ele:reads){

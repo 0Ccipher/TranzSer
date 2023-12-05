@@ -47,7 +47,7 @@ private:
 			  const std::vector<Transaction> &moAfter,
 			  const std::vector<Transaction> &moRfAfter,
 			  Calculator::GlobalTranRelation &matrix, const Event &e) const;
-	void addSCEcosLoc(
+	void addSCEcosLoc( SAddr loc,
 			  Calculator::GlobalRelation &coMatrix,
 			  Calculator::GlobalTranRelation &TranSCMatrix) const;
 
