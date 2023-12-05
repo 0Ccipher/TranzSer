@@ -28,3 +28,19 @@ Event Transactions::getLoad(SAddr addr) const{
 		return reads.at(addr);
 	return Event(-42,-42);
 }
+
+std::vector<Event> Transactions::getLoads() const{
+	std::vector<Event> loads;
+	for(auto ele:reads){
+		loads.push_back(ele.second);
+	}
+	return loads;
+}
+
+std::vector<Event> Transactions::getStores() const{
+	std::vector<Event> writes;
+	for(auto ele:stores){
+		writes.push_back(ele.second);
+	}
+	return writes;
+}

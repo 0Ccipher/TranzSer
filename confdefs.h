@@ -1,0 +1,27 @@
+/* confdefs.h */
+#define PACKAGE_NAME "GenMC"
+#define PACKAGE_TARNAME "genmc"
+#define PACKAGE_VERSION "0.9"
+#define PACKAGE_STRING "GenMC 0.9"
+#define PACKAGE_BUGREPORT "michalis@mpi-sws.org"
+#define PACKAGE_URL "https://plv.mpi-sws.org/genmc"
+#define PACKAGE "genmc"
+#define VERSION "0.9"
+#define HAVE_CXX14 1
+#define HAVE_LLVM 1
+#define LLVM_VERSION "14.0.0"
+#define LLVM_BUILDMODE "Release"
+#define LLVM_NDEBUG 1
+#define HAVE_CLANG_DISABLE_OPTNONE 1
+#define CLANGPATH "/usr/bin/clang-14"
+#define GIT_COMMIT "2b4ff6a"
+#define HAVE_LIBDL 1
+#define HAVE_LIBFFI 1
+#define HAVE_LIBHWLOC 1
+#define STDLIBCPP_SUPPORTS_ENUM_MAP_KEYS 1
+#define HAVE_STDIO_H 1
+#define HAVE_STDLIB_H 1
+#define HAVE_STRING_H 1
+#define HAVE_INTTYPES_H 1
+#define HAVE_STDINT_H 1
+#define HAVE_STRINGS_H 1

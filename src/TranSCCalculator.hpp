@@ -32,30 +32,30 @@ private:
 	std::vector<SAddr> getDoubleLocs() const;
 
 	
-	std::vector<Transaction> calcSCSuccs(const std::vector<Event> &fcs,
+	std::vector<Transaction> calcSCSuccs(
 				       const Event e) const;
-	std::vector<Transaction> calcSCPreds(const std::vector<Event> &fcs,
+	std::vector<Transaction> calcSCPreds(
 				       const Event e) const;
-	std::vector<Transaction> calcRfSCSuccs(const std::vector<Event> &fcs,
+	std::vector<Transaction> calcRfSCSuccs(
 					 const Event e) const;
 
-	void addRbEdges(const std::vector<Event> &fcs,
+	void addRbEdges(
 			const std::vector<Transaction> &moAfter,
 			const std::vector<Transaction> &moRfAfter,
 			Calculator::GlobalTranRelation &matrix, const Event &e) const;
-	void addMoRfEdges(const std::vector<Event> &fcs,
+	void addMoRfEdges(
 			  const std::vector<Transaction> &moAfter,
 			  const std::vector<Transaction> &moRfAfter,
 			  Calculator::GlobalTranRelation &matrix, const Event &e) const;
-	void addSCEcosLoc(const std::vector<Event> &fcs,
+	void addSCEcosLoc(
 			  Calculator::GlobalRelation &coMatrix,
 			  Calculator::GlobalTranRelation &TranSCMatrix) const;
 
-	void addSCEcos(const std::vector<Event> &fcs,
+	void addSCEcos(
 		       const std::vector<SAddr> &scLocs,
 		       Calculator::GlobalTranRelation &matrix) const;
 
-	void addInitEdges(const std::vector<Event> &fcs,
+	void addInitEdges(
 			  Calculator::GlobalTranRelation &matrix) const;
 	void addSbHbEdges(Calculator::GlobalTranRelation &matrix) const;
 

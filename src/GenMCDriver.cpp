@@ -2079,7 +2079,7 @@ void GenMCDriver::visitStore(std::unique_ptr<WriteLabel> wLab, const EventDeps *
 
 	// if (!cons)
 	// 	return;
-	BUG_ON(!cons); //new_scdpor: every step is conisistent
+	// BUG_ON(!cons); //new_scdpor: every step is conisistent
 
 	checkReconsiderFaiSpinloop(lab);
 	if (llvm::isa<HelpedCasWriteLabel>(lab))

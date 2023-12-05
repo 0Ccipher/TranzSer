@@ -40,7 +40,7 @@ std::vector<SAddr> TranSCCalculator::getDoubleLocs() const
 }
 
 
-std::vector<Transaction> TranSCCalculator::calcSCSuccs(const std::vector<Event> &fcs,
+std::vector<Transaction> TranSCCalculator::calcSCSuccs(
 					       const Event e) const
 {
 	auto &g = getGraph();
@@ -56,7 +56,7 @@ std::vector<Transaction> TranSCCalculator::calcSCSuccs(const std::vector<Event> 
 	return {};
 }
 
-std::vector<Transaction> TranSCCalculator::calcSCPreds(const std::vector<Event> &fcs,
+std::vector<Transaction> TranSCCalculator::calcSCPreds(
 					       const Event e) const
 {
 	auto &g = getGraph();
@@ -72,7 +72,7 @@ std::vector<Transaction> TranSCCalculator::calcSCPreds(const std::vector<Event> 
 	return {};
 }
 
-std::vector<Transaction> TranSCCalculator::calcRfSCSuccs(const std::vector<Event> &fcs,
+std::vector<Transaction> TranSCCalculator::calcRfSCSuccs(
 						 const Event ev) const
 {
 	auto &g = getGraph();
@@ -82,13 +82,13 @@ std::vector<Transaction> TranSCCalculator::calcRfSCSuccs(const std::vector<Event
 	BUG_ON(!llvm::isa<WriteLabel>(lab));
 	auto *wLab = static_cast<const WriteLabel *>(lab);
 	for (const auto &e : wLab->getReadersList()) {
-		auto succs = calcSCSuccs(fcs, e);
+		auto succs = calcSCSuccs( e);
 		rfs.insert(rfs.end(), succs.begin(), succs.end());
 	}
 	return rfs;
 }
 
-void TranSCCalculator::addRbEdges(const std::vector<Event> &fcs,
+void TranSCCalculator::addRbEdges(
 				const std::vector<Transaction> &moAfter,
 				const std::vector<Transaction> &moRfAfter,
 				Calculator::GlobalTranRelation &matrix,
@@ -100,21 +100,21 @@ void TranSCCalculator::addRbEdges(const std::vector<Event> &fcs,
 	BUG_ON(!llvm::isa<WriteLabel>(lab));
 	auto *wLab = static_cast<const WriteLabel *>(lab);
 	for (const auto &e : wLab->getReadersList()) {
-		auto preds = calcSCPreds(fcs, e);
+		auto preds = calcSCPreds( e);
 		matrix.addEdgesFromTo(preds, moAfter);        /* Base/fence: Adds rb-edges */
 	}
 	return;
 }
 
-void TranSCCalculator::addMoRfEdges(const std::vector<Event> &fcs,
+void TranSCCalculator::addMoRfEdges(
 				  const std::vector<Transaction> &moAfter,
 				  const std::vector<Transaction> &moRfAfter,
 				  Calculator::GlobalTranRelation &matrix,
 				  const Event &ev) const
 {
 	auto &g = getGraph();
-	auto preds = calcSCPreds(fcs, ev);
-	auto rfs = calcRfSCSuccs(fcs, ev);
+	auto preds = calcSCPreds( ev);
+	auto rfs = calcRfSCSuccs( ev);
 
 	matrix.addEdgesFromTo(preds, moAfter);        /* Base/fence:  Adds mo-edges */
 	matrix.addEdgesFromTo(preds, rfs);            /* Base/fence:  Adds rf-edges (hb_loc) */
@@ -135,7 +135,7 @@ void TranSCCalculator::addMoRfEdges(const std::vector<Event> &fcs,
  * more than one step either do not compose, or lead to an already added
  * single-step relation (e.g, (rf;rb) => co, (rb;co) => rb)
  */
-void TranSCCalculator::addSCEcosLoc(const std::vector<Event> &fcs,
+void TranSCCalculator::addSCEcosLoc(
 				 Calculator::GlobalRelation &coMatrix,
 				 Calculator::GlobalTranRelation &TranSCMatrix) const
 {
@@ -156,14 +156,14 @@ void TranSCCalculator::addSCEcosLoc(const std::vector<Event> &fcs,
 			if(!storeiTran.isInvalid() && !storejTran.isInvalid())
 			if(storeiTran != storejTran)
 			if (coMatrix(i, j)) {
-				auto succs = calcSCSuccs(fcs, stores[j]);
+				auto succs = calcSCSuccs( stores[j]);
 				coAfter.insert(coAfter.end(), succs.begin(), succs.end());
 			}
 		}
 
 		/* Then, add the proper edges to TranSC using co-after and (co;rf)-after successors */
-		addRbEdges(fcs, coAfter, coRfAfter, TranSCMatrix, stores[i]); // (fr)
-		addMoRfEdges(fcs, coAfter, coRfAfter, TranSCMatrix, stores[i]); //(co-rf)
+		addRbEdges( coAfter, coRfAfter, TranSCMatrix, stores[i]); // (fr)
+		addMoRfEdges( coAfter, coRfAfter, TranSCMatrix, stores[i]); //(co-rf)
 	}
 }
 
@@ -180,90 +180,55 @@ void TranSCCalculator::addSbHbEdges(Calculator::GlobalTranRelation &matrix) cons
 
 	auto accesses = g.getSCEventsTransactions();
 	auto &scs = accesses.first;
-	for (auto i = 0u; i < scs.size(); i++) {
-		for (auto j = 0u; j < scs.size(); j++) {
-			if (i == j)
+	auto &sctrans = accesses.second;
+	for(auto i = 0u; i < sctrans.size(); i++){
+		for(auto j = 0u; j < sctrans.size(); j++){
+			if(i==j)
 				continue;
-			const EventLabel *eiLab = g.getEventLabel(scs[i]);
-			const EventLabel *ejLab = g.getEventLabel(scs[j]);
+			const Transactions *trani = g.getTransaction(sctrans[i]);
+			const Transactions *tranj = g.getTransaction(sctrans[j]);
 
-			/* Adds sb-edges (po)*/
-			if (eiLab->getThread() == ejLab->getThread()) {
-				if(!eiLab->getTransaction().isInvalid() && !ejLab->getTransaction().isInvalid())
-				if(eiLab->getTransaction() != ejLab->getTransaction())
-				if (eiLab->getIndex() < ejLab->getIndex())
-					matrix.addEdge(eiLab->getTransaction(), ejLab->getTransaction());
+			/* Add sb-edges (po)*/
+			if(trani->getThread() == tranj->getThread()){
+				if(trani->getIndex() < tranj->getIndex())
+					matrix.addEdge(i,j);
 				continue;
 			}
-
-			/* TranSC_base: Adds [Esc];sb_(<>loc);hb;sb_(<>loc);[Esc] edges.
-			 * We do need to consider the [Fsc];hb? cases, since these
-			 * will be covered by addSCEcos(). (More speficically, from
-			 * the rf/hb_loc case in addMoRfEdges().)  */
-			// const EventLabel *ejPrevLab = g.getPreviousNonEmptyLabel(ejLab);
-			// if (!llvm::isa<MemAccessLabel>(ejPrevLab) ||
-			//     !llvm::isa<MemAccessLabel>(ejLab) ||
-			//     !llvm::isa<MemAccessLabel>(eiLab))
-			// 	continue;
-
-			// if (eiLab->getPos() == g.getLastThreadEvent(eiLab->getThread()))
-			// 	continue;
-
-			// auto *ejPrevMLab = static_cast<const MemAccessLabel *>(ejPrevLab);
-			// auto *ejMLab = static_cast<const MemAccessLabel *>(ejLab);
-			// auto *eiMLab = static_cast<const MemAccessLabel *>(eiLab);
-
-			// if (ejPrevMLab->getAddr() != ejMLab->getAddr()) {
-			// 	Event next = eiMLab->getPos().next();
-			// 	const EventLabel *eiNextLab = g.getEventLabel(next);
-			// 	if (auto *eiNextMLab =
-			// 	    llvm::dyn_cast<MemAccessLabel>(eiNextLab)) {
-			// 		if (eiMLab->getAddr() != eiNextMLab->getAddr() &&
-			// 		    hbRelation(eiNextMLab->getPos(), ejPrevMLab->getPos()))
-			// 			matrix.addEdge(eiLab->getTransaction(), ejLab->getTransaction());
-			// 	}
-			// }
 		}
 	}
 	return;
 }
 
-void TranSCCalculator::addInitEdges(const std::vector<Event> &fcs,
+void TranSCCalculator::addInitEdges(
 				  Calculator::GlobalTranRelation &matrix) const
 {
 	auto &g = getGraph();
-	for (auto i = 0u; i < g.getNumThreads(); i++) {
-		for (auto j = 0u; j < g.getThreadSize(i); j++) {
-			const EventLabel *lab = g.getEventLabel(Event(i, j));
-			/* Consider only reads that read from the initializer write */
-			if (!llvm::isa<ReadLabel>(lab) || g.isRMWLoad(lab))
-				continue;
-			auto *rLab = static_cast<const ReadLabel *>(lab);
-			if (!rLab->getRf().isInitializer())
-				continue;
-			/*Ensure that the event is from a transaction*/
-			if(rLab->getTransaction().isInvalid())
-				continue;
-			/*Ensure that the read event is present in transactions.reads
-			  That is, we consider the edges incoming/outgoing due the first 
-			  on the respective address from the repective transaction*/
-			auto *rLabTrans = g.getTransaction(rLab->getTransaction());
-			BUG_ON(rLabTrans->isLoadPresent(rLab->getAddr()));
-			if(rLab->getPos() != rLabTrans->getLoad(rLab->getAddr()))
-				continue;
-			auto preds = calcSCPreds(fcs, rLab->getPos());
-			for (const auto &w : stores(g, rLab->getAddr())) {
-				/* Can be casted to WriteLabel by construction */
-				auto *wLab = g.getWriteLabel(w);
-				auto wSuccs = calcSCSuccs(fcs, w);
-				matrix.addEdgesFromTo(preds, wSuccs); /* Adds rb-edges (fr)*/
+	for (auto i = 0u; i < g.getNumThreads(5); i++) {
+		for (auto j = 0u; j < g.getThreadTranSize(i); j++) {
+			const Transactions *tr = g.getTransaction(Transaction(i,j));
+			auto loads = tr->getLoads();
+			if(loads.empty()) continue;
+			for(auto ev:loads){
+				const EventLabel *lab = g.getEventLabel(ev);
+				BUG_ON(!llvm::isa<ReadLabel>(lab));
+				auto *rLab = static_cast<const ReadLabel *>(lab);
+				if (!rLab->getRf().isInitializer())
+					continue;
+				/*fr edges*/
+				// auto preds = calcSCPreds( rLab->getPos());
+				for (const auto &w : stores(g, rLab->getAddr())) {
+					/* Can be casted to WriteLabel by construction */
+					auto *wLab = g.getWriteLabel(w);
+					auto wSuccs = calcSCSuccs( w);
+					matrix.addEdgesFromTo({Transaction(i,j)}, wSuccs); /* Adds rb-edges (fr)*/
+				}
 			}
 		}
 	}
 	return;
 }
 
-void TranSCCalculator::addSCEcos(const std::vector<Event> &fcs,
+void TranSCCalculator::addSCEcos(
 			      const std::vector<SAddr> &scLocs,
 			      Calculator::GlobalTranRelation &matrix) const
 {
@@ -271,7 +236,7 @@ void TranSCCalculator::addSCEcos(const std::vector<Event> &fcs,
 	auto &coRelation = g.getPerLocRelation(ExecutionGraph::RelationId::co);
 
 	for (auto loc : scLocs)
-		addSCEcosLoc(fcs, coRelation[loc], matrix);
+		addSCEcosLoc( coRelation[loc], matrix);
 	return;
 }
 
@@ -293,7 +258,7 @@ void TranSCCalculator::calcTranSCRelation()
 		return;
 
 	/* Add edges from the initializer write (special case) */
-	addInitEdges(fcs, TranSCRelation);
+	addInitEdges( TranSCRelation);
 	/* Add sb and sb_(<>loc);hb;sb_(<>loc) edges (+ Fsc;hb;Fsc) */
 	addSbHbEdges(TranSCRelation);
 
@@ -301,8 +266,9 @@ void TranSCCalculator::calcTranSCRelation()
 	 * Collect memory locations with more than one SC accesses
 	 * and add the rest of TranSC_base and TranSC_fence
 	 */
-	addSCEcos(fcs, getDoubleLocs(), TranSCRelation);
+	TODO: addSCEcos( getDoubleLocs(), TranSCRelation);
 	TranSCRelation.transClosure();
+	addSbHbEdges(TranSCRelation);
 	return;
 }
 
@@ -331,7 +297,6 @@ void TranSCCalculator::initCalc()
 
 	/* Collect all SC events (except for RMW loads) */
 	auto accesses = getGraph().getSCEventsTransactions();
-
 	TranSCRelation = Calculator::GlobalTranRelation(accesses.second);
 	return;
 }
@@ -343,9 +308,9 @@ Calculator::CalculationResult TranSCCalculator::doCalc()
 	auto &TranSCRelation = g.getGlobalTranRelation(ExecutionGraph::RelationId::TranSC);
 	auto &coRelation = g.getPerLocRelation(ExecutionGraph::RelationId::co);
 
-	hbRelation.transClosure();
-	if (!hbRelation.isIrreflexive())
-		return Calculator::CalculationResult(false, false);
+	// hbRelation.transClosure();
+	// if (!hbRelation.isIrreflexive())
+	// 	return Calculator::CalculationResult(false, false);
 	calcTranSCRelation();
 	if (!TranSCRelation.isIrreflexive())
 		return Calculator::CalculationResult(false, false);

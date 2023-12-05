@@ -168,8 +168,9 @@ public:
 	inline int getRecoveryRoutineId() const { return recoveryTID; };
 
 	/* Returns the number of threads currently in the graph */
-	inline unsigned int getNumThreads() const { return events.size(); };
-
+	inline unsigned int getNumThreads() const { return events.size(); };\
+	//newscdpor
+	inline unsigned int getNumThreads(int tr) const { return transactions.size(); };
 	/* Returns the size of the thread tid */
 	inline unsigned int getThreadSize(int tid) const { return events[tid].size(); };
 	inline unsigned int getThreadTranSize(int tid) const { return transactions[tid].size(); };
