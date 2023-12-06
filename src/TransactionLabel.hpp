@@ -25,7 +25,8 @@
 class Transactions{
 
 public:
-
+	using StoreMap = std::unordered_map<SAddr, Event>;
+	using LoadMap = std::unordered_map<SAddr, Event>;
 	Transactions(unsigned int s, Transaction tr, Event be) : stamp(s), position(tr), beginEvent(be) {}
 	Transactions(Transaction tr, Event be)
 		: stamp(0), position(tr) , beginEvent(be) {}
@@ -47,14 +48,14 @@ public:
 	Event getBeginEvent() const { return beginEvent; }
 
 	/* Add the store*/
-	void addStore(SAddr addr, Event store);
+	void addStore(SAddr addr, Event store) {stores[addr] = store;};
 	bool isStorePresent(SAddr addr) const;
 	Event getStore(SAddr addr) const;
 	std::vector<Event> getStores() const;
-
+	StoreMap getLocStores() const;
 
 	/* Add the load*/
-	void addLoad(SAddr addr, Event load);
+	void addLoad(SAddr addr, Event load) {reads[addr] = load;};
 	bool isLoadPresent(SAddr addr) const;
 	Event getLoad(SAddr addr) const;
 	std::vector<Event> getLoads() const;
@@ -92,11 +93,11 @@ private:
 	const Event beginEvent;
 
 	/*Latest stores of this Transaction */
-	using StoreMap = std::unordered_map<SAddr, Event>;
+	
 	StoreMap stores;
 
 	/*Loades of this Transaction */
-	using LoadMap = std::unordered_map<SAddr, Event>;
+	
 	LoadMap reads;
 	
 	/* Events that are hb-before this label */

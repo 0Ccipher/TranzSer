@@ -1565,10 +1565,22 @@ void GenMCDriver::visitTrEnd(std::unique_ptr<TrEndLabel> lab){
 	// endLab->getPos().transaction = tr;
 	BUG_ON(!g.isInsideTransaction());
 	lab->setTransaction(g.getCurTransaction());
-	g.addOtherLabelToGraph(std::move(lab));
+	auto *trEndLab = g.addOtherLabelToGraph(std::move(lab));
 	//add new Transaction
 	// g.addNewTransaction(tr , lab->getPos());
+	/* Add the stores to the mo. */
+	auto *trans = g.getTransaction(trEndLab->getTransaction());
+	for(auto store: trans->getLocStores()){
+		auto placesRange = g.getCoherentPlacings(store.first, store.second, false);
+		auto &begO = placesRange.first;
+		auto &endO = placesRange.second;
+		g.getCoherenceCalculator()->addStoreToLoc(store.first, store.second, endO);
+		WARN(" Added store to mo :(" + to_string(store.second.thread) + 
+			"," + to_string(store.second.index) + ")  1579 \n");
+		/* TODO: Add it to other possible mo-places.*/
+	}
 	g.setInsideTransaction(false);
+	
 }
 
 int GenMCDriver::visitThreadCreate(std::unique_ptr<ThreadCreateLabel> tcLab, const EventDeps *deps,
@@ -1894,14 +1906,13 @@ SVal GenMCDriver::visitLoad(std::unique_ptr<ReadLabel> rLab, const EventDeps *de
 	g.trackCoherenceAtLoc(rLab->getAddr());
 
 	rLab->setAnnot(EE->getCurrentAnnotConcretized());
-	updateLabelViews(rLab.get(), deps);
+	updateLabelViews(rLab.get(), deps);	
+
+	/*Assign the transaction if inside one.*/
 	if(g.isInsideTransaction()){
 		rLab->setTransaction(g.getCurTransaction());
-		auto *tran = g.getTransaction(g.getCurTransaction());
-		if(!tran->isLoadPresent(rLab->getAddr()))
-			tran->addLoad(rLab->getAddr() , rLab->getPos());
 	}
-		
+
 	auto *lab = g.addReadLabelToGraph(std::move(rLab));
 
 	if (!isAccessValid(lab)) {
@@ -1909,6 +1920,47 @@ SVal GenMCDriver::visitLoad(std::unique_ptr<ReadLabel> rLab, const EventDeps *de
 		return SVal(0); /* Return some value; this execution will be blocked */
 	}
 
+	/*Check if the localread or a read on the addr is already present in the transaction.
+	  Give preferences to the latest write inside the transaction.
+	*/
+	if(g.isInsideTransaction()){
+		auto tr = lab->getTransaction();
+		auto *trans = g.getTransaction(tr);
+		if(trans->isLoadPresent(lab->getAddr()) || trans->isStorePresent(lab->getAddr())){
+			int readindex = -1;
+			int storeindex = -1;
+			if(trans->isLoadPresent(lab->getAddr()))
+				readindex = trans->getLoad(lab->getAddr()).index;
+			if(trans->isStorePresent(lab->getAddr()))
+				storeindex = trans->getStore(lab->getAddr()).index;
+			if(readindex < storeindex){
+				WARN("This is localread 1926 \n");
+				BUG_ON(!llvm::isa<WriteLabel>(g.getEventLabel(trans->getStore(lab->getAddr()))));
+				changeRf(lab->getPos(), trans->getStore(lab->getAddr()));
+				auto retVal = getWriteValue(trans->getStore(lab->getAddr()), lab->getAddr(), lab->getAccess());
+				return retVal;
+			}
+			/*
+				GetRf of the current read on the address
+			*/
+			if(readindex > storeindex){
+				WARN("This is currentread 1936 \n");
+				auto curread = trans->getLoad(lab->getAddr());
+				auto *curreadLab = g.getEventLabel(curread);
+				BUG_ON(!llvm::isa<ReadLabel>(curreadLab));
+				auto currRLab =  static_cast<const ReadLabel *>(curreadLab);
+				changeRf(lab->getPos(), currRLab->getRf());
+				auto retVal = getWriteValue(currRLab->getRf(), lab->getAddr(), lab->getAccess());
+				return retVal;
+			}
+		}
+	}
+	/* Update the currentread */
+	if(g.isInsideTransaction()){
+		auto *tran = g.getTransaction(g.getCurTransaction());
+		if(!tran->isLoadPresent(lab->getAddr()))
+			tran->addLoad(lab->getAddr() , lab->getPos());
+	}
 	/* Get an approximation of the stores we can read from */
 	auto stores = getRfsApproximation(lab);
 	BUG_ON(stores.empty());
@@ -2021,15 +2073,22 @@ void GenMCDriver::visitStore(std::unique_ptr<WriteLabel> wLab, const EventDeps *
 	if (getConf()->helper && g.isRMWStore(&*wLab))
 		annotateStoreHELPER(&*wLab);
 	updateLabelViews(wLab.get(), deps);
+	/* If inside a transaction, update the transaction store.*/
 	if(g.isInsideTransaction()){
 		wLab->setTransaction(g.getCurTransaction());
 		auto *tran = g.getTransaction(g.getCurTransaction());
 		tran->addStore(wLab->getAddr() , wLab->getPos());
 	}
+	
 	auto *lab = g.addWriteLabelToGraph(std::move(wLab));
 
 	if (!isAccessValid(lab)) {
 		visitError(lab->getPos(), Status::VS_AccessNonMalloc);
+		return;
+	}
+
+	/* If inside a transaction do not to mo here. This is covered at transaction end.*/
+	if(g.isInsideTransaction()){
 		return;
 	}
 

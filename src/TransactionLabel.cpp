@@ -5,13 +5,21 @@
 
 #include "TransactionLabel.hpp"
 
-void Transactions::addStore(SAddr addr, Event store){
-	stores[addr] = store;
-}
+// void Transactions::addStore(SAddr addr, Event store){
+// 	if(stores.count(addr) == 0){
+// 		stores.insert({addr,store});
+// 		return;
+// 	}
+// 	stores[addr] = store;
+// }
 
-void Transactions::addLoad(SAddr addr, Event load){
-	reads[addr] = load;
-}
+// void Transactions::addLoad(SAddr addr, Event load){
+// 	if(reads.count(addr) == 0){
+// 		reads.insert({addr,load});
+// 		return;
+// 	}
+// 	reads[addr] = load;
+// }
 
 bool Transactions::isLoadPresent(SAddr addr) const{
 	if(reads.count(addr) == 0) return false;
@@ -49,4 +57,8 @@ std::vector<Event> Transactions::getStores() const{
 		writes.push_back(ele.second);
 	}
 	return writes;
+}
+
+std::unordered_map<SAddr, Event> Transactions::getLocStores() const{
+	return stores;
 }
