@@ -21,18 +21,19 @@ int __VERIFIER_atomic_t1(){
 	printf("z12: %d\n",r1);
 	atomic_store_explicit(&x, 1, memory_order_seq_cst);
 	atomic_store_explicit(&x, 2, memory_order_seq_cst);
-	atomic_store_explicit(&z, 11, memory_order_seq_cst);
+	atomic_store_explicit(&z, 13, memory_order_seq_cst);
 	r1 = atomic_load_explicit(&z, memory_order_seq_cst);
 	printf("z13: %d\n",r1);
+	atomic_store_explicit(&z, 14, memory_order_seq_cst);
 	r1 = atomic_load_explicit(&z, memory_order_seq_cst);
 	printf("z14: %d\n",r1);
 	// int r1 = atomic_load_explicit(&arr[1], memory_order_seq_cst);
 	// printf("finished t1\n");
 	// TrEnd();
-	int i=0;
-	for (; i <= 2; i++){
-		printf("hello\n");
-	}
+	// int i=0;
+	// for (; i <= 2; i++){
+	// 	printf("hello\n");
+	// }
 	atomic_store_explicit(&x, 111, memory_order_seq_cst);
 	atomic_store_explicit(&y, 111, memory_order_seq_cst);
 	atomic_store_explicit(&z, 11, memory_order_seq_cst);
@@ -52,8 +53,9 @@ int __VERIFIER_atomic_t2(){
 	atomic_store_explicit(&x, 5, memory_order_seq_cst);
 	// atomic_store_explicit(&arr[1], 1, memory_order_seq_cst);
 	r1 = atomic_load_explicit(&x, memory_order_seq_cst);
-	printf("x2: %d\n",r1);
-	r1 = atomic_load_explicit(&x, memory_order_seq_cst);
+	printf("x21: %d\n",r1);
+	r1 = atomic_load_explicit(&z, memory_order_seq_cst);
+	printf("z2: %d\n",r1);
 	__VERIFIER_Transaction_end();
 	return r1;
  }
@@ -62,6 +64,7 @@ int __VERIFIER_atomic_t2(){
 void *thr1(void *arg){
 	atomic_store_explicit(&dummy, 1, memory_order_seq_cst);
  	int bba1 = __VERIFIER_atomic_t1();
+	atomic_store_explicit(&dummy, 1, memory_order_seq_cst);
 	int b1 = __VERIFIER_atomic_t1();
 	// // atomic_t3();
 	return NULL;
@@ -70,7 +73,9 @@ void *thr1(void *arg){
 void *thr2(void *arg){
 	// a2 = __VERIFIER_atomic_t2();
 	int ba1 = __VERIFIER_atomic_t2();
-	int bba1 = __VERIFIER_atomic_t1();
+	atomic_store_explicit(&dummy, 1, memory_order_seq_cst);
+	// int bba1 = __VERIFIER_atomic_t1();
+	// atomic_store_explicit(&dummy, 1, memory_order_seq_cst);
 	return NULL;
 
 }

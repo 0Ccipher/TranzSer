@@ -1429,35 +1429,83 @@ bool GenMCDriver::ensureConsistentRf(const ReadLabel *rLab, std::vector<Event> &
 bool GenMCDriver::getConsistentRfs(const ReadLabel *rLab, std::vector<Event> &rfs)
 {
 	isConsistent(ProgramPoint::step);
+	auto &g = getGraph();
 	bool found = false;
 	std::vector<Event> temprfs;
-	for(int i=0 ; i < rfs.size() ; i++){
-		found = true;
-		bool flag = false;
-		auto store1 = rfs[i];
-		int store1Id, store2Id, readId;
-		for(int j=0 ; j < rfs.size() ; j++){
-			auto store2 = rfs[j];
-			if(store1 == store2) continue;
-			if(store1 == Event(0,0) && isHbBefore(store2,rLab->getPos())){
-				flag = true; //do not consider this store
+	if(!rLab->getTransaction().isInvalid()){
+		auto tranHB = getGraph().getGlobalTranRelation(ExecutionGraph::RelationId::TranSC);
+		/*Handle init write case*/
+		bool initflag = false;
+		for(const auto *trans2 :alltransactions(g)) {
+			if(!trans2->isStorePresent(rLab->getAddr()))
+				continue;
+			if(tranHB(trans2->getPos(),rLab->getTransaction())) {
+				initflag = true; //do not consider this store
 				break;
 			}
-			if(store1 != Event(0,0) && store2 != Event(0,0)){
-				if(isHbBefore(store1,store2) && isHbBefore(store2,rLab->getPos())){
+		}
+					
+		if(!initflag){
+			temprfs.push_back(Event(0,0));
+		}
+		for(const auto *trans1 : alltransactions(g)){
+			if(trans1->getPos() == rLab->getTransaction()) continue;
+			if(!trans1->isStorePresent(rLab->getAddr()))  continue;
+			found = true;
+			bool flag = false;
+			auto store1 = trans1->getStore(rLab->getAddr());
+			for(const auto *trans2 : alltransactions(g)){
+				if(!trans2->isStorePresent(rLab->getAddr()))
+					continue;
+				if(trans1->getPos() == trans2->getPos()) continue;
+				if(tranHB(trans1->getPos(),trans2->getPos()) 
+							&& tranHB(trans2->getPos(),rLab->getTransaction())){
 					flag = true;  //do not consider this store
 					break;
 				}
+				
+			}
+			if(!flag){
+				// found = false;
+				temprfs.push_back(store1);
+				BUG_ON(rfs.empty());
+				// BUG_ON(!getConf()->LAPOR && rfs.empty());
+				if(rfs.empty())
+					break;
+
 			}
 		}
-		if(!flag){
-			// found = false;
-			temprfs.push_back(store1);
-			BUG_ON(rfs.empty());
-			// BUG_ON(!getConf()->LAPOR && rfs.empty());
-			if(rfs.empty())
-				break;
+		WARN("Get RF for (" + to_string(rLab->getPos().thread) + ","+ to_string(rLab->getPos().index)+") 1476\n");
+	}
+	else {
+		for(int i=0 ; i < rfs.size() ; i++){
+			found = true;
+			bool flag = false;
+			auto store1 = rfs[i];
+			int store1Id, store2Id, readId;
+			for(int j=0 ; j < rfs.size() ; j++){
+				auto store2 = rfs[j];
+				if(store1 == store2) continue;
+				if(store1 == Event(0,0) && isHbBefore(store2,rLab->getPos())){
+					flag = true; //do not consider this store
+					break;
+				}
+				if(store1 != Event(0,0) && store2 != Event(0,0)){
+					if(isHbBefore(store1,store2) && isHbBefore(store2,rLab->getPos())){
+						flag = true;  //do not consider this store
+						break;
+					}
+				}
+			}
+			if(!flag){
+				// found = false;
+				temprfs.push_back(store1);
+				BUG_ON(rfs.empty());
+				// BUG_ON(!getConf()->LAPOR && rfs.empty());
+				if(rfs.empty())
+					break;
 
+			}
 		}
 	}
 	std::vector<Event> trfs = temprfs;
@@ -1538,6 +1586,7 @@ int GenMCDriver::getSymmetricTidSR(int thread, Event parent, llvm::Function *thr
 }
 //newscdpor
 void GenMCDriver::visitTrBegin(std::unique_ptr<TrBeginLabel> lab){
+	WARN("Tr_Begin (" + to_string(lab->getPos().thread) + ","+ to_string(lab->getPos().index)+") 1587\n");
 	if (isExecutionDrivenByGraph())
 		return;
 
@@ -1575,12 +1624,12 @@ void GenMCDriver::visitTrEnd(std::unique_ptr<TrEndLabel> lab){
 		auto &begO = placesRange.first;
 		auto &endO = placesRange.second;
 		g.getCoherenceCalculator()->addStoreToLoc(store.first, store.second, endO);
-		WARN(" Added store to mo :(" + to_string(store.second.thread) + 
-			"," + to_string(store.second.index) + ")  1579 \n");
+		// WARN(" Added store to mo :(" + to_string(store.second.thread) + 
+		// 	"," + to_string(store.second.index) + ")  1579 \n");
 		/* TODO: Add it to other possible mo-places.*/
 	}
 	g.setInsideTransaction(false);
-	
+	WARN("Tr_End (" + to_string(trEndLab->getPos().thread) + ","+to_string(trEndLab->getPos().index)+") 1630\n");
 }
 
 int GenMCDriver::visitThreadCreate(std::unique_ptr<ThreadCreateLabel> tcLab, const EventDeps *deps,
@@ -1934,7 +1983,7 @@ SVal GenMCDriver::visitLoad(std::unique_ptr<ReadLabel> rLab, const EventDeps *de
 			if(trans->isStorePresent(lab->getAddr()))
 				storeindex = trans->getStore(lab->getAddr()).index;
 			if(readindex < storeindex){
-				WARN("This is localread 1926 \n");
+				// WARN("This is localread 1926 \n");
 				BUG_ON(!llvm::isa<WriteLabel>(g.getEventLabel(trans->getStore(lab->getAddr()))));
 				changeRf(lab->getPos(), trans->getStore(lab->getAddr()));
 				auto retVal = getWriteValue(trans->getStore(lab->getAddr()), lab->getAddr(), lab->getAccess());
@@ -1944,7 +1993,7 @@ SVal GenMCDriver::visitLoad(std::unique_ptr<ReadLabel> rLab, const EventDeps *de
 				GetRf of the current read on the address
 			*/
 			if(readindex > storeindex){
-				WARN("This is currentread 1936 \n");
+				// WARN("This is currentread 1936 \n");
 				auto curread = trans->getLoad(lab->getAddr());
 				auto *curreadLab = g.getEventLabel(curread);
 				BUG_ON(!llvm::isa<ReadLabel>(curreadLab));
@@ -2091,7 +2140,7 @@ void GenMCDriver::visitStore(std::unique_ptr<WriteLabel> wLab, const EventDeps *
 	if(g.isInsideTransaction()){
 		return;
 	}
-
+	WARN("Store outside transaction (" + to_string(lab->getPos().thread) + ","+ to_string(lab->getPos().index)+") 2141\n");
 	/* Find all possible placings in coherence for this store */
 	auto placesRange = g.getCoherentPlacings(lab->getAddr(), lab->getPos(), g.isRMWStore(lab));
 	auto &begO = placesRange.first;

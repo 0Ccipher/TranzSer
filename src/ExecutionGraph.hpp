@@ -762,7 +762,7 @@ private:
 	TransactionList transactions;
 
 	/*True if inside a transaction*/
-	bool insideTransaction;
+	bool insideTransaction=false;
 
 	/*if insideTransaction then gives current transaction*/
 	Transaction currentTransaction;
