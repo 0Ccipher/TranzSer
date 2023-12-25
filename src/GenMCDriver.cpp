@@ -659,6 +659,11 @@ void GenMCDriver::restrictGraph(const EventLabel *rLab)
 	notifyEERemoved(*getGraph().getPredsView(rLab->getPos()));
 	getGraph().cutToStamp(rLab->getStamp());
 	getGraph().resetStamp(rLab->getStamp() + 1);
+	/* If this is transaction read.
+	* Restrict the events in the transaction of this read
+	*/
+	if(!rLab->getTransaction().isInvalid());
+		getGraph().restrictTransaction(rLab->getPos());
 	return;
 }
 

@@ -1492,7 +1492,24 @@ void ExecutionGraph::changeStoreOffset(SAddr addr, Event s, int newOffset)
 	if (auto *cohTracker = llvm::dyn_cast<MOCalculator>(getCoherenceCalculator()))
 		cohTracker->changeStoreOffset(addr, s, newOffset);
 }
-
+//newscdpor
+void ExecutionGraph::restrictTransaction(Event readev){
+	/*	Events already deleted in the cutToStamp. Restrict the 
+	*  loads. Stores are okay(we will need the stores before the read)
+	* Also set g.insideTransaction to true
+	*/
+	auto *lab = getEventLabel(readev);
+	BUG_ON(!llvm::isa<ReadLabel>(lab));
+	auto *rLab = static_cast<const ReadLabel *>(lab);
+	auto *trans = getTransaction(rLab->getTransaction());
+	auto curreads = trans->getLoadsWithAddr();
+	for(auto ev : curreads){
+		if(ev.second.index > rLab->getStamp())
+			trans->eraseLoad(ev.first);
+	}
+	setInsideTransaction(true);
+	setCurTransaction(rLab->getTransaction());
+}
 void ExecutionGraph::cutToStamp(unsigned int stamp)
 {
 	setFPStatus(FS_Stale);
@@ -1529,6 +1546,22 @@ void ExecutionGraph::cutToStamp(unsigned int stamp)
 			/* No special action for CreateLabels; we can
 			 * keep the begin event of the child the since
 			 * it will not be deleted */
+		}
+	}
+	/* Remove the transactions
+	*/
+	for (auto i = 0u; i < getNumThreads(); i++) {
+		auto &trans = transactions[i];
+		bool flag = false;
+		int j = 0;
+		for(; j < trans.size() ; j++){
+			if(trans[j]->getBeginEvent().index >= (int) getThreadTranSize(i)){
+				flag = true;
+				break;
+			}
+		}
+		if(flag){
+			trans.erase(trans.begin() + j, trans.end());
 		}
 	}
 	return;

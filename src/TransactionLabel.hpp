@@ -53,12 +53,15 @@ public:
 	Event getStore(SAddr addr) const;
 	std::vector<Event> getStores() const;
 	StoreMap getLocStores() const;
+	void eraseStore(SAddr addr);
 
 	/* Add the load*/
 	void addLoad(SAddr addr, Event load) {reads[addr] = load;};
 	bool isLoadPresent(SAddr addr) const;
 	Event getLoad(SAddr addr) const;
 	std::vector<Event> getLoads() const;
+	std::vector<std::pair<SAddr,Event>> getLoadsWithAddr() const;
+	void eraseLoad(SAddr addr);
 
 	void setFinishedStatus(bool value) {finshedExecution = value;};
 	bool getFinishedStatus()  const {return finshedExecution;};
