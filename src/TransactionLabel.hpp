@@ -60,8 +60,8 @@ public:
 	Event getLoad(SAddr addr) const;
 	std::vector<Event> getLoads() const;
 
-	void setFinishedStatus(bool value) {finshedExecution = value};
-	bool getFinishedStatus(){return finshedExecution;}
+	void setFinishedStatus(bool value) {finshedExecution = value;};
+	bool getFinishedStatus()  const {return finshedExecution;};
 
 	/* Methods that get/set the vector clocks for this label. */
 	const View& getHbView() const { return hbView; }
@@ -105,7 +105,7 @@ private:
 
 	/* Executed transaction?*/
 
-	bool finshedExecution;
+	bool finshedExecution = false;
 	
 	/* Events that are hb-before this label */
 	View hbView;

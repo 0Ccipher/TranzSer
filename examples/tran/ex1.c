@@ -65,7 +65,7 @@ void *thr1(void *arg){
 	atomic_store_explicit(&dummy, 1, memory_order_seq_cst);
  	int bba1 = __VERIFIER_atomic_t1();
 	atomic_store_explicit(&dummy, 1, memory_order_seq_cst);
-	int b1 = __VERIFIER_atomic_t1();
+	// int b1 = __VERIFIER_atomic_t1();
 	// // atomic_t3();
 	return NULL;
 }
@@ -80,12 +80,23 @@ void *thr2(void *arg){
 
 }
 
+void *thr3(void *arg){
+	atomic_store_explicit(&dummy, 1, memory_order_seq_cst);
+ 	int bba1 = __VERIFIER_atomic_t1();
+	atomic_store_explicit(&dummy, 1, memory_order_seq_cst);
+	// int b1 = __VERIFIER_atomic_t1();
+	// // atomic_t3();
+	return NULL;
+}
+
 int main(int argc, char *argv[]){
 	pthread_t t1,t2,t3,t4;
 	pthread_create(&t1,NULL,thr1,NULL);
 	pthread_create(&t2,NULL,thr2,NULL);
+	pthread_create(&t3,NULL,thr3,NULL);
 	pthread_join(t1,NULL);
 	pthread_join(t2,NULL);
+	pthread_join(t3,NULL);
 
 	// __VERIFIER_atomic_t2();
 	// abort();

@@ -158,11 +158,14 @@ void TranSCCalculator::addSCEcosLoc( SAddr loc,
 		 */
 		std::vector<Transaction> coAfter,coRfAfter;
 		const Transactions *trani = g.getTransaction(sctrans[i]);
+		if(!trani->getFinishedStatus()) continue;
 		if(!trani->isStorePresent(loc)) continue;
 		Event storei = trani->getStore(loc);
 		for(auto j = 0u; j < sctrans.size(); j++){
 			if(i==j) continue;
 			const Transactions *tranj = g.getTransaction(sctrans[j]);
+			//check if it's current transactions
+			if(!tranj->getFinishedStatus()) continue;
 			if(!tranj->isStorePresent(loc)) continue;
 			Event storej = tranj->getStore(loc);
 			if (coMatrix(storei,storej)){
@@ -223,6 +226,7 @@ void TranSCCalculator::addInitEdges(
 			if(loads.empty()) continue;
 			for(auto ev:loads){
 				const EventLabel *lab = g.getEventLabel(ev);
+				if(!llvm::isa<ReadLabel>(lab)) abort();
 				BUG_ON(!llvm::isa<ReadLabel>(lab));
 				auto *rLab = static_cast<const ReadLabel *>(lab);
 				if (!rLab->getRf().isInitializer())

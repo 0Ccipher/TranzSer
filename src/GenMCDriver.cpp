@@ -1475,7 +1475,7 @@ bool GenMCDriver::getConsistentRfs(const ReadLabel *rLab, std::vector<Event> &rf
 
 			}
 		}
-		WARN("Get RF for (" + to_string(rLab->getPos().thread) + ","+ to_string(rLab->getPos().index)+") 1476\n");
+		// WARN("Get RF for (" + to_string(rLab->getPos().thread) + ","+ to_string(rLab->getPos().index)+") 1476\n");
 	}
 	else {
 		for(int i=0 ; i < rfs.size() ; i++){
@@ -1586,7 +1586,7 @@ int GenMCDriver::getSymmetricTidSR(int thread, Event parent, llvm::Function *thr
 }
 //newscdpor
 void GenMCDriver::visitTrBegin(std::unique_ptr<TrBeginLabel> lab){
-	WARN("Tr_Begin (" + to_string(lab->getPos().thread) + ","+ to_string(lab->getPos().index)+") 1587\n");
+	// WARN("Tr_Begin (" + to_string(lab->getPos().thread) + ","+ to_string(lab->getPos().index)+") 1587\n");
 	if (isExecutionDrivenByGraph())
 		return;
 
@@ -1602,6 +1602,10 @@ void GenMCDriver::visitTrBegin(std::unique_ptr<TrBeginLabel> lab){
 	g.setCurTransaction(tr);
 	g.addNewTransaction(std::make_unique<Transactions>(tr , Event(tr.thread , EE->getCurThr().globalInstructions)));
 	g.addOtherLabelToGraph(std::move(lab));
+
+	//started transaction
+	auto *trans = g.getTransaction(tr);
+	trans->setFinishedStatus(false);
 }
 
 void GenMCDriver::visitTrEnd(std::unique_ptr<TrEndLabel> lab){
@@ -1628,8 +1632,11 @@ void GenMCDriver::visitTrEnd(std::unique_ptr<TrEndLabel> lab){
 		// 	"," + to_string(store.second.index) + ")  1579 \n");
 		/* TODO: Add it to other possible mo-places.*/
 	}
+	//finished transaction
+	auto *tran = g.getTransaction(g.getCurTransaction());
+	tran->setFinishedStatus(true);
 	g.setInsideTransaction(false);
-	WARN("Tr_End (" + to_string(trEndLab->getPos().thread) + ","+to_string(trEndLab->getPos().index)+") 1630\n");
+	// WARN("Tr_End (" + to_string(trEndLab->getPos().thread) + ","+to_string(trEndLab->getPos().index)+") 1630\n");
 }
 
 int GenMCDriver::visitThreadCreate(std::unique_ptr<ThreadCreateLabel> tcLab, const EventDeps *deps,
@@ -2053,11 +2060,11 @@ SVal GenMCDriver::visitLoad(std::unique_ptr<ReadLabel> rLab, const EventDeps *de
 		visitBlock(BlockLabel::create(lab->getPos().next(), BlockageType::Barrier));
 
 	/* Push all the other alternatives choices to the Stack (many maximals for wb) */
-	// std::for_each(stores.begin(), stores.end() - 1, [&](const Event &s){
-	// 	auto status = llvm::isa<MOCalculator>(g.getCoherenceCalculator()) ? false :
-	// 		isCoMaximal(lab->getAddr(), s, true); /* MO messes with the status */
-	// 	addToWorklist(std::make_unique<ForwardRevisit>(lab->getPos(), s, status));
-	// });
+	std::for_each(stores.begin(), stores.end() - 1, [&](const Event &s){
+		auto status = llvm::isa<MOCalculator>(g.getCoherenceCalculator()) ? false :
+			isCoMaximal(lab->getAddr(), s, true); /* MO messes with the status */
+		addToWorklist(std::make_unique<ForwardRevisit>(lab->getPos(), s, status));
+	});
 	return retVal;
 }
 
@@ -2140,7 +2147,7 @@ void GenMCDriver::visitStore(std::unique_ptr<WriteLabel> wLab, const EventDeps *
 	if(g.isInsideTransaction()){
 		return;
 	}
-	WARN("Store outside transaction (" + to_string(lab->getPos().thread) + ","+ to_string(lab->getPos().index)+") 2141\n");
+	// WARN("Store outside transaction (" + to_string(lab->getPos().thread) + ","+ to_string(lab->getPos().index)+") 2141\n");
 	/* Find all possible placings in coherence for this store */
 	auto placesRange = g.getCoherentPlacings(lab->getAddr(), lab->getPos(), g.isRMWStore(lab));
 	auto &begO = placesRange.first;
@@ -3126,6 +3133,7 @@ bool GenMCDriver::restrictAndRevisit(WorkSet::ItemT item)
 	/* First, appropriately restrict the worklist, the revisit set, and the graph */
 	restrictWorklist(lab);
 	restrictRevisitSet(lab);
+	//TODO: Restrict loads and stores in the transactions 
 	restrictGraph(lab);
 
 	/* Handle special cases first: if we are restricting to a write, change its MO position */
