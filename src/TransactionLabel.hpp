@@ -53,6 +53,7 @@ public:
 	Event getStore(SAddr addr) const;
 	std::vector<Event> getStores() const;
 	StoreMap getLocStores() const;
+	std::vector<std::pair<SAddr,Event>> getStoresWithAddr() const;
 	void eraseStore(SAddr addr);
 
 	/* Add the load*/

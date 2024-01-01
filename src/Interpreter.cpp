@@ -96,6 +96,7 @@ void Interpreter::resetThread(unsigned int id)
 	thr.tls = threadLocalVars;
 	thr.blocked = BlockageType::NotBlocked;
 	thr.globalInstructions = 0;
+	thr.globalTransactions = 0;
 	thr.rng.seed(Thread::seed);
 	clearDeps(id);
 }

@@ -654,16 +654,24 @@ void GenMCDriver::notifyEERemoved(const VectorClock &v)
 
 void GenMCDriver::restrictGraph(const EventLabel *rLab)
 {
+	WARN("Revisit for read (" + to_string(rLab->getPos().thread) + ","+ to_string(rLab->getPos().index)+") 657\n");
 	/* Inform the interpreter about deleted events, and then
 	 * restrict the graph (and relations) */
 	notifyEERemoved(*getGraph().getPredsView(rLab->getPos()));
 	getGraph().cutToStamp(rLab->getStamp());
 	getGraph().resetStamp(rLab->getStamp() + 1);
+	//newscdpor
 	/* If this is transaction read.
 	* Restrict the events in the transaction of this read
 	*/
-	if(!rLab->getTransaction().isInvalid());
+	if(!rLab->getTransaction().isInvalid()){
 		getGraph().restrictTransaction(rLab->getPos());
+		/* Adjust the transaction count in EE*/
+		auto &g = getGraph();
+		for (auto i = 0u; i < g.getNumThreads(); i++) {
+			getEE()->getThrById(i).globalTransactions = g.getThreadTranSize(i);
+		}
+	}
 	return;
 }
 
@@ -746,6 +754,7 @@ void GenMCDriver::explore()
 			EE->runRecovery();
 
 		auto validExecution = true;
+		bool t1,t2;
 		do {
 			/*
 			 * restrictAndRevisit() might deem some execution infeasible,
@@ -759,7 +768,10 @@ void GenMCDriver::explore()
 				EE->reset();  /* To free memory */
 				return;
 			}
-			validExecution = restrictAndRevisit(std::move(item)) && isConsistent(ProgramPoint::step);
+			// validExecution = restrictAndRevisit(std::move(item)) && isConsistent(ProgramPoint::step);
+			t1 = restrictAndRevisit(std::move(item));
+			t2 = isConsistent(ProgramPoint::step);
+			validExecution = t1 && t2;
 		} while (!validExecution);
 	}
 }
@@ -1591,7 +1603,7 @@ int GenMCDriver::getSymmetricTidSR(int thread, Event parent, llvm::Function *thr
 }
 //newscdpor
 void GenMCDriver::visitTrBegin(std::unique_ptr<TrBeginLabel> lab){
-	// WARN("Tr_Begin (" + to_string(lab->getPos().thread) + ","+ to_string(lab->getPos().index)+") 1587\n");
+	WARN("Tr_Begin (" + to_string(lab->getPos().thread) + ","+ to_string(lab->getPos().index)+") 1587\n");
 	if (isExecutionDrivenByGraph())
 		return;
 
@@ -1641,7 +1653,7 @@ void GenMCDriver::visitTrEnd(std::unique_ptr<TrEndLabel> lab){
 	auto *tran = g.getTransaction(g.getCurTransaction());
 	tran->setFinishedStatus(true);
 	g.setInsideTransaction(false);
-	// WARN("Tr_End (" + to_string(trEndLab->getPos().thread) + ","+to_string(trEndLab->getPos().index)+") 1630\n");
+	WARN("Tr_End (" + to_string(trEndLab->getPos().thread) + ","+to_string(trEndLab->getPos().index)+") 1630\n");
 }
 
 int GenMCDriver::visitThreadCreate(std::unique_ptr<ThreadCreateLabel> tcLab, const EventDeps *deps,
@@ -3126,6 +3138,8 @@ bool GenMCDriver::revisitRead(const ReadRevisit &ri)
 
 	if (llvm::isa<SpeculativeReadLabel>(rLab) || oLab)
 		threadPrios = {rLab->getPos()};
+	WARN("Revisited True for read (" + to_string(rLab->getPos().thread) + ","+ to_string(rLab->getPos().index)+")"
+				+ "from w("+ to_string(ri.getRev().thread) + ","+ to_string(ri.getRev().index)+ ") 3137\n");
 	return true;
 }
 

@@ -1495,8 +1495,9 @@ void ExecutionGraph::changeStoreOffset(SAddr addr, Event s, int newOffset)
 //newscdpor
 void ExecutionGraph::restrictTransaction(Event readev){
 	/*	Events already deleted in the cutToStamp. Restrict the 
-	*  loads. Stores are okay(we will need the stores before the read)
+	*  loads. 
 	* Also set g.insideTransaction to true
+	* Also restrict the stores, if they are PO after this read.
 	*/
 	auto *lab = getEventLabel(readev);
 	BUG_ON(!llvm::isa<ReadLabel>(lab));
@@ -1504,11 +1505,19 @@ void ExecutionGraph::restrictTransaction(Event readev){
 	auto *trans = getTransaction(rLab->getTransaction());
 	auto curreads = trans->getLoadsWithAddr();
 	for(auto ev : curreads){
-		if(ev.second.index > rLab->getStamp())
+		if(ev.second.index > readev.index)
 			trans->eraseLoad(ev.first);
+	}
+	/*restrict the stores, if they are PO after this read.*/
+	auto curstores = trans->getStoresWithAddr();
+	for(auto ev : curstores){
+		if(ev.second.index > readev.index)
+			trans->eraseStore(ev.first);
 	}
 	setInsideTransaction(true);
 	setCurTransaction(rLab->getTransaction());
+	
+	
 }
 void ExecutionGraph::cutToStamp(unsigned int stamp)
 {
@@ -1548,14 +1557,14 @@ void ExecutionGraph::cutToStamp(unsigned int stamp)
 			 * it will not be deleted */
 		}
 	}
-	/* Remove the transactions
+	/* Remove the transactions with beginEvent.index > the size of beginEvent.thread in restricted graph(events)
 	*/
 	for (auto i = 0u; i < getNumThreads(); i++) {
 		auto &trans = transactions[i];
 		bool flag = false;
 		int j = 0;
 		for(; j < trans.size() ; j++){
-			if(trans[j]->getBeginEvent().index >= (int) getThreadTranSize(i)){
+			if(trans[j]->getBeginEvent().index >= (int) getThreadSize(i)){
 				flag = true;
 				break;
 			}

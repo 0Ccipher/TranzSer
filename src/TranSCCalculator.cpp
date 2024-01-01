@@ -106,8 +106,17 @@ void TranSCCalculator::addRbEdges(
 		/*Already covered in mo if store and load transaction is same*/
 		if(wLab->getTransaction() == rLab->getTransaction() || 
 					rLab->getTransaction().isInvalid()) continue;
+		/*Do not add the fr to the same transaction-tr of this 
+		* read-r(x) due to later write tr[r(x),---,w(x)-] 
+		*/
+		auto tempMoAfter = moAfter;
+		tempMoAfter.erase(std::remove_if(tempMoAfter.begin() , tempMoAfter.end() , [&](Transaction s)
+								{
+									return s == rLab->getTransaction();
+								}) ,
+					tempMoAfter.end());
 		auto preds = calcSCPreds( e);
-		matrix.addEdgesFromTo(preds, moAfter);        /* Base/fence: Adds rb-edges (fr)*/
+		matrix.addEdgesFromTo(preds, tempMoAfter);        /* Base/fence: Adds rb-edges (fr)*/
 	}
 	return;
 }

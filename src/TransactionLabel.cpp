@@ -58,6 +58,15 @@ std::vector<std::pair<SAddr,Event>> Transactions::getLoadsWithAddr() const{
 	}
 	return loads;
 }
+
+std::vector<std::pair<SAddr,Event>> Transactions::getStoresWithAddr() const{
+	std::vector<std::pair<SAddr,Event>> writes;
+	for(auto ele:stores){
+		writes.push_back(std::make_pair(ele.first , ele.second));
+	}
+	return writes;
+}
+
 void Transactions::eraseLoad(SAddr addr){
 	if(isLoadPresent(addr)){
 		reads.erase(addr);
