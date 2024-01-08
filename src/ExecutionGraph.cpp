@@ -1516,9 +1516,10 @@ void ExecutionGraph::restrictTransaction(Event readev){
 	}
 	setInsideTransaction(true);
 	setCurTransaction(rLab->getTransaction());
-	
+	trans->setFinishedStatus(false);
 	
 }
+
 void ExecutionGraph::cutToStamp(unsigned int stamp)
 {
 	setFPStatus(FS_Stale);

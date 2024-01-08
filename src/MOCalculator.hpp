@@ -73,6 +73,9 @@ public:
 	void
 	addStoreToLoc(SAddr addr, Event store, int offset) override;
 
+	//newscdpo
+	void removeAllStores(Transaction tr);
+
 	/* Inserts "store" after "pred" in coherence order */
 	void
 	addStoreToLocAfter(SAddr addr, Event store, Event pred) override;

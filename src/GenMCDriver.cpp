@@ -660,7 +660,10 @@ void GenMCDriver::restrictGraph(const EventLabel *rLab)
 	notifyEERemoved(*getGraph().getPredsView(rLab->getPos()));
 	getGraph().cutToStamp(rLab->getStamp());
 	getGraph().resetStamp(rLab->getStamp() + 1);
+
 	//newscdpor
+	/* If this revisit if for write, we need to restrict events after this write in the transaction */
+	if(rLab->getKind() == EventLabel::EL_Write) return;
 	/* If this is transaction read.
 	* Restrict the events in the transaction of this read
 	*/
@@ -1640,11 +1643,37 @@ void GenMCDriver::visitTrEnd(std::unique_ptr<TrEndLabel> lab){
 	// g.addNewTransaction(tr , lab->getPos());
 	/* Add the stores to the mo. */
 	auto *trans = g.getTransaction(trEndLab->getTransaction());
+	auto tranHB = getGraph().getGlobalTranRelation(ExecutionGraph::RelationId::TranSC);
+	/* Remove all earlier stores of this transaction from mo*/
+	if (auto *mm = llvm::dyn_cast<MOCalculator>(g.getCoherenceCalculator()))
+		mm->removeAllStores(trEndLab->getTransaction());
+	else
+		BUG();
+	/* Now add the latest stores from the transaction to the mo*/
 	for(auto store: trans->getLocStores()){
 		auto placesRange = g.getCoherentPlacings(store.first, store.second, false);
 		auto &begO = placesRange.first;
 		auto &endO = placesRange.second;
 		g.getCoherenceCalculator()->addStoreToLoc(store.first, store.second, endO);
+		auto *lab = g.getWriteLabel(store.second);
+		for (auto it = store_begin(g, lab->getAddr()) + begO,
+		  ie = store_begin(g, lab->getAddr()) + endO; it != ie; ++it) {
+
+			/* We cannot place the write just before the write of an RMW */
+			if (g.isRMWStore(*it))
+				continue;
+			auto *sLab = g.getWriteLabel(*it);
+			if(sLab->getTransaction().isInvalid())
+				continue;
+			/* Push the stack item */
+			if(!tranHB(sLab->getTransaction(), trans->getPos())) /// NEW_SCDPOR
+				if(!inRecoveryMode()){
+					addToWorklist(std::make_unique<WriteRevisit>(
+							lab->getPos(), std::distance(store_begin(g, lab->getAddr()), it)));
+				}
+					
+		}
+
 		// WARN(" Added store to mo :(" + to_string(store.second.thread) + 
 		// 	"," + to_string(store.second.index) + ")  1579 \n");
 		/* TODO: Add it to other possible mo-places.*/
@@ -2160,11 +2189,7 @@ void GenMCDriver::visitStore(std::unique_ptr<WriteLabel> wLab, const EventDeps *
 		return;
 	}
 
-	/* If inside a transaction do not to mo here. This is covered at transaction end.*/
-	if(g.isInsideTransaction()){
-		return;
-	}
-	// WARN("Store outside transaction (" + to_string(lab->getPos().thread) + ","+ to_string(lab->getPos().index)+") 2141\n");
+	
 	/* Find all possible placings in coherence for this store */
 	auto placesRange = g.getCoherentPlacings(lab->getAddr(), lab->getPos(), g.isRMWStore(lab));
 	auto &begO = placesRange.first;
@@ -2175,6 +2200,16 @@ void GenMCDriver::visitStore(std::unique_ptr<WriteLabel> wLab, const EventDeps *
 		const_cast<WriteLabel*>(lab)->setVal(getBarrierInitValue(lab->getAddr(), lab->getAccess()));
 	g.getCoherenceCalculator()->addStoreToLoc(lab->getAddr(), lab->getPos(), endO);
 	
+	/* If inside a transaction do not conider other mo-placing/(postponed write) here. 
+	* This is covered at transaction end.
+	*/
+	if(g.isInsideTransaction()){
+		bool cons = isConsistent(ProgramPoint::step);
+		WARN("Consistent :- "+ to_string(cons)+ " 2214 \n");
+		if(!cons) moot();
+		return;
+	}
+
 	// std::vector<int> mos;
 	// // TODO:::::::: CO orderings
 	// for (auto it = store_begin(g, lab->getAddr()) + begO,
@@ -2211,7 +2246,7 @@ void GenMCDriver::visitStore(std::unique_ptr<WriteLabel> wLab, const EventDeps *
 
 	// if (!cons)
 	// 	return;
-	// BUG_ON(!cons); //new_scdpor: every step is conisistent
+	BUG_ON(!cons); //new_scdpor: every step is conisistent
 
 	checkReconsiderFaiSpinloop(lab);
 	if (llvm::isa<HelpedCasWriteLabel>(lab))

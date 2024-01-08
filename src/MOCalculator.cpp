@@ -96,6 +96,24 @@ void MOCalculator::addStoreToLoc(SAddr addr, Event store, int offset)
 		stores[addr].insert(store_begin(addr) + offset, store);
 }
 
+//newscdpor
+void MOCalculator::removeAllStores(Transaction tr)
+{
+	const auto &g = getGraph();
+	for (auto it = begin(); it != end(); it++) {
+		it->second.erase(std::remove_if(it->second.begin(), it->second.end(),
+						[&](Event &e)
+						{ 
+							auto *lab = g.getEventLabel(e);
+							if(!lab->getTransaction().isInvalid()) 
+								if(lab->getTransaction() == tr)
+									return true;
+							return false;
+						}),
+				 it->second.end());
+
+	}
+}
 void MOCalculator::addStoreToLocAfter(SAddr addr, Event store, Event pred)
 {
 	int offset = getStoreOffset(addr, pred);
