@@ -100,14 +100,20 @@ void MOCalculator::addStoreToLoc(SAddr addr, Event store, int offset)
 void MOCalculator::removeAllStores(Transaction tr)
 {
 	const auto &g = getGraph();
+	auto *trans = g.getTransaction(tr);
 	for (auto it = begin(); it != end(); it++) {
 		it->second.erase(std::remove_if(it->second.begin(), it->second.end(),
 						[&](Event &e)
 						{ 
-							auto *lab = g.getEventLabel(e);
-							if(!lab->getTransaction().isInvalid()) 
-								if(lab->getTransaction() == tr)
+							auto *lab = g.getWriteLabel(e);
+							if(!lab->getTransaction().isInvalid()) {
+								if(lab->getTransaction() == tr 	
+										&& !trans->isRevisitedStore(lab->getAddr())){
 									return true;
+								}
+									
+							}
+								
 							return false;
 						}),
 				 it->second.end());

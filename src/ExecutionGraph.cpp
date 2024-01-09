@@ -1514,6 +1514,8 @@ void ExecutionGraph::restrictTransaction(Event readev){
 		if(ev.second.index > readev.index)
 			trans->eraseStore(ev.first);
 	}
+	/* Erase all revisited stores */
+	trans->eraseRevisitedStore();
 	setInsideTransaction(true);
 	setCurTransaction(rLab->getTransaction());
 	trans->setFinishedStatus(false);

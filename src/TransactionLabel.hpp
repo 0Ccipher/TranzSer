@@ -45,7 +45,9 @@ public:
 	int getThread() const { return position.thread; }
 
 	/* Returns the beginEvent of this transaction in the execution graph */
-	Event getBeginEvent() const { return beginEvent; }
+	Event getBeginEvent() const { return beginEvent; };
+	Event getEndEvent() const { return endEvent; };
+	void setEndEvent(Event e) { endEvent = e;}
 
 	/* Add the store*/
 	void addStore(SAddr addr, Event store) {stores[addr] = store;};
@@ -55,6 +57,10 @@ public:
 	StoreMap getLocStores() const;
 	std::vector<std::pair<SAddr,Event>> getStoresWithAddr() const;
 	void eraseStore(SAddr addr);
+
+	void addRevisitedStore(SAddr addr, Event store) {revisitedStores[addr] = store;};
+	bool isRevisitedStore(SAddr addr) const{ return (revisitedStores.count(addr) > 0) ;};
+	void eraseRevisitedStore() {revisitedStores.clear();};
 
 	/* Add the load*/
 	void addLoad(SAddr addr, Event load) {reads[addr] = load;};
@@ -98,10 +104,12 @@ private:
 
 	/* Position of the beging event label of this transaction within the execution graph (thread, index) */
 	const Event beginEvent;
+	Event endEvent;
 
 	/*Latest stores of this Transaction */
 	
 	StoreMap stores;
+	StoreMap revisitedStores;
 
 	/*Loades of this Transaction */
 	
