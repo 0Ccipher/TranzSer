@@ -22,6 +22,7 @@
 #define __REVISIT_HPP__
 
 #include "EventLabel.hpp"
+#include "Transaction.hpp"
 
 /*
  * Revisit class (abstract) - Represents a revisit operation
@@ -40,6 +41,7 @@ public:
 		RV_ReadLast,
 		RV_MO,
 		RV_Opt,
+		RV_TR_MO,
 	};
 
 protected:
@@ -201,6 +203,38 @@ public:
 	}
 
 private:
+	int moPos;
+};
+
+/*
+ * TransactionRevisit class - Represents an alternative MO position for a store inside the transaction
+ * Here, the revisit is for the endEvent of the corresponidg transaction
+ * (Used by drivers that track MO only)
+ */
+class TransactionRevisit : public Revisit {
+
+protected:
+	TransactionRevisit(Kind k, Event endEv, int moPos, Event w , Transaction tr) : Revisit(k, endEv), moPos(moPos),
+		 write(w), transaction(tr) {}
+
+public:
+	TransactionRevisit(Event endEv, int moPos, Event w , Transaction tr) : Revisit(RV_TR_MO, endEv), moPos(moPos), 
+			write(w), transaction(tr) {}
+
+	/* Returns the new MO position of the event for which
+	 * we are exploring alternative exploration options */
+	int getMOPos() const { return moPos; }
+
+	static bool classof(const Revisit *item) {
+		return item->getKind() == RV_TR_MO;
+	}
+
+	Event getWrite() const {return write;}
+
+	Transaction getTransaction() const {return transaction;}
+private:
+	Transaction transaction;
+	Event write;
 	int moPos;
 };
 

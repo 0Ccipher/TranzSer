@@ -654,29 +654,30 @@ void GenMCDriver::notifyEERemoved(const VectorClock &v)
 
 void GenMCDriver::restrictGraph(const EventLabel *rLab)
 {
+	WARN("Revisit for event (" + to_string(rLab->getPos().thread) + ","+ to_string(rLab->getPos().index)+") 657\n");
+	/* Inform the interpreter about deleted events, and then
+	 * restrict the graph (and relations) */
+	notifyEERemoved(*getGraph().getPredsView(rLab->getPos()));
+	getGraph().cutToStamp(rLab->getStamp());
+	getGraph().resetStamp(rLab->getStamp() + 1);
+
 	/* If this revisit if for write, we need to restrict events after this write in the transaction */
-	if(rLab->getKind() == EventLabel::EL_Write && !rLab->getTransaction().isInvalid()) {
+	if(rLab->getKind() == EventLabel::EL_TrEnd && !rLab->getTransaction().isInvalid()) {
 		auto &g = getGraph();
 		auto *trans = g.getTransaction(rLab->getTransaction());
-		auto *endL = g.getEventLabel(trans->getEndEvent());
-		notifyEERemoved(*g.getPredsView(endL->getPos()));
-		g.cutToStamp(endL->getStamp());
-		g.resetStamp(endL->getStamp() + 1);
 
-		/* Remove all earlier stores of this transaction from mo*/
+		/* Remove all later stores of this transaction from mo*/
 		auto *mm = llvm::dyn_cast<MOCalculator>(g.getCoherenceCalculator());
 		if (mm)
-			mm->removeAllStores(endL->getTransaction());
+			mm->removeAllStores(rLab->getTransaction());
 		else
 			BUG();
 		/* If this revisit is not consistent return */
 		if(!isConsistent(ProgramPoint::step))
 			return;
-		/* Get mo placings for the yet-not revisited writes*/
-		/* Now add the latest stores from the transaction to the mo*/
+		/* Get mo placings for the yet-not revisited transaction writes*/
 		for(auto store: trans->getLocStores()){
-			if(store.second == rLab->getPos()) continue;
-			/* Not the revisited store*/
+			/* this is revisited store*/
 			if(trans->isRevisitedStore(store.first)) continue;
 
 			auto placesRange = g.getCoherentPlacings(store.first, store.second, false);
@@ -709,14 +710,16 @@ void GenMCDriver::restrictGraph(const EventLabel *rLab)
 					continue;
 				}
 				/* Push the stack item */
-				// if(!tranHB(sLab->getTransaction(), trans->getPos())) /// NEW_SCDPOR
-					if(!inRecoveryMode()){
-						addToWorklist(std::make_unique<WriteRevisit>(
-								lab->getPos(), std::distance(store_begin(g, lab->getAddr()), it)));
-					}
+				if(!inRecoveryMode()){
+					addToWorklist(std::make_unique<TransactionRevisit>(
+							rLab->getPos() , std::distance(store_begin(g, store.first), it) , store.second ,
+							rLab->getTransaction()));
+					WARN("other Mo placings for this transaction added to worklist  \n");
+				}
 						
 			}
-			/* If no mo-placing for this addr - it means no consistent mo for this addr for current set of reads.
+			/* If no mo-placing for this addr - it means no consistent mo for this addr for current 
+			* set of reads.
 			* Set this execution as moot and return; 
 			*/
 			if(!addedMO){
@@ -732,14 +735,7 @@ void GenMCDriver::restrictGraph(const EventLabel *rLab)
 		}
 		return;
 	}
-
-	WARN("Revisit for read (" + to_string(rLab->getPos().thread) + ","+ to_string(rLab->getPos().index)+") 657\n");
-	/* Inform the interpreter about deleted events, and then
-	 * restrict the graph (and relations) */
-	notifyEERemoved(*getGraph().getPredsView(rLab->getPos()));
-	getGraph().cutToStamp(rLab->getStamp());
-	getGraph().resetStamp(rLab->getStamp() + 1);
-
+	
 	//newscdpor
 	/* If this is transaction read.
 	* Restrict the events in the transaction of this read
@@ -1768,9 +1764,10 @@ void GenMCDriver::visitTrEnd(std::unique_ptr<TrEndLabel> lab){
 			/* Push the stack item */
 			// if(!tranHB(sLab->getTransaction(), trans->getPos())) /// NEW_SCDPOR
 			if(!inRecoveryMode()){
-				addToWorklist(std::make_unique<WriteRevisit>(
-						store.second, std::distance(store_begin(g, store.first), it)));
-				WARN("other Mo placings added to worklist  \n");
+				addToWorklist(std::make_unique<TransactionRevisit>(
+						trEndLab->getPos() , std::distance(store_begin(g, store.first), it) , store.second ,
+						trEndLab->getTransaction()));
+				WARN("other Mo placings for this transaction added to worklist  \n");
 			}
 					
 		}
@@ -3295,17 +3292,22 @@ bool GenMCDriver::restrictAndRevisit(WorkSet::ItemT item)
 {
 	auto &g = getGraph();
 	auto *EE = getEE();
+	/*For transactionRevisit this is endLabel */
 	EventLabel *lab = g.getEventLabel(item->getPos());
 
 	/* First, appropriately restrict the worklist, the revisit set, and the graph */
 	restrictWorklist(lab);
 	restrictRevisitSet(lab);
 	/* Handle special case - for stores inside the transaction*/
-	if (auto *mi = llvm::dyn_cast<WriteRevisit>(item.get())){
-		auto *wLab = llvm::dyn_cast<WriteLabel>(lab);
+	if (auto *mi = llvm::dyn_cast<TransactionRevisit>(item.get())){
+		auto ev = mi->getWrite();
+		EventLabel *wlab = g.getEventLabel(ev);
+		auto *wLab = llvm::dyn_cast<WriteLabel>(wlab);
 		BUG_ON(!wLab);
+		BUG_ON(wLab->getTransaction().isInvalid());
+		BUG_ON(!(wLab->getTransaction() == mi->getTransaction()));
 		/* Mark this write as revisted, if inside a transaction*/
-		if(!wLab->getTransaction().isInvalid()){
+		{
 			auto *trans = g.getTransaction(wLab->getTransaction());
 			trans->addRevisitedStore(wLab->getAddr() , wLab->getPos());
 			g.changeStoreOffset(wLab->getAddr(), wLab->getPos(), mi->getMOPos());
@@ -3314,8 +3316,10 @@ bool GenMCDriver::restrictAndRevisit(WorkSet::ItemT item)
 			restrictGraph(lab);
 			
 			/* If this revisit is not consistent return */
-			if(!isConsistent(ProgramPoint::step))
+			if(!isConsistent(ProgramPoint::step)){
+				WARN("Revisit for this write is inconsistent- thread : " + to_string(wLab->getPos().thread)) + " \n";
 				return false;
+			}
 			return calcRevisits(wLab);
 		}
 	}
