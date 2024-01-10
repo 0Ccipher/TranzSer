@@ -62,6 +62,11 @@ public:
 	bool isRevisitedStore(SAddr addr) const{ return (revisitedStores.count(addr) > 0) ;};
 	void eraseRevisitedStore() {revisitedStores.clear();};
 
+	void moAdded(SAddr addr, Event store) {addedMo[addr] = store;};
+	bool isMoAdded(SAddr addr) const{ return (addedMo.count(addr) > 0) ;};
+	void eraseMoAdded(SAddr addr) ;
+	void eraseAllAddedMo() {addedMo.clear();};
+
 	/* Add the load*/
 	void addLoad(SAddr addr, Event load) {reads[addr] = load;};
 	bool isLoadPresent(SAddr addr) const;
@@ -110,6 +115,7 @@ private:
 	
 	StoreMap stores;
 	StoreMap revisitedStores;
+	StoreMap addedMo;
 
 	/*Loades of this Transaction */
 	

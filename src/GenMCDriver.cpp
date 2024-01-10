@@ -668,8 +668,10 @@ void GenMCDriver::restrictGraph(const EventLabel *rLab)
 
 		/* Remove all later stores of this transaction from mo*/
 		auto *mm = llvm::dyn_cast<MOCalculator>(g.getCoherenceCalculator());
-		if (mm)
+		if (mm){
 			mm->removeAllStores(rLab->getTransaction());
+			trans->eraseAllAddedMo();
+		}
 		else
 			BUG();
 		/* If this revisit is not consistent return */
@@ -685,9 +687,11 @@ void GenMCDriver::restrictGraph(const EventLabel *rLab)
 			auto &endO = placesRange.second;
 			bool addedMO = true;
 			g.getCoherenceCalculator()->addStoreToLoc(store.first, store.second, endO);
+			trans->moAdded(store.first, store.second);
 			if(!isConsistent(ProgramPoint::step)){
 				mm->removeStore(store.first , store.second);
 				addedMO = false;
+				trans->eraseMoAdded(store.first);
 			}
 			auto *lab = g.getWriteLabel(store.second);
 			for (auto it = store_begin(g, lab->getAddr()) + begO,
@@ -703,9 +707,11 @@ void GenMCDriver::restrictGraph(const EventLabel *rLab)
 					g.getCoherenceCalculator()->addStoreToLoc(store.first, store.second, 
 											std::distance(store_begin(g, lab->getAddr()), it));
 					addedMO = true;
+					trans->moAdded(store.first, store.second);
 					if(!isConsistent(ProgramPoint::step)){
 						mm->removeStore(store.first , store.second);
 						addedMO = false;
+						trans->eraseMoAdded(store.first);
 					}
 					continue;
 				}
@@ -749,8 +755,10 @@ void GenMCDriver::restrictGraph(const EventLabel *rLab)
 		}
 		/* Remove all earlier stores of this transaction from mo*/
 		auto *mm = llvm::dyn_cast<MOCalculator>(g.getCoherenceCalculator());
-		if (mm)
+		if (mm){
 			mm->removeAllStores(rLab->getTransaction());
+			g.getTransaction(rLab->getTransaction())->eraseAllAddedMo();
+		}
 		else
 			BUG();
 		
@@ -1724,8 +1732,10 @@ void GenMCDriver::visitTrEnd(std::unique_ptr<TrEndLabel> lab){
 	auto tranHB = getGraph().getGlobalTranRelation(ExecutionGraph::RelationId::TranSC);
 	/* Remove all earlier stores of this transaction from mo*/
 	auto *mm = llvm::dyn_cast<MOCalculator>(g.getCoherenceCalculator());
-	if (mm)
+	if (mm){
 		mm->removeAllStores(trEndLab->getTransaction());
+		trans->eraseAllAddedMo();
+	}
 	else
 		BUG();
 	/* Now add the latest stores from the transaction to the mo*/
@@ -1736,10 +1746,12 @@ void GenMCDriver::visitTrEnd(std::unique_ptr<TrEndLabel> lab){
 		WARN(" End0 = " + to_string(endO) + " \n");
 		bool addedMO = true;
 		g.getCoherenceCalculator()->addStoreToLoc(store.first, store.second, endO);
+		trans->moAdded(store.first, store.second);
 		WARN(" Mo added \n");
 		if(!isConsistent(ProgramPoint::step)){
 			mm->removeStore(store.first , store.second);
 			addedMO = false;
+			trans->eraseMoAdded(store.first);
 		}
 		for (auto it = store_begin(g, store.first) + begO,
 		  ie = store_begin(g,store.first) + endO; it != ie; ++it) {
@@ -1754,10 +1766,12 @@ void GenMCDriver::visitTrEnd(std::unique_ptr<TrEndLabel> lab){
 				g.getCoherenceCalculator()->addStoreToLoc(store.first, store.second, 
 										std::distance(store_begin(g, store.first), it));
 				addedMO = true;
+				trans->moAdded(store.first, store.second);
 				WARN(" Mo added inside loop  \n");
 				if(!isConsistent(ProgramPoint::step)){
 					mm->removeStore(store.first , store.second);
 					addedMO = false;
+					trans->eraseMoAdded(store.first);
 				}
 				continue;
 			}
@@ -3312,12 +3326,14 @@ bool GenMCDriver::restrictAndRevisit(WorkSet::ItemT item)
 			trans->addRevisitedStore(wLab->getAddr() , wLab->getPos());
 			g.changeStoreOffset(wLab->getAddr(), wLab->getPos(), mi->getMOPos());
 			wLab->setAddedMax(false);
+			trans->moAdded(wLab->getAddr() , wLab->getPos());
 			/* Restrict loads and stores in the transactions */
 			restrictGraph(lab);
 			
 			/* If this revisit is not consistent return */
 			if(!isConsistent(ProgramPoint::step)){
-				WARN("Revisit for this write is inconsistent- thread : " + to_string(wLab->getPos().thread)) + " \n";
+				WARN("Revisit for this write is inconsistent- thread : " + to_string(wLab->getPos().thread) + " \n" );
+				trans->eraseMoAdded(wLab->getAddr());
 				return false;
 			}
 			return calcRevisits(wLab);

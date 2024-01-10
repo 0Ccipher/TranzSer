@@ -33,7 +33,7 @@ int __VERIFIER_atomic_t2(){
 	
 	atomic_store_explicit(&z, 2, memory_order_seq_cst);
 	
-	// atomic_store_explicit(&x, 2, memory_order_seq_cst);
+	atomic_store_explicit(&x, 2, memory_order_seq_cst);
 	r1 = atomic_load_explicit(&x, memory_order_seq_cst);
 	printf("x21: %d\n",r1);
 	
@@ -93,14 +93,15 @@ int main(int argc, char *argv[]){
 	pthread_create(&t1,NULL,thr1,NULL);
 	pthread_create(&t2,NULL,thr2,NULL);
 	pthread_create(&t3,NULL,thr3,NULL);
-	// pthread_create(&t4,NULL,thr1,NULL);
-	// pthread_create(&t5,NULL,thr2,NULL);
+	pthread_create(&t4,NULL,thr1,NULL);
+	pthread_create(&t5,NULL,thr2,NULL);
 	pthread_join(t1,NULL);
 	pthread_join(t2,NULL);
 	pthread_join(t3,NULL);
-	// pthread_join(t4,NULL);
-	// pthread_join(t5,NULL);
-	
+	pthread_join(t4,NULL);
+	pthread_join(t5,NULL);
+	// __VERIFIER_atomic_t2();
+	// abort();
 	// assert(0);
 	printf("___Done\n\n");
 	return 0;

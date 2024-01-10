@@ -95,7 +95,9 @@
             "__split_buffer": "cpp",
             "__nullptr": "cpp",
             "*.def": "cpp",
-            "*.inc": "cpp"
+            "*.inc": "cpp",
+            "__hash_table": "cpp",
+            "__tree": "cpp"
       },
       "C_Cpp.errorSquiggles": "enabled"
 }

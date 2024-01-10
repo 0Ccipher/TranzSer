@@ -73,6 +73,11 @@ void Transactions::eraseLoad(SAddr addr){
 	}
 }
 
+void Transactions::eraseMoAdded(SAddr addr){
+	if(isMoAdded(addr)){
+		addedMo.erase(addr);
+	}
+}
 void Transactions::eraseStore(SAddr addr){
 	if(isStorePresent(addr)){
 		stores.erase(addr);
