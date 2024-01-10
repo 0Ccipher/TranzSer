@@ -662,21 +662,32 @@ void GenMCDriver::restrictGraph(const EventLabel *rLab)
 		notifyEERemoved(*g.getPredsView(endL->getPos()));
 		g.cutToStamp(endL->getStamp());
 		g.resetStamp(endL->getStamp() + 1);
-		/* Get mo placings for the yet-not revisited writes*/
-		auto tranHB = g.getGlobalTranRelation(ExecutionGraph::RelationId::TranSC);
+
 		/* Remove all earlier stores of this transaction from mo*/
-		if (auto *mm = llvm::dyn_cast<MOCalculator>(g.getCoherenceCalculator()))
+		auto *mm = llvm::dyn_cast<MOCalculator>(g.getCoherenceCalculator());
+		if (mm)
 			mm->removeAllStores(endL->getTransaction());
 		else
 			BUG();
+		/* If this revisit is not consistent return */
+		if(!isConsistent(ProgramPoint::step))
+			return;
+		/* Get mo placings for the yet-not revisited writes*/
 		/* Now add the latest stores from the transaction to the mo*/
 		for(auto store: trans->getLocStores()){
-			/*Ignore already revisited stores*/
+			if(store.second == rLab->getPos()) continue;
+			/* Not the revisited store*/
 			if(trans->isRevisitedStore(store.first)) continue;
+
 			auto placesRange = g.getCoherentPlacings(store.first, store.second, false);
 			auto &begO = placesRange.first;
 			auto &endO = placesRange.second;
+			bool addedMO = true;
 			g.getCoherenceCalculator()->addStoreToLoc(store.first, store.second, endO);
+			if(!isConsistent(ProgramPoint::step)){
+				mm->removeStore(store.first , store.second);
+				addedMO = false;
+			}
 			auto *lab = g.getWriteLabel(store.second);
 			for (auto it = store_begin(g, lab->getAddr()) + begO,
 			ie = store_begin(g, lab->getAddr()) + endO; it != ie; ++it) {
@@ -687,15 +698,32 @@ void GenMCDriver::restrictGraph(const EventLabel *rLab)
 				auto *sLab = g.getWriteLabel(*it);
 				if(sLab->getTransaction().isInvalid())
 					continue;
+				if(!addedMO){
+					g.getCoherenceCalculator()->addStoreToLoc(store.first, store.second, 
+											std::distance(store_begin(g, lab->getAddr()), it));
+					addedMO = true;
+					if(!isConsistent(ProgramPoint::step)){
+						mm->removeStore(store.first , store.second);
+						addedMO = false;
+					}
+					continue;
+				}
 				/* Push the stack item */
-				if(!tranHB(sLab->getTransaction(), trans->getPos())) /// NEW_SCDPOR
+				// if(!tranHB(sLab->getTransaction(), trans->getPos())) /// NEW_SCDPOR
 					if(!inRecoveryMode()){
 						addToWorklist(std::make_unique<WriteRevisit>(
 								lab->getPos(), std::distance(store_begin(g, lab->getAddr()), it)));
 					}
 						
 			}
-
+			/* If no mo-placing for this addr - it means no consistent mo for this addr for current set of reads.
+			* Set this execution as moot and return; 
+			*/
+			if(!addedMO){
+				moot();
+				return;
+			}
+			
 		}
 
 		/* Adjust the transaction count in EE*/
@@ -723,6 +751,13 @@ void GenMCDriver::restrictGraph(const EventLabel *rLab)
 		for (auto i = 0u; i < g.getNumThreads(); i++) {
 			getEE()->getThrById(i).globalTransactions = g.getThreadTranSize(i);
 		}
+		/* Remove all earlier stores of this transaction from mo*/
+		auto *mm = llvm::dyn_cast<MOCalculator>(g.getCoherenceCalculator());
+		if (mm)
+			mm->removeAllStores(rLab->getTransaction());
+		else
+			BUG();
+		
 	}
 	return;
 }
@@ -917,6 +952,7 @@ SVal GenMCDriver::getReadRetValueAndMaybeBlock(const ReadLabel *rLab)
 	auto res = getReadValue(rLab);
 	if (rLab->getRf().isBottom()) {
 		/* Bottom is an acceptable re-option only @ replay; block anyway */
+		WARN(" Reply read wit RF.thread = " + to_string(rLab->getRf().thread) + " 948 \n");
 		BUG_ON(!inReplay());
 		thr.block(BlockageType::Error);
 	} else if (llvm::isa<BWaitReadLabel>(rLab) &&
@@ -1497,6 +1533,7 @@ bool GenMCDriver::ensureConsistentRf(const ReadLabel *rLab, std::vector<Event> &
 //NewSCDPOR
 bool GenMCDriver::getConsistentRfs(const ReadLabel *rLab, std::vector<Event> &rfs)
 {
+	/* Compute relations. */
 	isConsistent(ProgramPoint::step);
 	auto &g = getGraph();
 	bool found = false;
@@ -1516,6 +1553,7 @@ bool GenMCDriver::getConsistentRfs(const ReadLabel *rLab, std::vector<Event> &rf
 					
 		if(!initflag){
 			temprfs.push_back(Event(0,0));
+			found = true;
 		}
 		for(const auto *trans1 : alltransactions(g)){
 			if(trans1->getPos() == rLab->getTransaction()) continue;
@@ -1683,18 +1721,14 @@ void GenMCDriver::visitTrEnd(std::unique_ptr<TrEndLabel> lab){
 
 	updateLabelViews(lab.get(), nullptr);
 	auto &g = getGraph();
-	//updateLabelViews(tcLab.get(), deps);
-	// endLab->getPos().transaction = tr;
 	BUG_ON(!g.isInsideTransaction());
 	lab->setTransaction(g.getCurTransaction());
 	auto *trEndLab = g.addOtherLabelToGraph(std::move(lab));
-	//add new Transaction
-	// g.addNewTransaction(tr , lab->getPos());
-	/* Add the stores to the mo. */
 	auto *trans = g.getTransaction(trEndLab->getTransaction());
 	auto tranHB = getGraph().getGlobalTranRelation(ExecutionGraph::RelationId::TranSC);
 	/* Remove all earlier stores of this transaction from mo*/
-	if (auto *mm = llvm::dyn_cast<MOCalculator>(g.getCoherenceCalculator()))
+	auto *mm = llvm::dyn_cast<MOCalculator>(g.getCoherenceCalculator());
+	if (mm)
 		mm->removeAllStores(trEndLab->getTransaction());
 	else
 		BUG();
@@ -1703,26 +1737,52 @@ void GenMCDriver::visitTrEnd(std::unique_ptr<TrEndLabel> lab){
 		auto placesRange = g.getCoherentPlacings(store.first, store.second, false);
 		auto &begO = placesRange.first;
 		auto &endO = placesRange.second;
+		WARN(" End0 = " + to_string(endO) + " \n");
+		bool addedMO = true;
 		g.getCoherenceCalculator()->addStoreToLoc(store.first, store.second, endO);
-		auto *lab = g.getWriteLabel(store.second);
-		for (auto it = store_begin(g, lab->getAddr()) + begO,
-		  ie = store_begin(g, lab->getAddr()) + endO; it != ie; ++it) {
+		WARN(" Mo added \n");
+		if(!isConsistent(ProgramPoint::step)){
+			mm->removeStore(store.first , store.second);
+			addedMO = false;
+		}
+		for (auto it = store_begin(g, store.first) + begO,
+		  ie = store_begin(g,store.first) + endO; it != ie; ++it) {
 
 			/* We cannot place the write just before the write of an RMW */
 			if (g.isRMWStore(*it))
 				continue;
 			auto *sLab = g.getWriteLabel(*it);
-			if(sLab->getTransaction().isInvalid())
+			if(sLab->getTransaction().isInvalid() && !store.second.isInitializer())
 				continue;
-			/* Push the stack item */
-			if(!tranHB(sLab->getTransaction(), trans->getPos())) /// NEW_SCDPOR
-				if(!inRecoveryMode()){
-					addToWorklist(std::make_unique<WriteRevisit>(
-							lab->getPos(), std::distance(store_begin(g, lab->getAddr()), it)));
+			if(!addedMO){
+				g.getCoherenceCalculator()->addStoreToLoc(store.first, store.second, 
+										std::distance(store_begin(g, store.first), it));
+				addedMO = true;
+				WARN(" Mo added inside loop  \n");
+				if(!isConsistent(ProgramPoint::step)){
+					mm->removeStore(store.first , store.second);
+					addedMO = false;
 				}
+				continue;
+			}
+			/* Push the stack item */
+			// if(!tranHB(sLab->getTransaction(), trans->getPos())) /// NEW_SCDPOR
+			if(!inRecoveryMode()){
+				addToWorklist(std::make_unique<WriteRevisit>(
+						store.second, std::distance(store_begin(g, store.first), it)));
+				WARN("other Mo placings added to worklist  \n");
+			}
 					
 		}
-
+		/* If no mo-placing for this addr - it means no consistent mo for this addr for current set of reads.
+		* Set this execution as moot and return; 
+		*/
+		
+		if(!addedMO){
+			WARN(" Moot this execution  \n");
+			moot();
+			return;
+		}
 		// WARN(" Added store to mo :(" + to_string(store.second.thread) + 
 		// 	"," + to_string(store.second.index) + ")  1579 \n");
 		/* TODO: Add it to other possible mo-places.*/
@@ -2127,8 +2187,11 @@ SVal GenMCDriver::visitLoad(std::unique_ptr<ReadLabel> rLab, const EventDeps *de
 	//changeRf(lab->getPos(), stores.back());
 
 	/* ... and make sure that the rf we end up with is consistent */
-	if (!getConsistentRfs(lab, stores))
+	if (!getConsistentRfs(lab, stores)){
+		WARN("RF-set size = " + to_string(stores.size())+"  1548 \n");
 		return SVal(0);
+	}
+		
 	/*Add an label for rf*/
 	changeRf(lab->getPos(), stores.back());
 
@@ -3237,7 +3300,26 @@ bool GenMCDriver::restrictAndRevisit(WorkSet::ItemT item)
 	/* First, appropriately restrict the worklist, the revisit set, and the graph */
 	restrictWorklist(lab);
 	restrictRevisitSet(lab);
-	//TODO: Restrict loads and stores in the transactions 
+	/* Handle special case - for stores inside the transaction*/
+	if (auto *mi = llvm::dyn_cast<WriteRevisit>(item.get())){
+		auto *wLab = llvm::dyn_cast<WriteLabel>(lab);
+		BUG_ON(!wLab);
+		/* Mark this write as revisted, if inside a transaction*/
+		if(!wLab->getTransaction().isInvalid()){
+			auto *trans = g.getTransaction(wLab->getTransaction());
+			trans->addRevisitedStore(wLab->getAddr() , wLab->getPos());
+			g.changeStoreOffset(wLab->getAddr(), wLab->getPos(), mi->getMOPos());
+			wLab->setAddedMax(false);
+			/* Restrict loads and stores in the transactions */
+			restrictGraph(lab);
+			
+			/* If this revisit is not consistent return */
+			if(!isConsistent(ProgramPoint::step))
+				return false;
+			return calcRevisits(wLab);
+		}
+	}
+	/* Restrict loads and stores in the transactions */
 	restrictGraph(lab);
 
 	/* Handle special cases first: if we are restricting to a write, change its MO position */

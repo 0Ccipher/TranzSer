@@ -120,6 +120,14 @@ void MOCalculator::removeAllStores(Transaction tr)
 
 	}
 }
+
+void MOCalculator::removeStore(SAddr addr, Event store){
+	if(stores.count(addr) == 0) return;
+	auto it = std::find(stores[addr].begin() , stores[addr].end() , store);
+	if(it == stores[addr].end()) return;
+	stores[addr].erase(it);
+}
+
 void MOCalculator::addStoreToLocAfter(SAddr addr, Event store, Event pred)
 {
 	int offset = getStoreOffset(addr, pred);

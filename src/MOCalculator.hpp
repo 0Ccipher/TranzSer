@@ -75,6 +75,7 @@ public:
 
 	//newscdpo
 	void removeAllStores(Transaction tr);
+	void removeStore(SAddr addr, Event store);
 
 	/* Inserts "store" after "pred" in coherence order */
 	void
