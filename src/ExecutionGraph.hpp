@@ -377,13 +377,13 @@ public:
 	/* Given a revisit RLAB <- WLAB, returns the view of the resulting graph till WLAB.
 	*/
 	virtual std::unique_ptr<VectorClock>
-	getRevisitViewTillStore(const BackwardRevisit &r) const;
+	getRevisitViewTr(const TransactionBackwardRevisit &r) const;
 
 	/* Returns a list of loads that can be revisited */
 	virtual std::vector<Event> getRevisitable(const WriteLabel *sLab) const;
 
 	/* Returns a list of loads that can be revisited (storerule)*/
-	virtual std::vector<Event> getConsistentRevisitable(const WriteLabel *sLab) const;
+	virtual std::vector<Event> getConsistentRevisitable(const Transactions *trans) const;
 
 	/* Returns the first po-predecessor satisfying F */
 	template <typename F>
@@ -590,7 +590,6 @@ public:
 	/* Returns true if ELAB has been revisited by some event that
 	 * will be deleted by the revisit R */
 	bool hasBeenRevisitedByDeleted(const BackwardRevisit &r, const EventLabel *eLab) const;
-
 	/* Returns whether the prefix of SLAB contains LAB's matching lock */
 	bool prefixContainsMatchingLock(const BackwardRevisit &r, const EventLabel *lab) const {
 		if (!llvm::isa<UnlockWriteLabel>(lab))
@@ -608,6 +607,7 @@ public:
 	/* Returns true if all events to be removed by the revisit
 	 * RLAB <- SLAB form a maximal extension */
 	bool isMaximalExtension(const BackwardRevisit &r) const;
+	bool isMaximalExtensionTr(const TransactionBackwardRevisit &r);
 
 	/* Returns true if the graph that will be created when sLab revisits rLab
 	 * will be the same as the current one */
@@ -631,7 +631,7 @@ public:
 	std::pair<int, int> getCoherentPlacings(SAddr addr, Event pos, bool isRMW);
 	std::vector<Event> getCoherentRevisits(const WriteLabel *wLab);
 	//newscdpor
-	std::vector<Event> getConsistentRevisits(const WriteLabel *wLab);
+	std::vector<Event> getConsistentRevisits(const Transactions *trans);
 	void setAddedMaxFalse(const WriteLabel *wLab);
 
 
@@ -688,8 +688,6 @@ public:
 	 * 2) Copy events => these should notify calculators so that calcs populate their structures
 	 */
 	virtual std::unique_ptr<ExecutionGraph> getCopyUpTo(const VectorClock &v) const;
-	//newscdpor
-	virtual std::unique_ptr<ExecutionGraph> getCopyUpToStore( VectorClock &v ,  BackwardRevisit *br) ;
 
 	/* Overloaded operators */
 	friend llvm::raw_ostream& operator<<(llvm::raw_ostream &s, const ExecutionGraph &g);
@@ -733,8 +731,6 @@ protected:
 	Event getMinimumStampEvent(const std::vector<Event> &es) const;
 
 	void copyGraphUpTo(ExecutionGraph &other, const VectorClock &v) const;
-    //newscdpor
-	void copyGraphUpToStore(ExecutionGraph &other,  VectorClock &v,  BackwardRevisit *br);
 
 	FixpointStatus getFPStatus() const { return relations.fixStatus; }
 	void setFPStatus(FixpointStatus s) { relations.fixStatus = s; }

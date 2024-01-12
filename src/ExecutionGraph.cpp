@@ -383,26 +383,28 @@ Event ExecutionGraph::getPendingRMW(const WriteLabel *sLab) const
 }
 
 //newscdpor
-std::vector<Event> ExecutionGraph::getConsistentRevisitable(const WriteLabel *sLab) const
+std::vector<Event> ExecutionGraph::getConsistentRevisitable(const Transactions *trans) const
 {
-	auto &before = getPorfBefore(sLab->getPos());
-	auto pendingRMW = getPendingRMW(sLab);
+	auto *eLab = getEventLabel(trans->getEndEvent());
+	auto &before = getPorfBefore(eLab->getPos());
+	// auto pendingRMW = getPendingRMW(sLab);
 	std::vector<Event> loads;
 
 	for (auto i = 0u; i < getNumThreads(); i++) {
 		for (auto j = before[i] + 1u; j < getThreadSize(i); j++) {
 			const EventLabel *lab = getEventLabel(Event(i, j));
 			if (auto *rLab = llvm::dyn_cast<ReadLabel>(lab)) {
-				if (rLab->getAddr() == sLab->getAddr())
+				if (trans->isStorePresent(rLab->getAddr()) &&
+				    rLab->isRevisitable() && rLab->wasAddedMax())
 					loads.push_back(rLab->getPos());
 			}
 		}
 	}
-	if (!pendingRMW.isInitializer())
-		loads.erase(std::remove_if(loads.begin(), loads.end(), [&](Event &e){
-			auto *confLab = getEventLabel(pendingRMW);
-			return getEventLabel(e)->getStamp() > confLab->getStamp();
-		}), loads.end());
+	// if (!pendingRMW.isInitializer())
+	// 	loads.erase(std::remove_if(loads.begin(), loads.end(), [&](Event &e){
+	// 		auto *confLab = getEventLabel(pendingRMW);
+	// 		return getEventLabel(e)->getStamp() > confLab->getStamp();
+	// 	}), loads.end());
 	return loads;
 }
 
@@ -505,6 +507,8 @@ const EventLabel *ExecutionGraph::addOtherLabelToGraph(std::unique_ptr<EventLabe
 //newscdpor
 void ExecutionGraph::addNewTransaction(std::unique_ptr<Transactions> tr)
 {	
+	WARN("addNewTransaction for tr("+to_string(tr->getPos().thread)+","+to_string(tr->getPos().index)+") \n");
+	WARN("addNewTransaction for tr-thread size = "+to_string(transactions[tr->getPos().thread].size())+" \n");
 	auto pos = tr->getPos();
 	if (pos.index < transactions[pos.thread].size()) {
 		transactions[pos.thread][pos.index] = std::move(tr);
@@ -895,9 +899,11 @@ ExecutionGraph::getCoherentStores(SAddr addr, Event pos)
 
 //newscdpor
 std::vector<Event>
-ExecutionGraph::getConsistentRevisits(const WriteLabel *wLab)
+ExecutionGraph::getConsistentRevisits(const Transactions *trans)
 {
-	return getCoherenceCalculator()->getConsistentLoadRevisits(wLab);
+	if (auto *cohTracker = llvm::dyn_cast<MOCalculator>(getCoherenceCalculator()))
+		return cohTracker->getConsistentLoadRevisits(trans);
+	return {};
 }
 
 //newscdpor
@@ -925,13 +931,12 @@ ExecutionGraph::getRevisitView(const BackwardRevisit &r) const
 
 //newscdpor
 std::unique_ptr<VectorClock>
-ExecutionGraph::getRevisitViewTillStore(const BackwardRevisit &r) const
+ExecutionGraph::getRevisitViewTr(const TransactionBackwardRevisit &r) const
 {
-	auto *sLab = getWriteLabel(r.getRev());
-	auto preds = std::make_unique<View>(getViewFromStamp(sLab->getStamp()));
-	// preds->update(getWriteLabel(r.getRev())->getPorfView());
-	// if (auto *br = llvm::dyn_cast<BackwardRevisitHELPER>(&r))
-	// 	preds->update(getWriteLabel(br->getMid())->getPorfView());
+	auto *rLab = getReadLabel(r.getPos());
+	auto preds = std::make_unique<View>(getViewFromStamp(rLab->getStamp()));
+	/*also add porf-prefix of this end event*/
+	preds->update(getEventLabel(r.getRev())->getPorfView());
 	return std::move(preds);
 }
 
@@ -1364,6 +1369,14 @@ bool ExecutionGraph::isMaximalExtension(const BackwardRevisit &r) const
 	return getCoherenceCalculator()->inMaximalPath(r);
 }
 
+//newscdpor
+bool ExecutionGraph::isMaximalExtensionTr(const TransactionBackwardRevisit &r)
+{
+	if (auto *cohTracker = llvm::dyn_cast<MOCalculator>(getCoherenceCalculator()))
+		return cohTracker->inMaximalPathTr(r);
+	return false;
+}
+
 bool ExecutionGraph::revisitModifiesGraph(const BackwardRevisit &r) const
 {
 	auto v = getRevisitView(r);
@@ -1516,6 +1529,7 @@ void ExecutionGraph::restrictTransaction(Event readev){
 	}
 	/* Erase all revisited stores */
 	trans->eraseRevisitedStore();
+	trans->eraseAllAddedMo();
 	setInsideTransaction(true);
 	setCurTransaction(rLab->getTransaction());
 	trans->setFinishedStatus(false);
@@ -1613,6 +1627,9 @@ void ExecutionGraph::copyGraphUpTo(ExecutionGraph &other, const VectorClock &v) 
 	// FIXME: The reason why we resize to num of threads instead of v.size() is
 	// to keep the same size as the interpreter threads.
 	other.events.resize(getNumThreads());
+	//newscdpor
+	other.transactions.resize(getNumThreads());
+
 	for (auto i = 0u; i < getNumThreads(); i++) {
 		other.addOtherLabelToGraph(std::move(getEventLabel(Event(i, 0))->clone()));
 		for (auto j = 1; j <= v[i]; j++) {
@@ -1635,6 +1652,13 @@ void ExecutionGraph::copyGraphUpTo(ExecutionGraph &other, const VectorClock &v) 
 				;
 			if (auto *lLab = llvm::dyn_cast<LockLabelLAPOR>(nLab))
 				other.getLbCalculatorLAPOR()->addLockToList(lLab->getLockAddr(), lLab->getPos());
+			
+			if(auto *bLab = llvm::dyn_cast<TrBeginLabel>(nLab)){
+				other.addNewTransaction(getTransaction(bLab->getTransaction())->clone());
+			}
+			if(auto *bLab = llvm::dyn_cast<TrEndLabel>(nLab)){
+				WARN("Copied the TrEndLabel \n");
+			}
 		}
 	}
 
@@ -1651,103 +1675,12 @@ void ExecutionGraph::copyGraphUpTo(ExecutionGraph &other, const VectorClock &v) 
 	return;
 }
 
-//newscdpor
-void ExecutionGraph::copyGraphUpToStore(ExecutionGraph &other,  VectorClock &v,  BackwardRevisit *br)
-{
-	/* First, populate calculators, etc */
-	other.timestamp = timestamp;
-
-	other.relations = relations;
-	other.relsCache = relsCache;
-
-	other.relations.fixStatus = FS_Stale;
-	other.relsCache.fixStatus = FS_Stale;
-
-	for (const auto &cc : consistencyCalculators)
-		other.consistencyCalculators.push_back(cc->clone(other));
-
-	other.partialConsCalculators = partialConsCalculators;
-
-	other.calculatorIndex = calculatorIndex;
-	other.relationIndex = relationIndex;
-
-	if (persChecker.get())
-		other.persChecker = persChecker->clone(other);
-	other.recoveryTID = recoveryTID;
-
-	other.bam = bam;
-
-	/* Then, copy the appropriate events */
-	/* FIXME: Fix LAPOR (use addLockLabelToGraphLAPOR??) */
-	auto *cc = getCoherenceCalculator();
-	auto *occ = other.getCoherenceCalculator();
-	BUG_ON(!cc || !occ);
-
-	// FIXME: The reason why we resize to num of threads instead of v.size() is
-	// to keep the same size as the interpreter threads.
-	auto *rLab = getReadLabel(br->getPos());
-	Event readev = rLab->getPos();
-	other.events.resize(getNumThreads());
-	for (auto i = 0u; i < getNumThreads(); i++) {
-		other.addOtherLabelToGraph(std::move(getEventLabel(Event(i, 0))->clone()));
-		for (auto j = 1; j <= v[i]; j++) {
-			if(isCbBefore(readev , Event(i,j)) && readev != Event(i,j)){
-				continue;
-			}
-			// if (!v.contains(Event(i, j))) {
-			// 	other.addOtherLabelToGraph(
-			// 		EmptyLabel::create(other.nextStamp(), Event(i, j)));
-			// 	continue;
-			// }
-			auto *nLab = other.addOtherLabelToGraph(getEventLabel(Event(i, j))->clone());
-			if (auto *wLab = llvm::dyn_cast<WriteLabel>(nLab)) {
-				auto &readers = (const_cast<WriteLabel *>(wLab)->readerList);
-				readers.erase(std::remove_if(readers.begin(),
-						readers.end(), [&](Event r)
-						{ return (!v.contains(r) || isCbBefore(readev , r)); }),
-				 readers.end());
-				// const_cast<WriteLabel *>(wLab)->removeReader([&v , &readev](const Event &r){
-				// 	return (!v.contains(r) || isCbBefore(readev , r));
-				// });
-			}
-			if (auto *mLab = llvm::dyn_cast<MemAccessLabel>(nLab))
-				occ->trackCoherenceAtLoc(mLab->getAddr());
-			if (auto *tcLab = llvm::dyn_cast<ThreadCreateLabel>(nLab))
-				;
-			if (auto *eLab = llvm::dyn_cast<ThreadFinishLabel>(nLab))
-				;
-			if (auto *lLab = llvm::dyn_cast<LockLabelLAPOR>(nLab))
-				other.getLbCalculatorLAPOR()->addLockToList(lLab->getLockAddr(), lLab->getPos());
-		}
-	}
-
-	/* Finally, copy coherence info */
-	/* FIXME: Temporary ugly hack */
-	for (auto it = cc->begin(); it != cc->end(); ++it) {
-		for (auto sIt = it->second.begin(); sIt != it->second.end(); ++sIt) {
-			if (v.contains(*sIt) && !isCbBefore(readev , *sIt)) {
-				occ->addStoreToLoc(it->first, *sIt, -1);
-			}
-		}
-	}
-	/* FIXME: Make sure all fields are copied */
-	return;
-}
-
 std::unique_ptr<ExecutionGraph> ExecutionGraph::getCopyUpTo(const VectorClock &v) const
 {
 	auto og = std::unique_ptr<ExecutionGraph>(new ExecutionGraph(warnOnGraphSize));
 	copyGraphUpTo(*og, v);
 	return og;
 }
-//newscdpor
-std::unique_ptr<ExecutionGraph> ExecutionGraph::getCopyUpToStore( VectorClock &v ,  BackwardRevisit *br) 
-{
-	auto og = std::unique_ptr<ExecutionGraph>(new ExecutionGraph(warnOnGraphSize));
-	copyGraphUpToStore(*og, v, &*br);
-	return og;
-}
-
 
 /************************************************************
  ** PSC calculation

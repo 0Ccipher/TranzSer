@@ -96,6 +96,9 @@ public:
 
 	virtual ~Transactions() = default;
 
+	std::unique_ptr<Transactions> clone() const  {
+		return std::make_unique<Transactions>(*this);
+	}
 	friend llvm::raw_ostream& operator<<(llvm::raw_ostream& rhs,
 					     const Transactions &tr);
 

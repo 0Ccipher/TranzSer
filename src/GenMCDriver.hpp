@@ -24,6 +24,7 @@
 #include "Config.hpp"
 #include "DepInfo.hpp"
 #include "EventLabel.hpp"
+#include "TransactionLabel.hpp"
 #include "RevisitSet.hpp"
 #include "WorkSet.hpp"
 #include <llvm/IR/Module.h>
@@ -557,7 +558,7 @@ private:
 	// NEWSC_DPOR
 	/* Calculates revisit(StoreRule) options and pushes them to the worklist.
 	 * Returns true if the current exploration should continue */ 
-	bool loadRevisits(const WriteLabel *lab);
+	bool loadRevisits(const Transactions *trans);
 
 	/* Modifies (but not restricts) the graph when we are revisiting a read.
 	 * Returns true if the resulting graph should be explored. */
@@ -590,7 +591,7 @@ private:
 		--except rLav~cb_after events.
 	 * May modify V but will not execute BR in the copy. */
 	std::unique_ptr<ExecutionGraph>
-	copyGraphTillStore( BackwardRevisit *br, VectorClock *v) ;
+	copyGraphTr( TransactionBackwardRevisit *br, VectorClock *v) ;
 
 	/* Given a list of stores that it is consistent to read-from,
 	 * filters out options that can be skipped (according to the conf),
@@ -756,9 +757,9 @@ private:
 	virtual std::vector<Event> getRevisitableApproximation(const WriteLabel *sLab);
 
 	// NEWSCDPOR
-	/* Returns an approximation of the reads that SLAB can revisit.
+	/* Returns an approximation of the reads that writes from trans can revisit.
 	 * The reads are ordered in reverse-addition order */
-	virtual std::vector<Event> getRevisitableLoads(const WriteLabel *sLab);
+	virtual std::vector<Event> getRevisitableLoads(const Transactions *trans);
 
 	/* Changes the reads-from edge for the specified label.
 	 * This effectively changes the label, hence this method is virtual */

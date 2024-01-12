@@ -42,6 +42,8 @@ public:
 		RV_MO,
 		RV_Opt,
 		RV_TR_MO,
+		RV_TR_BRev,
+		RV_TR_BRevLast,
 	};
 
 protected:
@@ -236,6 +238,62 @@ private:
 	Transaction transaction;
 	Event write;
 	int moPos;
+};
+
+/*
+ * TransactionBackwardRevisit class - Represents a backward revisit for writes inside a transaction
+ * Here r of ReadRevisit is endEv of the respective transaction.
+ */
+class TransactionBackwardRevisit : public ReadRevisit {
+
+protected:
+	TransactionBackwardRevisit(Kind k, Event p, Event endEv, Event w, Transaction tr,
+		 std::vector<std::unique_ptr<EventLabel> > &&prefix,
+		 std::vector<std::pair<Event, Event> > &&moPlacings)
+		: ReadRevisit(k, p, endEv),
+		  prefix(std::move(prefix)),
+		  moPlacings(std::move(moPlacings)), write(w), transaction(tr) {}
+
+public:
+	TransactionBackwardRevisit(Event p, Event endEv, Event w, Transaction tr,
+		 std::vector<std::unique_ptr<EventLabel> > &&prefix,
+		 std::vector<std::pair<Event, Event> > &&moPlacings)
+		: TransactionBackwardRevisit(RV_TR_BRev, p, endEv, w, tr, std::move(prefix), std::move(moPlacings)) {}
+	TransactionBackwardRevisit(Event p, Event endEv , Event w, Transaction tr )
+		: TransactionBackwardRevisit(p, endEv, w, tr , {}, {}) {}
+	TransactionBackwardRevisit(const ReadLabel *rLab, const TrEndLabel *eLab, const WriteLabel *wLab, Transaction tr)
+		: TransactionBackwardRevisit(rLab->getPos(), eLab->getPos(), wLab->getPos() , tr) {}
+
+	/* Returns (releases) the prefix of the revisiting event */
+	std::vector<std::unique_ptr<EventLabel> > &&getPrefixRel() {
+		return std::move(prefix);
+	}
+
+	/* Returns (but does not release) the prefix of the revisiting event */
+	const std::vector<std::unique_ptr<EventLabel> > &getPrefixNoRel() const {
+		return prefix;
+	}
+
+	/* Returns (releases) the coherence placing in the prefix */
+	std::vector<std::pair<Event, Event> > &&getMOPlacingsRel() {
+		return std::move(moPlacings);
+	}
+
+	static bool classof(const Revisit *item) {
+		return item->getKind() >= RV_TR_BRev && item->getKind() <= RV_TR_BRevLast;
+	}
+
+	Event getWrite() const{
+		return write;
+	}
+	Transaction getTransaction() const{
+		return transaction;
+	}
+private:
+	std::vector<std::unique_ptr<EventLabel> >  prefix;
+	std::vector<std::pair<Event, Event> >  moPlacings;
+	Event write;
+	Transaction transaction;
 };
 
 

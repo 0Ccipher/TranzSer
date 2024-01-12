@@ -256,39 +256,44 @@ MOCalculator::getMOInvOptRfAfter(const WriteLabel *sLab)
 
 //newscdpor
 std::vector<Event>
-MOCalculator::getConsistentLoadRevisits(const WriteLabel *sLab)
+MOCalculator::getConsistentLoadRevisits(const Transactions *trans)
 {
 	const auto &g = getGraph();
-	/* Get the w \in (w,R1,w').. that is get MO-before write*/
-	auto offset = getStoreOffset(sLab->getAddr(), sLab->getPos());
-	Event pred_store;
-	if(offset > 0){
-		pred_store = *(store_begin(sLab->getAddr()) + offset - 1);
-	}
+	auto ls = g.getConsistentRevisitable(trans);
 
-	/* Get loads which are not cb_before the store slab*/
-	auto ls = g.getConsistentRevisitable(sLab);
+	auto stores = trans->getStoresWithAddr();
+	/* If this store is po- and mo-maximal then we are done */
+	if (!supportsOutOfOrder() && std::all_of( stores.begin() , stores.end() , 
+				[&](std::pair<SAddr,Event> &s) {
+						auto *sLab = getGraph().getWriteLabel(s.second);
+						return isCoMaximal(sLab->getAddr(), sLab->getPos());
+				}) )
+		return ls;
+
+	/* First, we have to exclude (mo;rf?;hb?;sb)-after reads */
+	// auto optRfs = getMOOptRfAfter(sLab);
+	std::vector<Event> moOptRfAfter;
+	for(auto store: stores){
+		std::for_each(succ_begin(store.first, store.second),
+		      succ_end(store.first, store.second), [&](const Event &w){
+			      auto *wLab = g.getWriteLabel(w);
+			      moOptRfAfter.push_back(wLab->getPos());
+			      moOptRfAfter.insert(moOptRfAfter.end(), wLab->readers_begin(), wLab->readers_end());
+		});
+	}
 	
-	/* Remove the loads not reading from pred_store */
-	ls.erase(std::remove_if(ls.begin(), ls.end() , [&](Event e)
-				{
-					auto *rLab = g.getReadLabel(e);
-					bool flag = false;
-					if(offset > 0 && rLab->getRf() != pred_store)
-						flag = true;
-					if(offset == 0 && rLab->getRf() != Event::getInitializer() )
-						flag = true;
-					return flag;
-				}) , 
-		ls.end());
-	
-	/* Remove the loads which are not free in the ExecutionGraph(storerule) */
-	ls.erase(std::remove_if(ls.begin() , ls.end(), [&](Event e)
-				{
-					auto flag = getGraph().isFree(e);
-					return (!flag);
-				}), 
-		ls.end());
+	ls.erase(std::remove_if(ls.begin(), ls.end(), [&](Event e)
+				{ 
+					const View &before = g.getHbPoBefore(e);
+				  	return std::any_of(moOptRfAfter.begin(), moOptRfAfter.end(),
+					 	[&](Event ev){ return before.contains(ev); });
+				}), ls.end());
+
+	/* If out-of-order event addition is not supported, then we are done
+	 * due to po-maximality */
+	if (!supportsOutOfOrder())
+		return ls;
+	//TODO: See if there is need for futher optimization as in getCoherentRevisits()
 	return ls;
 }
 
@@ -447,7 +452,7 @@ bool MOCalculator::inMaximalPath(const BackwardRevisit &r)
 		return false;
 
 	auto &g = getGraph();
-        auto v = g.getRevisitView(r);
+    auto v = g.getRevisitView(r);
 
 	for (const auto *lab : labels(g)) {
 		if ((lab->getPos() != r.getPos() && v->contains(lab->getPos())) ||
@@ -459,6 +464,63 @@ bool MOCalculator::inMaximalPath(const BackwardRevisit &r)
 			return false;
 		if (g.hasBeenRevisitedByDeleted(r, lab))
 			return false;
+		if (!wasAddedMaximally(lab))
+			return false;
+	}
+	return true;
+}
+
+//newscdpor
+bool MOCalculator::inMaximalPathTr(const TransactionBackwardRevisit &r)
+{
+	
+	auto &g = getGraph();
+	auto preds = g.getRevisitViewTr(r);
+	
+	auto *trans = g.getTransaction(r.getTransaction());
+	/*mo-succ of all writes should be in the updated graph */
+	auto stores = trans->getStoresWithAddr();
+	if(std::any_of(stores.begin() , stores.end(), 
+				[&](std::pair<SAddr,Event> &store) {
+					auto *wLab = g.getWriteLabel(store.second);
+					auto succIt = succ_begin(wLab->getAddr(), wLab->getPos());
+					auto succE = succ_end(wLab->getAddr(), wLab->getPos());
+					if (!(succIt == succE) && !(preds->contains(*succIt)))
+						return true;
+					return false;
+				}))
+		return false;
+	
+	for (const auto *lab : labels(g)) {
+		if ((lab->getPos() != r.getPos() && preds->contains(lab->getPos())) || g.isOptBlockedRead(lab))
+			continue;
+
+		/*isCoBeforeSavedPrefix(r, lab)*/
+		if(auto *mLab = llvm::dyn_cast<MemAccessLabel>(lab)){
+			auto w = llvm::isa<ReadLabel>(mLab) ? llvm::dyn_cast<ReadLabel>(mLab)->getRf() : mLab->getPos();
+			if(any_of(succ_begin(mLab->getAddr(), w), succ_end(mLab->getAddr(), w), 
+					[&](const Event &s){
+			      		auto *sLab = g.getEventLabel(s);
+						if(sLab->getTransaction().isInvalid())
+							return false;
+						auto *sTran = g.getTransaction(sLab->getTransaction());
+						auto *eLab = g.getEventLabel(sTran->getEndEvent());
+			     		return preds->contains(sLab->getPos()) &&
+							preds->contains(eLab->getPos()) &&
+							sLab->getTransaction() != trans->getPos() &&
+							mLab->getIndex() > sLab->getPPoRfView()[mLab->getThread()] &&
+				     		mLab->getIndex() > eLab->getPPoRfView()[mLab->getThread()];
+		      			}) )
+				return false;
+
+		}
+		/*hasBeenRevisitedByDeleted(r,lab)*/
+		auto *rLab = llvm::dyn_cast<ReadLabel>(lab);
+		if (rLab){
+			auto *rfLab = g.getEventLabel(rLab->getRf());
+			if( !preds->contains(rfLab->getPos()) && rfLab->getStamp() > lab->getStamp() )
+				return false;
+		}
 		if (!wasAddedMaximally(lab))
 			return false;
 	}

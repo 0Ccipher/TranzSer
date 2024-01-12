@@ -22,7 +22,9 @@
 #define __MO_CALCULATOR_HPP__
 
 #include "CoherenceCalculator.hpp"
+#include "TransactionLabel.hpp"
 #include <unordered_map>
+#include <Revisit.hpp>
 
 /*******************************************************************************
  **                        MOCalculator Class
@@ -96,15 +98,16 @@ public:
 	getCoherentRevisits(const WriteLabel *wLab) override;
 
 	//newscdpor
-	/* Returns all the reads that "wLab" can revisit without violating
+	/* Returns all the reads that trans can revisit without violating
 	 * consistency */
 	std::vector<Event>
-	getConsistentLoadRevisits(const WriteLabel *wLab) override;
+	getConsistentLoadRevisits(const Transactions *trans) ;
 	//newscdpor
 	/* Sets maximal=false for the MO-successor of this sLab */
 	void setAddedMaxFalse(const WriteLabel *sLab) override;
 
 	bool inMaximalPath(const BackwardRevisit &r) override;
+	bool inMaximalPathTr(const TransactionBackwardRevisit &r);
 
 	/* Overrided Calculator methods */
 

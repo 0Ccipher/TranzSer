@@ -4599,6 +4599,7 @@ void Interpreter::callFunction(Function *F, const std::vector<GenericValue> &Arg
   
   if(F->getName().str().find("__VERIFIER_atomic_") == 0){
     if(AtomicFunctionCall < 0){
+		WARN("Transaction Begin-\n");
       AtomicFunctionCall = ECStack().size();
     } // else we are already inside an atomic function call
   }
