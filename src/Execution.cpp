@@ -4713,27 +4713,27 @@ void Interpreter::run()
 		llvm::ExecutionContext &SF = ECStack().back();
 		llvm::Instruction &I = *SF.CurInst++;
 		visit(I);
-		/* Atomic function? */
-		if(0 <= AtomicFunctionCall){
-			// driver->visitTrBegin(TrBeginLabel::create(nextPos()) , nextTran());
-			/* We have entered an atomic function.
-			* Keep executing until we exit it.
-			*/
-			WARN("AtomicF = "+std::__cxx11::to_string( ) +" 1 \n");
-			WARN("ESC size = "+std::__cxx11::to_string(int(ECStack().size())) +" 1 \n");
-			while(AtomicFunctionCall < int(ECStack().size())){
-				WARN("AtomicF = "+std::__cxx11::to_string(AtomicFunctionCall) +" \n");
-				WARN("ESC size = "+std::__cxx11::to_string(int(ECStack().size())) +" \n");
-				driver->handleExecutionInProgress();
-				ExecutionContext &SF = ECStack().back();  // Current stack frame
-				Instruction &I = *SF.CurInst++;         // Increment before execute
-				visit(I);
-			}
-			AtomicFunctionCall = -1;
-			WARN("AtomicF = "+std::__cxx11::to_string(AtomicFunctionCall) +" 3 \n");
-			WARN("ESC size = "+std::__cxx11::to_string(int(ECStack().size())) +" 3 \n");
-			// driver->visitTrEnd(TrEndLabel::create(nextPos()) , currTran());
-		}
+		// /* Atomic function? */
+		// if(0 <= AtomicFunctionCall){
+		// 	// driver->visitTrBegin(TrBeginLabel::create(nextPos()) , nextTran());
+		// 	/* We have entered an atomic function.
+		// 	* Keep executing until we exit it.
+		// 	*/
+		// 	WARN("AtomicF = "+std::__cxx11::to_string(AtomicFunctionCall) +" 1 \n");
+		// 	WARN("ESC size = "+std::__cxx11::to_string(int(ECStack().size())) +" 1 \n");
+		// 	while(AtomicFunctionCall < int(ECStack().size())){
+		// 		WARN("AtomicF = "+std::__cxx11::to_string(AtomicFunctionCall) +" \n");
+		// 		WARN("ESC size = "+std::__cxx11::to_string(int(ECStack().size())) +" \n");
+		// 		driver->handleExecutionInProgress();
+		// 		ExecutionContext &SF = ECStack().back();  // Current stack frame
+		// 		Instruction &I = *SF.CurInst++;         // Increment before execute
+		// 		visit(I);
+		// 	}
+		// 	AtomicFunctionCall = -1;
+		// 	WARN("AtomicF = "+std::__cxx11::to_string(AtomicFunctionCall) +" 3 \n");
+		// 	WARN("ESC size = "+std::__cxx11::to_string(int(ECStack().size())) +" 3 \n");
+		// 	// driver->visitTrEnd(TrEndLabel::create(nextPos()) , currTran());
+		// }
 	}
 	return;
 }

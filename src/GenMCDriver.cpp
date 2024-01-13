@@ -1698,8 +1698,15 @@ int GenMCDriver::getSymmetricTidSR(int thread, Event parent, llvm::Function *thr
 //newscdpor
 void GenMCDriver::visitTrBegin(std::unique_ptr<TrBeginLabel> lab){
 	WARN("Tr_Begin (" + to_string(lab->getPos().thread) + ","+ to_string(lab->getPos().index)+") \n");
-	if (isExecutionDrivenByGraph())
+
+	if (isExecutionDrivenByGraph()) {
+		getGraph().setInsideTransaction(true);
+		auto *bLab = getGraph().getEventLabel(lab->getPos());
+		WARN("Replay Tr_Begin tr(" + to_string(bLab->getTransaction().thread) + ","+ to_string(bLab->getTransaction().index)+") \n");
+		BUG_ON(bLab->getTransaction().isInvalid());
+		getGraph().setCurTransaction(bLab->getTransaction());
 		return;
+	}
 
 	WARN("Not Reply-Fresh Tr_Begin \n");
 
@@ -1723,8 +1730,11 @@ void GenMCDriver::visitTrBegin(std::unique_ptr<TrBeginLabel> lab){
 
 void GenMCDriver::visitTrEnd(std::unique_ptr<TrEndLabel> lab){
 	WARN("Tr_End (" + to_string(lab->getPos().thread) + ","+to_string(lab->getPos().index)+") \n");
-	if (isExecutionDrivenByGraph())
+
+	if (isExecutionDrivenByGraph()) {
+		getGraph().setInsideTransaction(false);
 		return;
+	}
 
 	WARN("Not Reply-Fresh Tr_End \n");
 
@@ -2974,6 +2984,7 @@ GenMCDriver::copyGraphTr( TransactionBackwardRevisit *br, VectorClock *v)
 			lab->setStamp(og->nextStamp());
 	}
 	WARN("copyGraphTr for read("+to_string(revLab->getPos().thread)+","+to_string(revLab->getPos().index)+") 2 \n");
+
 	/* Restrict the transactions with this BRevisted read in the updated grapg-og*/
 	auto readev = revLab->getPos();
 	auto *trans = og->getTransaction(revLab->getTransaction());
@@ -3344,7 +3355,7 @@ bool GenMCDriver::restrictAndRevisit(WorkSet::ItemT item)
 		BUG_ON(wLab->getTransaction().isInvalid());
 		BUG_ON(!(wLab->getTransaction() == mi->getTransaction()));
 		/* Mark this write as revisted, if inside a transaction*/
-		{
+		
 			auto *trans = g.getTransaction(wLab->getTransaction());
 			trans->addRevisitedStore(wLab->getAddr() , wLab->getPos());
 			g.changeStoreOffset(wLab->getAddr(), wLab->getPos(), mi->getMOPos());
@@ -3359,8 +3370,8 @@ bool GenMCDriver::restrictAndRevisit(WorkSet::ItemT item)
 				trans->eraseMoAdded(wLab->getAddr());
 				return false;
 			}
-			return calcRevisits(wLab);
-		}
+			return loadRevisits(trans);
+		
 	}
 	/* Restrict loads and stores in the transactions */
 	restrictGraph(lab);
