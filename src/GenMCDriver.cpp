@@ -3079,8 +3079,12 @@ bool GenMCDriver::loadRevisits(const Transactions *trans)
 		if (tp && tp->getRemainingTasks() < 8 * tp->size()) {
 			tp->submit(getSharedState());
 		} else {
-			if (isConsistent(ProgramPoint::step))
+			if (isConsistent(ProgramPoint::step)){
+				WARN("Started new execution for this TR_BRevist \n");
 				explore();
+				WARN("Returned from execution of this TR_BRevist \n");
+			}
+				
 		}
 
 		restoreLocalState(std::move(localState));

@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include  <stdlib.h>
 
-atomic_int x,y,z,dummy;
+atomic_int x,y,z,w,dummy;
 int a1 = 0, a2 =0;
 
 void __VERIFIER_Transaction_begin();
@@ -19,14 +19,14 @@ int __VERIFIER_atomic_t1(){
 	// atomic_store_explicit(&x, 1, memory_order_seq_cst);
 	
 	// atomic_store_explicit(&z, 11, memory_order_seq_cst);
-	r1 = atomic_load_explicit(&z, memory_order_seq_cst);
-	printf("z12: %d\n",r1);
+	// r1 = atomic_load_explicit(&z, memory_order_seq_cst);
+	// printf("z12: %d\n",r1);
 	
 	atomic_store_explicit(&y, 1, memory_order_seq_cst);
 	r1 = atomic_load_explicit(&y, memory_order_seq_cst);
 	printf("y1: %d\n",r1);
 	__VERIFIER_Transaction_end();
-
+	printf("t1-done \n");
 	return 1;
 }
 
@@ -38,12 +38,13 @@ int __VERIFIER_atomic_t2(){
 	
 	atomic_store_explicit(&x, 2, memory_order_seq_cst);
 	r1 = atomic_load_explicit(&x, memory_order_seq_cst);
-	printf("x21: %d\n",r1);
+	printf("x21-own: %d\n",r1);
 	
-	// r1 = atomic_load_explicit(&z, memory_order_seq_cst);
-	// printf("z2-own: %d\n",r1);
+	r1 = atomic_load_explicit(&z, memory_order_seq_cst);
+	printf("z2: %d\n",r1);
 	
 	__VERIFIER_Transaction_end();
+	printf("t2-done \n");
 	return r1;
  }
 
@@ -59,7 +60,23 @@ int __VERIFIER_atomic_t3(){
 	// printf("x13-own: %d\n",r1);
 	
 	__VERIFIER_Transaction_end();
+	printf("t3-done \n");
+	return 1;
+}
 
+int __VERIFIER_atomic_t4(){
+
+	__VERIFIER_Transaction_begin();
+	int r1 = 0;
+	atomic_store_explicit(&w, 4, memory_order_seq_cst);
+
+	r1 = atomic_load_explicit(&w, memory_order_seq_cst);
+	printf("w4-own: %d\n",r1);
+	// r1 = atomic_load_explicit(&x, memory_order_seq_cst);
+	// printf("x13-own: %d\n",r1);
+	
+	__VERIFIER_Transaction_end();
+	printf("t4-done \n");
 	return 1;
 }
 
@@ -67,6 +84,7 @@ int __VERIFIER_atomic_t3(){
 void *thr1(void *arg){
 	// atomic_store_explicit(&dummy, 1, memory_order_seq_cst);
  	int bba1 = __VERIFIER_atomic_t1();
+	printf("t1-returned \n");
 	// atomic_store_explicit(&dummy, 1, memory_order_seq_cst);
 	// int b1 = __VERIFIER_atomic_t1();
 	// // atomic_t3();
@@ -76,6 +94,7 @@ void *thr1(void *arg){
 void *thr2(void *arg){
 	// a2 = __VERIFIER_atomic_t2();
 	int ba1 = __VERIFIER_atomic_t2();
+	printf("t2-returned \n");
 	// atomic_store_explicit(&dummy, 1, memory_order_seq_cst);
 	// int bba1 = __VERIFIER_atomic_t1();
 	// atomic_store_explicit(&dummy, 1, memory_order_seq_cst);
@@ -86,6 +105,17 @@ void *thr2(void *arg){
 void *thr3(void *arg){
 	// atomic_store_explicit(&dummy, 1, memory_order_seq_cst);
  	int bba1 = __VERIFIER_atomic_t3();
+	printf("t3-returned \n");
+	// atomic_store_explicit(&dummy, 1, memory_order_seq_cst);
+	// int b1 = __VERIFIER_atomic_t1();
+	// // atomic_t3();
+	return NULL;
+}
+
+void *thr4(void *arg){
+	// atomic_store_explicit(&dummy, 1, memory_order_seq_cst);
+ 	int bba1 = __VERIFIER_atomic_t4();
+	printf("t4-returned \n");
 	// atomic_store_explicit(&dummy, 1, memory_order_seq_cst);
 	// int b1 = __VERIFIER_atomic_t1();
 	// // atomic_t3();
@@ -97,9 +127,15 @@ int main(int argc, char *argv[]){
 	pthread_create(&t1,NULL,thr1,NULL);
 	pthread_create(&t2,NULL,thr2,NULL);
 	pthread_create(&t3,NULL,thr3,NULL);
+	pthread_create(&t4,NULL,thr4,NULL);
 	pthread_join(t1,NULL);
+	printf("t1-joined \n");
 	pthread_join(t2,NULL);
+	printf("t2-joined \n");
 	pthread_join(t3,NULL);
+	printf("t3-joined \n");
+	pthread_join(t4,NULL);
+	printf("t4-joined \n");
 	
 	// assert(0);
 	printf("___Done\n\n");
