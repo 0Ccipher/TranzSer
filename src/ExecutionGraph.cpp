@@ -507,8 +507,8 @@ const EventLabel *ExecutionGraph::addOtherLabelToGraph(std::unique_ptr<EventLabe
 //newscdpor
 void ExecutionGraph::addNewTransaction(std::unique_ptr<Transactions> tr)
 {	
-	WARN("addNewTransaction for tr("+to_string(tr->getPos().thread)+","+to_string(tr->getPos().index)+") \n");
-	WARN("addNewTransaction for tr-thread size = "+to_string(transactions[tr->getPos().thread].size())+" \n");
+	// WARN("addNewTransaction for tr("+to_string(tr->getPos().thread)+","+to_string(tr->getPos().index)+") \n");
+	// WARN("addNewTransaction for tr-thread size = "+to_string(transactions[tr->getPos().thread].size())+" \n");
 	auto pos = tr->getPos();
 	if (pos.index < transactions[pos.thread].size()) {
 		transactions[pos.thread][pos.index] = std::move(tr);
@@ -935,7 +935,7 @@ ExecutionGraph::getRevisitViewTr(const TransactionBackwardRevisit &r) const
 {
 	auto *rLab = getReadLabel(r.getPos());
 	auto preds = std::make_unique<View>(getViewFromStamp(rLab->getStamp()));
-	/*also add porf-prefix of this end event*/
+	/*also add porf-prefix(till the endEv of the respective transaction) of this end event*/
 	preds->update(getEventLabel(r.getRev())->getPorfView());
 	return std::move(preds);
 }
@@ -1655,9 +1655,10 @@ void ExecutionGraph::copyGraphUpTo(ExecutionGraph &other, const VectorClock &v) 
 			
 			if(auto *bLab = llvm::dyn_cast<TrBeginLabel>(nLab)){
 				other.addNewTransaction(getTransaction(bLab->getTransaction())->clone());
+				WARN("Copied the TrBeginLabel ("+to_string(bLab->getPos().thread)+","+to_string(bLab->getPos().index)+") \n");
 			}
-			if(auto *bLab = llvm::dyn_cast<TrEndLabel>(nLab)){
-				WARN("Copied the TrEndLabel \n");
+			if(auto *eLab = llvm::dyn_cast<TrEndLabel>(nLab)){
+				WARN("Copied the TrEndLabel ("+to_string(eLab->getPos().thread)+","+to_string(eLab->getPos().index)+") \n");
 			}
 		}
 	}

@@ -1733,6 +1733,7 @@ void GenMCDriver::visitTrEnd(std::unique_ptr<TrEndLabel> lab){
 
 	if (isExecutionDrivenByGraph()) {
 		getGraph().setInsideTransaction(false);
+		WARN(" Reply Tr_End \n");
 		return;
 	}
 
