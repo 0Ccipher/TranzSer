@@ -1543,6 +1543,7 @@ bool GenMCDriver::getConsistentRfs(const ReadLabel *rLab, std::vector<Event> &rf
 	bool found = false;
 	std::vector<Event> temprfs;
 	if(!rLab->getTransaction().isInvalid()){
+		WARN("RFs for read in tr(" + to_string(rLab->getTransaction().thread) + ","+ to_string(rLab->getTransaction().index)+")\n");
 		auto tranHB = getGraph().getGlobalTranRelation(ExecutionGraph::RelationId::TranSC);
 		/*Handle init write case*/
 		bool initflag = false;
@@ -2205,6 +2206,7 @@ SVal GenMCDriver::visitLoad(std::unique_ptr<ReadLabel> rLab, const EventDeps *de
 		auto *tran = g.getTransaction(g.getCurTransaction());
 		if(!tran->isLoadPresent(lab->getAddr()))
 			tran->addLoad(lab->getAddr() , lab->getPos());
+		WARN("Transaction Load \n");
 	}
 	/* Get an approximation of the stores we can read from */
 	auto stores = getRfsApproximation(lab);
