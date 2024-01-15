@@ -15,14 +15,13 @@ int __VERIFIER_atomic_t1(){
 
 	__VERIFIER_Transaction_begin();
 	int r1 = 0;
-	r1 = atomic_load_explicit(&z, memory_order_seq_cst);
-	printf("z1: %d\n",r1);
-	
-	r1 = atomic_load_explicit(&y, memory_order_seq_cst);
-	printf("y1: %d\n",r1);
+	// r1 = atomic_load_explicit(&y, memory_order_seq_cst);
+	// printf("y1: %d\n",r1);
 
 	r1 = atomic_load_explicit(&w, memory_order_seq_cst);
 	printf("w1: %d\n",r1);
+	r1 = atomic_load_explicit(&z, memory_order_seq_cst);
+	printf("z1: %d\n",r1);
 
 	__VERIFIER_Transaction_end();
 	printf("t1-done \n");
@@ -53,9 +52,9 @@ int __VERIFIER_atomic_t3(){
 	r1 = atomic_load_explicit(&z, memory_order_seq_cst);
 	printf("z3-own: %d\n",r1);
 
-	atomic_store_explicit(&x, 3, memory_order_seq_cst);
-	r1 = atomic_load_explicit(&x, memory_order_seq_cst);
-	printf("x3: %d\n",r1);
+	// atomic_store_explicit(&x, 3, memory_order_seq_cst);
+	// r1 = atomic_load_explicit(&x, memory_order_seq_cst);
+	// printf("x3: %d\n",r1);
 
 	r1 = atomic_load_explicit(&y, memory_order_seq_cst);
 	printf("y3-own: %d\n",r1);
@@ -72,7 +71,7 @@ int __VERIFIER_atomic_t4(){
 
 	__VERIFIER_Transaction_begin();
 	int r1 = 0;
-	// atomic_store_explicit(&w, 4, memory_order_seq_cst);
+	atomic_store_explicit(&w, 4, memory_order_seq_cst);
 
 	r1 = atomic_load_explicit(&w, memory_order_seq_cst);
 	printf("w4-own: %d\n",r1);
@@ -86,8 +85,8 @@ int __VERIFIER_atomic_t4(){
 void *thr1(void *arg){
  	int bba1 = __VERIFIER_atomic_t1();
 	printf("t1-returned \n");
-	int bba2 = __VERIFIER_atomic_t1();
-	printf("t12-returned \n");
+	// int bba2 = __VERIFIER_atomic_t1();
+	// printf("t12-returned \n");
 	return NULL;
 }
 
@@ -112,21 +111,22 @@ void *thr4(void *arg){
 
 int main(int argc, char *argv[]){
 	pthread_t t1,t2,t3,t4,t5;
-	// pthread_create(&t1,NULL,thr1,NULL);
+	
 	// pthread_create(&t2,NULL,thr2,NULL);
 	pthread_create(&t3,NULL,thr3,NULL);
-	// pthread_create(&t4,NULL,thr4,NULL);
-	pthread_create(&t5,NULL,thr1,NULL);
-	// pthread_join(t1,NULL);
-	// printf("t1-joined \n");
+	pthread_create(&t4,NULL,thr4,NULL);
+	pthread_create(&t1,NULL,thr1,NULL);
+	// pthread_create(&t5,NULL,thr1,NULL);
+	pthread_join(t1,NULL);
+	printf("t1-joined \n");
 	// pthread_join(t2,NULL);
 	// printf("t2-joined \n");
 	pthread_join(t3,NULL);
 	printf("t3-joined \n");
-	// pthread_join(t4,NULL);
-	// printf("t4-joined \n");
-	pthread_join(t5,NULL);
-	printf("t5-joined \n");
+	pthread_join(t4,NULL);
+	printf("t4-joined \n");
+	// pthread_join(t5,NULL);
+	// printf("t5-joined \n");
 	
 	// assert(0);
 	printf("___Done\n\n");

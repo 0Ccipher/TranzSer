@@ -1589,36 +1589,9 @@ bool GenMCDriver::getConsistentRfs(const ReadLabel *rLab, std::vector<Event> &rf
 		}
 		// WARN("Get RF for (" + to_string(rLab->getPos().thread) + ","+ to_string(rLab->getPos().index)+") 1476\n");
 	}
+	/*Not inside transaction*/
 	else {
-		for(int i=0 ; i < rfs.size() ; i++){
-			found = true;
-			bool flag = false;
-			auto store1 = rfs[i];
-			int store1Id, store2Id, readId;
-			for(int j=0 ; j < rfs.size() ; j++){
-				auto store2 = rfs[j];
-				if(store1 == store2) continue;
-				if(store1 == Event(0,0) && isHbBefore(store2,rLab->getPos())){
-					flag = true; //do not consider this store
-					break;
-				}
-				if(store1 != Event(0,0) && store2 != Event(0,0)){
-					if(isHbBefore(store1,store2) && isHbBefore(store2,rLab->getPos())){
-						flag = true;  //do not consider this store
-						break;
-					}
-				}
-			}
-			if(!flag){
-				// found = false;
-				temprfs.push_back(store1);
-				BUG_ON(rfs.empty());
-				// BUG_ON(!getConf()->LAPOR && rfs.empty());
-				if(rfs.empty())
-					break;
-
-			}
-		}
+		return true;
 	}
 	std::vector<Event> trfs = temprfs;
 	// if(temprfs.empty())
@@ -1706,6 +1679,7 @@ void GenMCDriver::visitTrBegin(std::unique_ptr<TrBeginLabel> lab){
 		WARN("Replay Tr_Begin tr(" + to_string(bLab->getTransaction().thread) + ","+ to_string(bLab->getTransaction().index)+") \n");
 		BUG_ON(bLab->getTransaction().isInvalid());
 		getGraph().setCurTransaction(bLab->getTransaction());
+		EE->incTran();
 		return;
 	}
 
@@ -2220,12 +2194,30 @@ SVal GenMCDriver::visitLoad(std::unique_ptr<ReadLabel> rLab, const EventDeps *de
 
 	/* ... and make sure that the rf we end up with is consistent */
 	if (!getConsistentRfs(lab, stores)){
-		WARN("RF-set size = " + to_string(stores.size())+"  1548 \n");
+		WARN("RF-set size = " + to_string(stores.size())+"\n");
 		return SVal(0);
 	}
-		
-	/*Add an label for rf*/
+	WARN("RF-set size = " + to_string(stores.size())+"\n");
+	/*Add an label for rf - and check cons*/
 	changeRf(lab->getPos(), stores.back());
+	{
+		bool found = false;
+		while (!found) {
+			found = true;
+			changeRf(lab->getPos(), stores.back());
+			if (!isConsistent(ProgramPoint::step)) {
+				found = false;
+				stores.erase(stores.end() - 1);
+				BUG_ON(!getConf()->LAPOR && stores.empty());
+				if (stores.empty())
+					break;
+			}
+		}
+		if (!found) {
+			getEE()->block(BlockageType::Cons);
+			return SVal(0);
+		}
+	}
 
 	GENMC_DEBUG(
 		if (getConf()->vLevel >= VerbosityLevel::V3) {
