@@ -169,7 +169,7 @@ void TranSCCalculator::addSCEcosLoc( SAddr loc,
 		const Transactions *trani = g.getTransaction(sctrans[i]);
 		// if(!trani->getFinishedStatus()) continue;
 		if(!trani->isStorePresent(loc)) continue;
-		if(!trani->isMoAdded(loc)) continue;
+		if(!trani->isMoAdded(loc) && !trani->isRevisitedStore(loc) ) continue;
 		Event storei = trani->getStore(loc);
 		for(auto j = 0u; j < sctrans.size(); j++){
 			if(i==j) continue;
@@ -177,7 +177,7 @@ void TranSCCalculator::addSCEcosLoc( SAddr loc,
 			//check if it's current transactions
 			// if(!tranj->getFinishedStatus()) continue;
 			if(!tranj->isStorePresent(loc)) continue;
-			if(!tranj->isMoAdded(loc)) continue;
+			if(!tranj->isMoAdded(loc) && !tranj->isRevisitedStore(loc)) continue;
 			Event storej = tranj->getStore(loc);
 			if (coMatrix(storei,storej)){
 				auto succs = calcSCSuccs( storej);

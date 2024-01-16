@@ -60,7 +60,7 @@ public:
 
 	void addRevisitedStore(SAddr addr, Event store) {revisitedStores[addr] = store;};
 	bool isRevisitedStore(SAddr addr) const{ return (revisitedStores.count(addr) > 0) ;};
-	void eraseRevisitedStore() {revisitedStores.clear();};
+	void eraseRevisitedStores() {revisitedStores.clear();};
 
 	void moAdded(SAddr addr, Event store) {addedMo[addr] = store;};
 	bool isMoAdded(SAddr addr) const{ return (addedMo.count(addr) > 0) ;};

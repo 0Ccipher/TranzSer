@@ -937,6 +937,14 @@ ExecutionGraph::getRevisitViewTr(const TransactionBackwardRevisit &r) const
 	auto preds = std::make_unique<View>(getViewFromStamp(rLab->getStamp()));
 	/*also add porf-prefix(till the endEv of the respective transaction) of this end event*/
 	preds->update(getEventLabel(r.getRev())->getPorfView());
+	string s = "";
+	s = s + "[ ";
+	for (auto it=preds->begin() ; it!=preds->end() ; it++){
+		s = s +  std::__cxx11::to_string(*it) + " ";
+	}
+		
+	s = s + "]";
+	WARN("View : " + s+"\n");
 	return std::move(preds);
 }
 
@@ -1528,7 +1536,7 @@ void ExecutionGraph::restrictTransaction(Event readev){
 			trans->eraseStore(ev.first);
 	}
 	/* Erase all revisited stores */
-	trans->eraseRevisitedStore();
+	trans->eraseRevisitedStores();
 	trans->eraseAllAddedMo();
 	setInsideTransaction(true);
 	setCurTransaction(rLab->getTransaction());

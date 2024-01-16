@@ -654,7 +654,6 @@ void GenMCDriver::notifyEERemoved(const VectorClock &v)
 
 void GenMCDriver::restrictGraph(const EventLabel *rLab)
 {
-	WARN("Revisit for event (" + to_string(rLab->getPos().thread) + ","+ to_string(rLab->getPos().index)+") 657\n");
 	/* Inform the interpreter about deleted events, and then
 	 * restrict the graph (and relations) */
 	notifyEERemoved(*getGraph().getPredsView(rLab->getPos()));
@@ -663,10 +662,11 @@ void GenMCDriver::restrictGraph(const EventLabel *rLab)
 
 	/* If this revisit if for write, we need to restrict events after this write in the transaction */
 	if(rLab->getKind() == EventLabel::EL_TrEnd && !rLab->getTransaction().isInvalid()) {
+		WARN("Revisit for TR write (" + to_string(rLab->getPos().thread) + ","+ to_string(rLab->getPos().index)+") 657\n");
 		auto &g = getGraph();
 		auto *trans = g.getTransaction(rLab->getTransaction());
 
-		/* Remove all later stores of this transaction from mo*/
+		/* Remove all moAdded Writes later stores of this transaction from mo*/
 		auto *mm = llvm::dyn_cast<MOCalculator>(g.getCoherenceCalculator());
 		if (mm){
 			mm->removeAllStores(rLab->getTransaction());
@@ -746,6 +746,7 @@ void GenMCDriver::restrictGraph(const EventLabel *rLab)
 	/* If this is transaction read.
 	* Restrict the events in the transaction of this read
 	*/
+	WARN("Revisit for read (" + to_string(rLab->getPos().thread) + ","+ to_string(rLab->getPos().index)+") 657\n");
 	if(!rLab->getTransaction().isInvalid()){
 		getGraph().restrictTransaction(rLab->getPos());
 		/* Adjust the transaction count in EE*/
@@ -758,6 +759,7 @@ void GenMCDriver::restrictGraph(const EventLabel *rLab)
 		if (mm){
 			mm->removeAllStores(rLab->getTransaction());
 			g.getTransaction(rLab->getTransaction())->eraseAllAddedMo();
+			g.getTransaction(rLab->getTransaction())->eraseRevisitedStores();
 		}
 		else
 			BUG();
@@ -1726,6 +1728,7 @@ void GenMCDriver::visitTrEnd(std::unique_ptr<TrEndLabel> lab){
 	if (mm){
 		mm->removeAllStores(trEndLab->getTransaction());
 		trans->eraseAllAddedMo();
+		trans->eraseRevisitedStores();
 	}
 	else
 		BUG();
@@ -2994,8 +2997,8 @@ GenMCDriver::copyGraphTr( TransactionBackwardRevisit *br, VectorClock *v)
 		if(ev.second.index > readev.index)
 			trans->eraseStore(ev.first);
 	}
-	/* Erase all revisited stores */
-	trans->eraseRevisitedStore();
+	/* Erase all revisited stores from the transaction of this revisted read*/
+	trans->eraseRevisitedStores();
 	trans->eraseAllAddedMo();
 	og->setInsideTransaction(true);
 	og->setCurTransaction(revLab->getTransaction());
@@ -3037,23 +3040,27 @@ bool GenMCDriver::loadRevisits(const Transactions *trans)
 	auto loads = getRevisitableLoads(trans);
 	// if (tryOptimizeRevisits(sLab, loads))
 	// 	return true;
+	WARN("possible BRevist Loads : "+to_string(loads.size())+" \n");
 	auto *eLab = llvm::dyn_cast<TrEndLabel>(g.getEventLabel(trans->getEndEvent()));
 	BUG_ON(!eLab);
 	for (auto &l : loads) {
 		auto *rLab = g.getReadLabel(l);
 		BUG_ON(!rLab);
 
+		WARN("TR_BRevisits for read("+to_string(rLab->getPos().thread)+","+to_string(rLab->getPos().index)+
+				") from tr("+to_string(trans->getPos().thread)+","+to_string(trans->getPos().index)+") \n");
+		WARN("read TimeStamp="+ std::__cxx11::to_string(rLab->getStamp()) +"\n");
+
 		auto *sLab = g.getWriteLabel(trans->getStore(rLab->getAddr()));
 
 		/* Create TransactionBAckwardRevisit */
-		// auto br = constructBackwardRevisit(rLab, sLab);
 		auto br =  std::make_unique<TransactionBackwardRevisit>(rLab, eLab , sLab , trans->getPos());
-		if (!g.isMaximalExtensionTr(*br))
+		if (!g.isMaximalExtensionTr(*br)){
+			WARN("Not MaximalPath \n");
 			break;
-
+		}
+		
 		GENMC_DEBUG(checkForDuplicateRevisit(rLab, sLab););
-		WARN("TR_BRevisits for read("+to_string(rLab->getPos().thread)+","+to_string(rLab->getPos().index)+
-				") from tr("+to_string(trans->getPos().thread)+","+to_string(trans->getPos().index)+") \n");
 		WARN("TR_BRevisits for read("+to_string(rLab->getPos().thread)+","+to_string(rLab->getPos().index)+
 				") from store("+to_string(sLab->getPos().thread)+","+to_string(sLab->getPos().index)+") \n");
 		/* Get the View till this endEv */
@@ -3360,8 +3367,9 @@ bool GenMCDriver::restrictAndRevisit(WorkSet::ItemT item)
 			restrictGraph(lab);
 			
 			/* If this revisit is not consistent return */
+			WARN("Checking consistenct of Revisit for this Tran-write \n");
 			if(!isConsistent(ProgramPoint::step)){
-				WARN("Revisit for this write is inconsistent- thread : " + to_string(wLab->getPos().thread) + " \n" );
+				WARN("Revisit for this Tran-write is inconsistent- thread : " + to_string(wLab->getPos().thread) + " \n" );
 				trans->eraseMoAdded(wLab->getAddr());
 				return false;
 			}
@@ -3377,11 +3385,6 @@ bool GenMCDriver::restrictAndRevisit(WorkSet::ItemT item)
 		BUG_ON(!wLab);
 		g.changeStoreOffset(wLab->getAddr(), wLab->getPos(), mi->getMOPos());
 		wLab->setAddedMax(false);
-		/* Mark this write as revisted, if inside a transaction*/
-		if(!wLab->getTransaction().isInvalid()){
-			auto *trans = g.getTransaction(wLab->getTransaction());
-			trans->addRevisitedStore(wLab->getAddr() , wLab->getPos());
-		}
 		repairDanglingLocks();
 		repairDanglingBarriers();
 		return calcRevisits(wLab);
