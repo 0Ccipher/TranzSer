@@ -480,6 +480,9 @@ bool MOCalculator::inMaximalPathTr(const TransactionBackwardRevisit &r)
 	auto preds = g.getRevisitViewTr(r);
 	
 	auto *trans = g.getTransaction(r.getTransaction());
+	auto *rLab = g.getEventLabel(r.getPos());
+	BUG_ON(rLab->getTransaction().isInvalid());
+	auto *rTrans = g.getTransaction(rLab->getTransaction());
 	/*mo-succ of all writes should be in the updated graph */
 	auto stores = trans->getStoresWithAddr();
 	if(std::any_of(stores.begin() , stores.end(), 
@@ -515,6 +518,11 @@ bool MOCalculator::inMaximalPathTr(const TransactionBackwardRevisit &r)
 									mLab->getIndex() > sLab->getPPoRfView()[mLab->getThread()] &&
 									mLab->getIndex() > eLab->getPPoRfView()[mLab->getThread()];
 								if(flag){
+									/*Check if sTran also has write on some read in trans before this revisited read*/
+									for(auto ev : rTrans->getLoadsWithAddr()){
+										if(ev.second.index < r.getPos().index && sTran->isStorePresent(ev.first))
+											return false;
+									}
 									WARN("check(RF-for read) event("+ std::__cxx11::to_string(w.thread)+","+std::__cxx11::to_string(w.index) +")\n");
 									WARN("succ(RF-for read) event("+ std::__cxx11::to_string(sLab->getPos().thread)+","+std::__cxx11::to_string(sLab->getPos().index) +")\n");
 									return true;

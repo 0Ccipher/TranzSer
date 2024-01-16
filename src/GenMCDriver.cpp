@@ -720,7 +720,7 @@ void GenMCDriver::restrictGraph(const EventLabel *rLab)
 					addToWorklist(std::make_unique<TransactionRevisit>(
 							rLab->getPos() , std::distance(store_begin(g, store.first), it) , store.second ,
 							rLab->getTransaction()));
-					WARN("other Mo placings for this transaction added to worklist  \n");
+					WARN("restrictGraph other Mo placings for this transaction added to worklist  \n");
 				}
 						
 			}
