@@ -109,8 +109,8 @@ void MOCalculator::removeAllStores(Transaction tr)
 							if(!lab->getTransaction().isInvalid()) {
 								if(lab->getTransaction() == tr 	
 										&& !trans->isRevisitedStore(lab->getAddr())){
-									WARN("Removed from mo write("+std::__cxx11::to_string(lab->getPos().thread)
-											+","+std::__cxx11::to_string(lab->getPos().index)+")\n");
+									WARN("**Removed from mo write("+std::__cxx11::to_string(lab->getPos().thread)
+											+","+std::__cxx11::to_string(lab->getPos().index)+")**\n");
 									return true;
 								}
 									

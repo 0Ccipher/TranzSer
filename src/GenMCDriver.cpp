@@ -668,19 +668,19 @@ void GenMCDriver::restrictGraph(const EventLabel *rLab)
 
 		/* Remove all moAdded Writes later stores of this transaction from mo*/
 		auto *mm = llvm::dyn_cast<MOCalculator>(g.getCoherenceCalculator());
-		if (mm){
-			mm->removeAllStores(rLab->getTransaction());
-			trans->eraseAllAddedMo();
-		}
-		else
-			BUG();
-		/* If this revisit is not consistent return */
-		if(!isConsistent(ProgramPoint::step))
-			return;
+		BUG_ON(!mm);
+		// /* If this revisit is not consistent return */
+		// if(!isConsistent(ProgramPoint::step))
+		// 	return;
 		/* Get mo placings for the yet-not revisited transaction writes*/
 		for(auto store: trans->getLocStores()){
-			/* this is revisited store*/
-			if(trans->isRevisitedStore(store.first)) continue;
+			WARN("#TR write("+std::__cxx11::to_string(store.second.thread)
+						+","+std::__cxx11::to_string(store.second.index)+") 1 \n");
+			/* this is revisited store or po-before store*/
+			if(trans->isRevisitedStore(store.first) || trans->isMoAdded(store.first)) continue;
+
+			WARN("#TR write("+std::__cxx11::to_string(store.second.thread)
+						+","+std::__cxx11::to_string(store.second.index)+") 2 \n");
 
 			auto placesRange = g.getCoherentPlacings(store.first, store.second, false);
 			auto &begO = placesRange.first;
@@ -688,10 +688,14 @@ void GenMCDriver::restrictGraph(const EventLabel *rLab)
 			bool addedMO = true;
 			g.getCoherenceCalculator()->addStoreToLoc(store.first, store.second, endO);
 			trans->moAdded(store.first, store.second);
+			WARN("**Added to mo write("+std::__cxx11::to_string(store.second.thread)
+						+","+std::__cxx11::to_string(store.second.index)+")**\n");
 			if(!isConsistent(ProgramPoint::step)){
 				mm->removeStore(store.first , store.second);
 				addedMO = false;
 				trans->eraseMoAdded(store.first);
+				WARN("**Removed from mo write("+std::__cxx11::to_string(store.second.thread)
+						+","+std::__cxx11::to_string(store.second.index)+")**\n");
 			}
 			auto *lab = g.getWriteLabel(store.second);
 			for (auto it = store_begin(g, lab->getAddr()) + begO,
@@ -712,6 +716,8 @@ void GenMCDriver::restrictGraph(const EventLabel *rLab)
 						mm->removeStore(store.first , store.second);
 						addedMO = false;
 						trans->eraseMoAdded(store.first);
+						WARN("**Removed from mo the write("+std::__cxx11::to_string(store.second.thread)
+						+","+std::__cxx11::to_string(store.second.index)+")**\n");
 					}
 					continue;
 				}
@@ -3363,6 +3369,22 @@ bool GenMCDriver::restrictAndRevisit(WorkSet::ItemT item)
 			g.changeStoreOffset(wLab->getAddr(), wLab->getPos(), mi->getMOPos());
 			wLab->setAddedMax(false);
 			trans->moAdded(wLab->getAddr() , wLab->getPos());
+			/*Remove stores from mo if store > wLab.getPos().index in the transaction*/
+			auto *mm = llvm::dyn_cast<MOCalculator>(g.getCoherenceCalculator());
+			if (mm){
+				for(auto ev : trans->getStoresWithAddr()){
+					if(ev.second.index > wLab->getPos().index){
+						mm->removeStore(ev.first , ev.second);
+						trans->eraseMoAdded(ev.first);
+						trans->eraseRevisitedStore(ev.first);
+					}
+				}
+			}
+			else
+				BUG();
+			// /* If this revisit is not consistent return */
+			if(!isConsistent(ProgramPoint::step))
+				return false;
 			/* Restrict loads and stores in the transactions */
 			restrictGraph(lab);
 			

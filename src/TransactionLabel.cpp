@@ -78,11 +78,19 @@ void Transactions::eraseMoAdded(SAddr addr){
 		addedMo.erase(addr);
 	}
 }
+
+void Transactions::eraseRevisitedStore(SAddr addr){
+	if(isRevisitedStore(addr)){
+		revisitedStores.erase(addr);
+	}
+}
+
 void Transactions::eraseStore(SAddr addr){
 	if(isStorePresent(addr)){
 		stores.erase(addr);
 	}
 }
+
 std::vector<Event> Transactions::getStores() const{
 	std::vector<Event> writes;
 	for(auto ele:stores){
