@@ -1,5 +1,5 @@
 /*
-	Example 9 (2)  -  traces 
+	Example 9 (2)  -  18 traces 
 */
 #include <pthread.h>
 #include <assert.h>
