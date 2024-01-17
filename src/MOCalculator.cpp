@@ -518,21 +518,24 @@ bool MOCalculator::inMaximalPathTr(const TransactionBackwardRevisit &r)
 									mLab->getIndex() > sLab->getPPoRfView()[mLab->getThread()] &&
 									mLab->getIndex() > eLab->getPPoRfView()[mLab->getThread()];
 								if(flag){
-									/*Check if this mLab-event is same as r.getPos() and
-									* sTran also has write on some read in trans before this revisited read
+									/*Check if this mLab-event belongs to same transaction as rLab and
+									* sTran(succs of mLab) also has write on some read in trans before rLab
 									*/
-									if(mLab->getPos() == r.getPos())
+									if(mLab->getTransaction().isInvalid()) return false;
+									if(mLab->getTransaction() == rLab->getTransaction()){
 										for(auto ev : rTrans->getLoadsWithAddr()){
 											if(ev.second.index < r.getPos().index && sTran->isStorePresent(ev.first))
 												return false;
 										}
+									}
+										
 									WARN("check(RF-for read) event("+ std::__cxx11::to_string(w.thread)+","+std::__cxx11::to_string(w.index) +")\n");
-									WARN("succ(RF-for read) event("+ std::__cxx11::to_string(sLab->getPos().thread)+","+std::__cxx11::to_string(sLab->getPos().index) +")\n");
+									WARN("succ event("+ std::__cxx11::to_string(sLab->getPos().thread)+","+std::__cxx11::to_string(sLab->getPos().index) +")\n");
 									return true;
 								}
 								return false;
 							}) ) {
-					WARN("CoBeforeSavedPrefix(RF-for read) event("+ std::__cxx11::to_string(lab->getPos().thread)+","+std::__cxx11::to_string(lab->getPos().index) +")\n");
+					WARN("`CoBeforeSavedPrefix(RF-for read) event("+ std::__cxx11::to_string(lab->getPos().thread)+","+std::__cxx11::to_string(lab->getPos().index) +")`\n");
 					return false;
 				}
 			
@@ -543,12 +546,12 @@ bool MOCalculator::inMaximalPathTr(const TransactionBackwardRevisit &r)
 			if (rLab){
 				auto *rfLab = g.getEventLabel(rLab->getRf());
 				if( !preds->contains(rfLab->getPos()) && rfLab->getStamp() > lab->getStamp() ) {
-					WARN("hasBeenRevisitedByDeleted for read("+ std::__cxx11::to_string(lab->getPos().thread)+","+std::__cxx11::to_string(lab->getPos().index) +")\n");
+					WARN("`hasBeenRevisitedByDeleted for read("+ std::__cxx11::to_string(lab->getPos().thread)+","+std::__cxx11::to_string(lab->getPos().index) +")`\n");
 					return false;
 				}
 			}
 			if (!wasAddedMaximally(lab)) {
-				WARN("No AddedMaximally event("+ std::__cxx11::to_string(lab->getPos().thread)+","+std::__cxx11::to_string(lab->getPos().index) +")\n");
+				WARN("`No AddedMaximally event("+ std::__cxx11::to_string(lab->getPos().thread)+","+std::__cxx11::to_string(lab->getPos().index) +")`\n");
 				return false;
 			}
 	}
