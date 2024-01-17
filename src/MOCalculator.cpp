@@ -518,11 +518,14 @@ bool MOCalculator::inMaximalPathTr(const TransactionBackwardRevisit &r)
 									mLab->getIndex() > sLab->getPPoRfView()[mLab->getThread()] &&
 									mLab->getIndex() > eLab->getPPoRfView()[mLab->getThread()];
 								if(flag){
-									/*Check if sTran also has write on some read in trans before this revisited read*/
-									for(auto ev : rTrans->getLoadsWithAddr()){
-										if(ev.second.index < r.getPos().index && sTran->isStorePresent(ev.first))
-											return false;
-									}
+									/*Check if this mLab-event is same as r.getPos() and
+									* sTran also has write on some read in trans before this revisited read
+									*/
+									if(mLab->getPos() == r.getPos())
+										for(auto ev : rTrans->getLoadsWithAddr()){
+											if(ev.second.index < r.getPos().index && sTran->isStorePresent(ev.first))
+												return false;
+										}
 									WARN("check(RF-for read) event("+ std::__cxx11::to_string(w.thread)+","+std::__cxx11::to_string(w.index) +")\n");
 									WARN("succ(RF-for read) event("+ std::__cxx11::to_string(sLab->getPos().thread)+","+std::__cxx11::to_string(sLab->getPos().index) +")\n");
 									return true;

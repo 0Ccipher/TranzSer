@@ -1,5 +1,5 @@
 /*
-	Example 8  -  traces 
+	Example 9  -  traces 
 */
 #include <pthread.h>
 #include <assert.h>
@@ -91,8 +91,12 @@ void *thr2(void *arg){
 void *thr3(void *arg){
 	int bba2 = __VERIFIER_atomic_t3();
 	printf("t2-returned \n");
- 	int bba1 = __VERIFIER_atomic_t4();
-	printf("t3-returned \n");
+	return NULL;
+}
+
+void *thr4(void *arg){
+	int bba2 = __VERIFIER_atomic_t4();
+	printf("t2-returned \n");
 	return NULL;
 }
 
@@ -100,10 +104,10 @@ void *thr3(void *arg){
 int main(int argc, char *argv[]){
 	pthread_t t1,t2,t3,t4,t5;
 	
+	pthread_create(&t3,NULL,thr3,NULL);
+	pthread_create(&t4,NULL,thr4,NULL);
 	pthread_create(&t1,NULL,thr1,NULL);
 	pthread_create(&t2,NULL,thr2,NULL);
-	pthread_create(&t3,NULL,thr3,NULL);
-	
 
 	pthread_join(t1,NULL);
 	printf("t1-joined \n");
@@ -111,6 +115,8 @@ int main(int argc, char *argv[]){
 	printf("t2-joined \n");
 	pthread_join(t3,NULL);
 	printf("t3-joined \n");
+	pthread_join(t4,NULL);
+	printf("t4-joined \n");
 	
 	
 	// assert(0);
