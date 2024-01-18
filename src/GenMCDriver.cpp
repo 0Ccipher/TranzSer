@@ -685,6 +685,7 @@ void GenMCDriver::restrictGraph(const EventLabel *rLab)
 			auto placesRange = g.getCoherentPlacings(store.first, store.second, false);
 			auto &begO = placesRange.first;
 			auto &endO = placesRange.second;
+			WARN(" Beg0 = " + to_string(begO) +" End0 = " + to_string(endO) + " \n");
 			bool addedMO = true;
 			g.getCoherenceCalculator()->addStoreToLoc(store.first, store.second, endO);
 			trans->moAdded(store.first, store.second);
@@ -747,6 +748,7 @@ void GenMCDriver::restrictGraph(const EventLabel *rLab)
 		/* Adjust the transaction count in EE*/
 		for (auto i = 0u; i < g.getNumThreads(); i++) {
 			getEE()->getThrById(i).globalTransactions = g.getThreadTranSize(i);
+			WARN("** thread : " + to_string(i) + ", globalTransactions : "+ to_string(getEE()->getThrById(i).globalTransactions)+")** \n");
 		}
 
 		return;
@@ -756,7 +758,7 @@ void GenMCDriver::restrictGraph(const EventLabel *rLab)
 	/* If this is transaction read.
 	* Restrict the events in the transaction of this read
 	*/
-	WARN("**Revisit for read (" + to_string(rLab->getPos().thread) + ","+ to_string(rLab->getPos().index)+")** 657\n");
+	WARN("**Revisit for read (" + to_string(rLab->getPos().thread) + ","+ to_string(rLab->getPos().index)+")** \n");
 	if(!rLab->getTransaction().isInvalid()){
 		getGraph().restrictTransaction(rLab->getPos());
 		/* Adjust the transaction count in EE*/
@@ -1732,13 +1734,15 @@ void GenMCDriver::visitTrEnd(std::unique_ptr<TrEndLabel> lab){
 	lab->setTransaction(g.getCurTransaction());
 	auto *trEndLab = g.addOtherLabelToGraph(std::move(lab));
 	auto *trans = g.getTransaction(trEndLab->getTransaction());
-	auto tranHB = getGraph().getGlobalTranRelation(ExecutionGraph::RelationId::TranSC);
+	// auto tranHB = getGraph().getGlobalTranRelation(ExecutionGraph::RelationId::TranSC);
 	/* Remove all earlier stores of this transaction from mo*/
 	auto *mm = llvm::dyn_cast<MOCalculator>(g.getCoherenceCalculator());
 	if (mm){
 		mm->removeAllStores(trEndLab->getTransaction());
 		trans->eraseAllAddedMo();
 		trans->eraseRevisitedStores();
+		WARN("visitTrEnd removes stores from tr("+std::__cxx11::to_string(trEndLab->getTransaction().thread)
+			 +","+std::__cxx11::to_string(trEndLab->getTransaction().index)+") \n");
 	}
 	else
 		BUG();
@@ -1749,7 +1753,7 @@ void GenMCDriver::visitTrEnd(std::unique_ptr<TrEndLabel> lab){
 		auto placesRange = g.getCoherentPlacings(store.first, store.second, false);
 		auto &begO = placesRange.first;
 		auto &endO = placesRange.second;
-		WARN(" End0 = " + to_string(endO) + " \n");
+		WARN(" Beg0 = " + to_string(begO) +" End0 = " + to_string(endO) + " \n");
 		bool addedMO = true;
 		g.getCoherenceCalculator()->addStoreToLoc(store.first, store.second, endO);
 		trans->moAdded(store.first, store.second);
@@ -1760,15 +1764,22 @@ void GenMCDriver::visitTrEnd(std::unique_ptr<TrEndLabel> lab){
 		// 	trans->eraseMoAdded(store.first);
 		// 	WARN("visitTrEnd Mo removed \n");
 		// }
+		WARN("visitTrEnd TR write("+std::__cxx11::to_string(store.second.thread)
+			 			+","+std::__cxx11::to_string(store.second.index)+") 2 \n");
 		for (auto it = store_begin(g, store.first) + begO,
 		  ie = store_begin(g,store.first) + endO; it != ie; ++it) {
-
+			WARN("visitTrEnd TR write("+std::__cxx11::to_string(store.second.thread)
+			 			+","+std::__cxx11::to_string(store.second.index)+") in loop \n");
 			/* We cannot place the write just before the write of an RMW */
 			if (g.isRMWStore(*it))
 				continue;
 			auto *sLab = g.getWriteLabel(*it);
-			if(sLab->getTransaction().isInvalid() && !store.second.isInitializer())
+			if(sLab->getTransaction().isInvalid() && !store.second.isInitializer()){
+				WARN("visitTrEnd TR write("+std::__cxx11::to_string(store.second.thread)
+			 			+","+std::__cxx11::to_string(store.second.index)+") is not in transaction\n");
 				continue;
+			}
+				
 			// if(!addedMO){
 			// 	g.getCoherenceCalculator()->addStoreToLoc(store.first, store.second, 
 			// 							std::distance(store_begin(g, store.first), it));
@@ -3387,6 +3398,7 @@ bool GenMCDriver::restrictAndRevisit(WorkSet::ItemT item)
 		auto *trans = g.getTransaction(wLab->getTransaction());
 		trans->addRevisitedStore(wLab->getAddr() , wLab->getPos());
 		g.changeStoreOffset(wLab->getAddr(), wLab->getPos(), mi->getMOPos());
+		WARN("*Revisit for TR write with new mo-Position : " + to_string(mi->getMOPos())+"*\n");
 		wLab->setAddedMax(false);
 		trans->moAdded(wLab->getAddr() , wLab->getPos());
 		/*Remove stores from mo if store > wLab.getPos().index in the transaction*/
@@ -3407,6 +3419,23 @@ bool GenMCDriver::restrictAndRevisit(WorkSet::ItemT item)
 		*/
 		/* Restrict loads and stores in the transactions */
 		restrictGraph(lab);
+		if (!isConsistent(ProgramPoint::step)){
+				auto tranHB = getGraph().getGlobalTranRelation(ExecutionGraph::RelationId::TranSC); 
+				WARN("`Not consistent 1 `  \n");
+				if(!tranHB.isIrreflexive())
+					WARN("`Not consistent 2 `  \n");
+				auto &hbRelation = g.getGlobalRelation(ExecutionGraph::RelationId::hb);
+				if(!hbRelation.isIrreflexive())
+					WARN("`Not consistent 3 `  \n");
+				// auto tranPSC = getGraph().getGlobalRelation(ExecutionGraph::RelationId::psc); 
+				// if(!tranPSC.isIrreflexive())
+				// 	WARN("`Not consistent 4 `  \n");
+				auto &coRelation = g.getPerLocRelation(ExecutionGraph::RelationId::co);
+				for (auto &coLoc : coRelation) {
+					if (!coLoc.second.isIrreflexive())
+						WARN("`Not consistent 5 `  \n");
+				}
+		}
 		return loadRevisits(trans);
 		
 	}

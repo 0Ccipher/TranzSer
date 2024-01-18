@@ -53,6 +53,8 @@ int __VERIFIER_atomic_t3(){
 	atomic_store_explicit(&x, 2, memory_order_seq_cst);
 	r1 = atomic_load_explicit(&z, memory_order_seq_cst);
 	printf("z13-own: %d\n",r1);
+	r1 = atomic_load_explicit(&x, memory_order_seq_cst);
+	printf("x13-own: %d\n",r1);
 	
 	__VERIFIER_Transaction_end();
 
@@ -67,16 +69,6 @@ void *thr1(void *arg){
 	// int b1 = __VERIFIER_atomic_t1();
 	// // atomic_t3();
 	return NULL;
-}
-
-void *thr2(void *arg){
-	// a2 = __VERIFIER_atomic_t2();
-	int ba1 = __VERIFIER_atomic_t2();
-	// atomic_store_explicit(&dummy, 1, memory_order_seq_cst);
-	// int bba1 = __VERIFIER_atomic_t1();
-	// atomic_store_explicit(&dummy, 1, memory_order_seq_cst);
-	return NULL;
-
 }
 
 void *thr3(void *arg){

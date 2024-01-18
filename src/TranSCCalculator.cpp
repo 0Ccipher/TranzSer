@@ -299,7 +299,7 @@ void TranSCCalculator::calcTranSCRelation()
 	 */
 	addSCEcos( getDoubleLocs(), TranSCRelation);
 	TranSCRelation.transClosure();
-	addSbHbEdges(TranSCRelation);
+	// addSbHbEdges(TranSCRelation);
 	return;
 }
 
@@ -345,10 +345,10 @@ Calculator::CalculationResult TranSCCalculator::doCalc()
 
 	hbRelation.transClosure();
 	if (!hbRelation.isIrreflexive())
-		return Calculator::CalculationResult(false, false);
+		{WARN("`Not consistent hb `  \n"); return Calculator::CalculationResult(false, false);}
 	calcTranSCRelation();
 	if (!TranSCRelation.isIrreflexive())
-		return Calculator::CalculationResult(false, false);
+		{ calcTranSCRelation(); WARN("`Not consistent tranSC `  \n"); return Calculator::CalculationResult(false, false);}
 
 	auto result = addTranSCConstraints();
 	if (!result.cons)
@@ -359,7 +359,7 @@ Calculator::CalculationResult TranSCCalculator::doCalc()
 	/* Check that co is acyclic */
 	for (auto &coLoc : coRelation) {
 		if (!coLoc.second.isIrreflexive())
-		return Calculator::CalculationResult(result.changed, false);
+		{WARN("`Not consistent co `  \n"); return Calculator::CalculationResult(result.changed, false);}
 	}
 	return Calculator::CalculationResult(result.changed, true);
 }
