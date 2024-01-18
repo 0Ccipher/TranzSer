@@ -64,6 +64,9 @@ std::vector<std::pair<SAddr,Event>> Transactions::getStoresWithAddr() const{
 	for(auto ele:stores){
 		writes.push_back(std::make_pair(ele.first , ele.second));
 	}
+	std::sort(writes.begin(), writes.end(), [&](const std::pair<SAddr,Event> &w1, const std::pair<SAddr,Event> &w2){
+		return w1.second.index < w2.second.index;
+	});
 	return writes;
 }
 

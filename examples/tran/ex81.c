@@ -1,5 +1,5 @@
 /*
-	Example 8  -  traces 
+	Example 8  -  12 traces 
 */
 #include <pthread.h>
 #include <assert.h>
@@ -90,9 +90,9 @@ void *thr2(void *arg){
 
 void *thr3(void *arg){
 	int bba2 = __VERIFIER_atomic_t3();
-	printf("t2-returned \n");
- 	int bba1 = __VERIFIER_atomic_t4();
 	printf("t3-returned \n");
+ 	int bba1 = __VERIFIER_atomic_t4();
+	printf("t4-returned \n");
 	return NULL;
 }
 

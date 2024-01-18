@@ -27,22 +27,6 @@ int __VERIFIER_atomic_t1(){
 	return 1;
 }
 
-int __VERIFIER_atomic_t11(){
-
-	__VERIFIER_Transaction_begin();
-	atomic_store_explicit(&z, 1, memory_order_seq_cst);
-	int r1 = 0;
-	atomic_store_explicit(&x, 1, memory_order_seq_cst);
-	
-	atomic_store_explicit(&z, 11, memory_order_seq_cst);
-	r1 = atomic_load_explicit(&z, memory_order_seq_cst);
-	printf("z12-own: %d\n",r1);
-	
-	__VERIFIER_Transaction_end();
-
-	return 1;
-}
-
 int __VERIFIER_atomic_t2(){
 	__VERIFIER_Transaction_begin();
 	int r1 = 0;
@@ -88,9 +72,6 @@ void *thr1(void *arg){
 void *thr2(void *arg){
 	// a2 = __VERIFIER_atomic_t2();
 	int ba1 = __VERIFIER_atomic_t2();
-	int bba1 = __VERIFIER_atomic_t3();
-	int ba2 = __VERIFIER_atomic_t2();
-	int ba3 = __VERIFIER_atomic_t11();
 	// atomic_store_explicit(&dummy, 1, memory_order_seq_cst);
 	// int bba1 = __VERIFIER_atomic_t1();
 	// atomic_store_explicit(&dummy, 1, memory_order_seq_cst);
@@ -102,7 +83,6 @@ void *thr3(void *arg){
 	// atomic_store_explicit(&dummy, 1, memory_order_seq_cst);
  	int bba1 = __VERIFIER_atomic_t3();
 	int ba2 = __VERIFIER_atomic_t2();
-	int ba3 = __VERIFIER_atomic_t1();
 	// atomic_store_explicit(&dummy, 1, memory_order_seq_cst);
 	// int b1 = __VERIFIER_atomic_t1();
 	// // atomic_t3();
@@ -112,17 +92,13 @@ void *thr3(void *arg){
 int main(int argc, char *argv[]){
 	pthread_t t1,t2,t3,t4,t5;
 	pthread_create(&t1,NULL,thr1,NULL);
-	pthread_create(&t2,NULL,thr2,NULL);
 	pthread_create(&t3,NULL,thr3,NULL);
 	pthread_create(&t4,NULL,thr1,NULL);
-	pthread_create(&t5,NULL,thr2,NULL);
+
 	pthread_join(t1,NULL);
-	pthread_join(t2,NULL);
 	pthread_join(t3,NULL);
 	pthread_join(t4,NULL);
-	pthread_join(t5,NULL);
-	// __VERIFIER_atomic_t2();
-	// abort();
+	
 	// assert(0);
 	printf("___Done\n\n");
 	return 0;
