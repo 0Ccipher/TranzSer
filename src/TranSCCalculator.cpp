@@ -348,7 +348,11 @@ Calculator::CalculationResult TranSCCalculator::doCalc()
 		{WARN("`Not consistent hb `  \n"); return Calculator::CalculationResult(false, false);}
 	calcTranSCRelation();
 	if (!TranSCRelation.isIrreflexive())
-		{ calcTranSCRelation(); WARN("`Not consistent tranSC `  \n"); return Calculator::CalculationResult(false, false);}
+		{ initCalc(); 
+		calcTranSCRelation(); 
+		WARN("`Not consistent tranSC `  \n"); 
+		return Calculator::CalculationResult(false, false);
+		}
 
 	auto result = addTranSCConstraints();
 	if (!result.cons)

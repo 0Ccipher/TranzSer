@@ -3381,6 +3381,7 @@ bool GenMCDriver::restrictAndRevisit(WorkSet::ItemT item)
 	auto *EE = getEE();
 	/*For transactionRevisit this is endLabel */
 	EventLabel *lab = g.getEventLabel(item->getPos());
+	WARN("**restrictAndRevisit for (" + to_string(lab->getPos().thread) + ","+ to_string(lab->getPos().index)+")**\n");
 
 	/* First, appropriately restrict the worklist, the revisit set, and the graph */
 	restrictWorklist(lab);
@@ -3388,19 +3389,15 @@ bool GenMCDriver::restrictAndRevisit(WorkSet::ItemT item)
 	/* Handle special case - for stores inside the transaction*/
 	if (auto *mi = llvm::dyn_cast<TransactionRevisit>(item.get())){
 		auto ev = mi->getWrite();
+		WARN("**Revisit for TR write(" + to_string(ev.thread) + ","+ to_string(ev.index)+")**\n");
 		EventLabel *wlab = g.getEventLabel(ev);
 		auto *wLab = llvm::dyn_cast<WriteLabel>(wlab);
 		BUG_ON(!wLab);
 		BUG_ON(wLab->getTransaction().isInvalid());
 		BUG_ON(!(wLab->getTransaction() == mi->getTransaction()));
-		WARN("**Revisit for TR write(" + to_string(wLab->getPos().thread) + ","+ to_string(wLab->getPos().index)+")**\n");
 		/* Mark this write as revisted, if inside a transaction*/
 		auto *trans = g.getTransaction(wLab->getTransaction());
 		trans->addRevisitedStore(wLab->getAddr() , wLab->getPos());
-		g.changeStoreOffset(wLab->getAddr(), wLab->getPos(), mi->getMOPos());
-		WARN("*Revisit for TR write with new mo-Position : " + to_string(mi->getMOPos())+"*\n");
-		wLab->setAddedMax(false);
-		trans->moAdded(wLab->getAddr() , wLab->getPos());
 		/*Remove stores from mo if store > wLab.getPos().index in the transaction*/
 		auto *mm = llvm::dyn_cast<MOCalculator>(g.getCoherenceCalculator());
 		if (mm){
@@ -3414,11 +3411,20 @@ bool GenMCDriver::restrictAndRevisit(WorkSet::ItemT item)
 		}
 		else
 			BUG();
-		/* No need to check for cons, this write can be postponed hence need to do BRevisit first. 
+
+		/* Restrict transactions as well as loads and stores in this transaction */
+		restrictGraph(lab);
+		
+		g.changeStoreOffset(wLab->getAddr(), wLab->getPos(), mi->getMOPos());
+		WARN("*Revisit for TR write with new mo-Position : " + to_string(mi->getMOPos())+"*\n");
+		wLab->setAddedMax(false);
+		trans->moAdded(wLab->getAddr() , wLab->getPos());
+		WARN("Mo Added \n");
+
+		/*Just for Debug:
+		 No need to check for cons, this write can be postponed hence need to do BRevisit first. 
 		* Cons will be handled after returning to explore()
 		*/
-		/* Restrict loads and stores in the transactions */
-		restrictGraph(lab);
 		if (!isConsistent(ProgramPoint::step)){
 				auto tranHB = getGraph().getGlobalTranRelation(ExecutionGraph::RelationId::TranSC); 
 				WARN("`Not consistent 1 `  \n");
