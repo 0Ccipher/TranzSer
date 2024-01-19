@@ -3422,7 +3422,7 @@ bool GenMCDriver::restrictAndRevisit(WorkSet::ItemT item)
 		WARN("Mo Added \n");
 
 		/*Just for Debug:
-		 No need to check for cons, this write can be postponed hence need to do BRevisit first. 
+		 No need to check for cons, this write can be postponedfor some read, hence need to do BRevisit first. 
 		* Cons will be handled after returning to explore()
 		*/
 		if (!isConsistent(ProgramPoint::step)){
