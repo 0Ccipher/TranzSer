@@ -104,22 +104,22 @@ void MOCalculator::removeAllStores(Transaction tr)
 	auto *trans = g.getTransaction(tr);
 	for (auto it = begin(); it != end(); it++) {
 		it->second.erase(std::remove_if(it->second.begin(), it->second.end(),
-						[&](Event &e)
-						{ 
-							auto *lab = g.getWriteLabel(e);
-							if(!lab->getTransaction().isInvalid()) {
-								if(lab->getTransaction() == tr 	
-										&& !trans->isRevisitedStore(lab->getAddr())){
-									WARN("**Removed from mo write("+std::__cxx11::to_string(lab->getPos().thread)
-											+","+std::__cxx11::to_string(lab->getPos().index)+")**\n");
-									return true;
-								}
-									
-							}
-								
-							return false;
-						}),
-				 it->second.end());
+				[&](Event &e)
+				{ 
+					auto *lab = g.getWriteLabel(e);
+					if(!lab->getTransaction().isInvalid()) {
+						if(lab->getTransaction() == tr 	
+								&& !trans->isRevisitedStore(lab->getAddr())){
+							WARN("**Removed from mo write("+std::__cxx11::to_string(lab->getPos().thread)
+									+","+std::__cxx11::to_string(lab->getPos().index)+")**\n");
+							return true;
+						}
+							
+					}
+						
+					return false;
+				}),
+				it->second.end());
 
 	}
 }
@@ -476,15 +476,16 @@ bool MOCalculator::inMaximalPath(const BackwardRevisit &r)
 //newscdpor
 bool MOCalculator::inMaximalPathTr(const TransactionBackwardRevisit &r)
 {
-	WARN("inMaximalPathTr Read ("+ std::__cxx11::to_string(r.getPos().thread)+","+std::__cxx11::to_string(r.getPos().index) +")\n");
+	WARN("inMaximalPathTr Read ("+ std::__cxx11::to_string(r.getPos().thread)+
+		","+std::__cxx11::to_string(r.getPos().index) +")\n");
 	auto &g = getGraph();
 	auto preds = g.getRevisitViewTr(r);
 	
 	auto *trans = g.getTransaction(r.getTransaction());
-	auto *rLab = g.getEventLabel(r.getPos());
-	BUG_ON(rLab->getTransaction().isInvalid());
-	auto *rTrans = g.getTransaction(rLab->getTransaction());
-	/*mo-succ of all writes should be in the updated graph */
+	auto *revLab = g.getEventLabel(r.getPos());
+	BUG_ON(revLab->getTransaction().isInvalid());
+	auto *rTrans = g.getTransaction(revLab->getTransaction());
+	/*mo-succ of all writes from r.Transaction should be in the updated graph */
 	auto stores = trans->getStoresWithAddr();
 	if(std::any_of(stores.begin() , stores.end(), 
 				[&](std::pair<SAddr,Event> &store) {
@@ -499,62 +500,106 @@ bool MOCalculator::inMaximalPathTr(const TransactionBackwardRevisit &r)
 		return false;
 	}
 		
-		for (const auto *lab : labels(g)) {
-			if ((lab->getPos() != r.getPos() && preds->contains(lab->getPos())) || g.isOptBlockedRead(lab)) {
-				continue;
-			}
-			/*isCoBeforeSavedPrefix(r, lab)*/
-			if(auto *mLab = llvm::dyn_cast<MemAccessLabel>(lab)){
-				auto w = llvm::isa<ReadLabel>(mLab) ? llvm::dyn_cast<ReadLabel>(mLab)->getRf() : mLab->getPos();
-				if(any_of(succ_begin(mLab->getAddr(), w), succ_end(mLab->getAddr(), w), 
-						[&](const Event &s){
-								auto *sLab = g.getEventLabel(s);
-								if(sLab->getTransaction().isInvalid())
-									return false;
-								auto *sTran = g.getTransaction(sLab->getTransaction());
-								auto *eLab = g.getEventLabel(sTran->getEndEvent());
-								bool flag = preds->contains(sLab->getPos()) &&
-									preds->contains(eLab->getPos()) &&
-									sLab->getTransaction() != trans->getPos() &&
-									mLab->getIndex() > sLab->getPPoRfView()[mLab->getThread()] &&
-									mLab->getIndex() > eLab->getPPoRfView()[mLab->getThread()];
-								if(flag){
-									/*Check if this mLab-event belongs to same transaction as rLab and
-									* sTran(succs of mLab) also has write on some read in trans before rLab
-									*/
-									if(mLab->getTransaction().isInvalid()) return false;
-									if(mLab->getTransaction() == rLab->getTransaction()){
-										for(auto ev : rTrans->getLoadsWithAddr()){
-											if(ev.second.index < r.getPos().index && sTran->isStorePresent(ev.first))
-												return false;
-										}
-									}
-										
-									WARN("check(RF-for read) event("+ std::__cxx11::to_string(w.thread)+","+std::__cxx11::to_string(w.index) +")\n");
-									WARN("succ event("+ std::__cxx11::to_string(sLab->getPos().thread)+","+std::__cxx11::to_string(sLab->getPos().index) +")\n");
-									return true;
+	for (const auto *lab : labels(g)) {
+		if ((lab->getPos() != r.getPos() && preds->contains(lab->getPos())) || g.isOptBlockedRead(lab)) {
+			continue;
+		}
+		/*isCoBeforeSavedPrefix(r, lab)*/
+		if(auto *mLab = llvm::dyn_cast<MemAccessLabel>(lab)) {
+			auto w = llvm::isa<ReadLabel>(mLab) ? llvm::dyn_cast<ReadLabel>(mLab)->getRf() : mLab->getPos();
+			if(any_of(succ_begin(mLab->getAddr(), w), succ_end(mLab->getAddr(), w), 
+					[&](const Event &s){
+						auto *sLab = g.getEventLabel(s);
+						if(sLab->getTransaction().isInvalid())
+							return false;
+						auto *sTran = g.getTransaction(sLab->getTransaction());
+						auto *eLab = g.getEventLabel(sTran->getEndEvent());
+						bool flag = preds->contains(sLab->getPos()) &&
+							preds->contains(eLab->getPos()) &&
+							sLab->getTransaction() != trans->getPos() &&
+							mLab->getIndex() > sLab->getPPoRfView()[mLab->getThread()] &&
+							mLab->getIndex() > eLab->getPPoRfView()[mLab->getThread()];
+						if(flag) {
+							WARN("isCoBeforeSavedPrefix check(RF-for read) event("
+								+ std::__cxx11::to_string(w.thread)+","+
+								std::__cxx11::to_string(w.index) +") 1 \n");
+							/*Check if this mLab-event belongs to same transaction as rLab and
+							* sTran(succs of mLab) also has write on some read in trans before rLab
+							*/
+							if(mLab->getTransaction().isInvalid()) return false;
+							if(mLab->getTransaction() == revLab->getTransaction()){
+								for(auto ev : rTrans->getLoadsWithAddr()){
+									if(ev.second.index < r.getPos().index && 
+										sTran->isStorePresent(ev.first))
+										return false;
 								}
-								return false;
-							}) ) {
-					WARN("`CoBeforeSavedPrefix(RF-for read) event("+ std::__cxx11::to_string(lab->getPos().thread)+","+std::__cxx11::to_string(lab->getPos().index) +")`\n");
-					return false;
-				}
-			
-
-			}
-			/*hasBeenRevisitedByDeleted(r,lab)*/
-			auto *rLab = llvm::dyn_cast<ReadLabel>(lab);
-			if (rLab){
-				auto *rfLab = g.getEventLabel(rLab->getRf());
-				if( !preds->contains(rfLab->getPos()) && rfLab->getStamp() > lab->getStamp() ) {
-					WARN("`hasBeenRevisitedByDeleted for read("+ std::__cxx11::to_string(lab->getPos().thread)+","+std::__cxx11::to_string(lab->getPos().index) +")`\n");
-					return false;
-				}
-			}
-			if (!wasAddedMaximally(lab)) {
-				WARN("`No AddedMaximally event("+ std::__cxx11::to_string(lab->getPos().thread)+","+std::__cxx11::to_string(lab->getPos().index) +")`\n");
+							}
+								
+							WARN("isCoBeforeSavedPrefix check(RF-for read) event("+ 
+								std::__cxx11::to_string(w.thread)+","+std::__cxx11::to_string(w.index)
+									+") 2 \n");
+							WARN("isCoBeforeSavedPrefix succ event("+ 
+								std::__cxx11::to_string(sLab->getPos().thread)+","+
+								std::__cxx11::to_string(sLab->getPos().index) +")\n");
+							return true;
+						}
+						return false;
+						}) ) {
+				WARN("`CoBeforeSavedPrefix(RF-for read) event("+ 
+					std::__cxx11::to_string(lab->getPos().thread)+","+
+					std::__cxx11::to_string(lab->getPos().index) +")`\n");
 				return false;
 			}
+		
+
+		}
+		/*hasBeenRevisitedByDeleted(r,lab)*/
+		auto *rLab = llvm::dyn_cast<ReadLabel>(lab);
+		if (rLab){
+			auto *rfLab = g.getEventLabel(rLab->getRf());
+			if( !preds->contains(rfLab->getPos()) && rfLab->getStamp() > lab->getStamp() ) {
+				WARN("`hasBeenRevisitedByDeleted for read("+ std::__cxx11::to_string(lab->getPos().thread)
+					+","+std::__cxx11::to_string(lab->getPos().index) +")`\n");
+				return false;
+			}
+		}
+		if (!wasAddedMaximally(lab)) {
+			WARN("`Not AddedMaximally event("+ std::__cxx11::to_string(lab->getPos().thread)+","
+				+std::__cxx11::to_string(lab->getPos().index) +")` 1 \n");
+			/* If lab.trans = BRevisit read.trans, then its okay lab to be not-maximal if all the 
+			mo-succ transaction contain writes on the same location as some read ev \in BRevisit read.trans.
+			And the mo-succ write.stamp < lab.stamp.
+			This check is mainly needed if lab is writeLabel (for reads, this issue may not arise; still check it)
+			*/
+			if(auto *mLab = llvm::dyn_cast<MemAccessLabel>(lab)){
+				auto w = llvm::isa<ReadLabel>(mLab) ? llvm::dyn_cast<ReadLabel>(mLab)->getRf()
+								 : mLab->getPos();
+				if(mLab->getTransaction().isInvalid()) continue;
+				if(mLab->getTransaction() == revLab->getTransaction()){
+					if(std::all_of(succ_begin(mLab->getAddr(), w), succ_end(mLab->getAddr(), w),
+						[&](const Event &s){
+							auto *sLab = g.getEventLabel(s);
+							if(sLab->getStamp() > mLab->getStamp())
+								return true;
+							if(sLab->getTransaction().isInvalid())
+								return true;
+							auto *sTran = g.getTransaction(sLab->getTransaction());
+							for(auto ev : rTrans->getLoadsWithAddr()){
+								if(ev.second.index < r.getPos().index && 
+									sTran->isStorePresent(ev.first))
+									return true;
+							}
+							return false;
+						} )) {
+							continue;
+					}
+				}
+
+			}
+			WARN("`Not AddedMaximally event("+ std::__cxx11::to_string(lab->getPos().thread)+","
+				+std::__cxx11::to_string(lab->getPos().index) +")` 2 \n");
+			return false;
+		}
 	}
 	return true;
 }

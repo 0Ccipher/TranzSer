@@ -68,7 +68,7 @@ void TranDriver::calcReadViews(ReadLabel *lab)
 			if (auto *wLab = llvm::dyn_cast<WriteLabel>(rfLab))
 				hb.update(wLab->getMsgView());
 		}
-		/* If it's part of the transaction-update the view till endEv for external reads*/
+		/* If it's part of the transaction; update the view till endEv for external reads*/
 		if(!lab->getTransaction().isInvalid()){
 			if(!rfLab->getTransaction().isInvalid() && rfLab->getTransaction() != lab->getTransaction() ){
 				auto endEv = g.getTransaction(rfLab->getTransaction())->getEndEvent();

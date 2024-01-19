@@ -1826,7 +1826,7 @@ void GenMCDriver::visitTrEnd(std::unique_ptr<TrEndLabel> lab){
 	tran->setEndEvent(trEndLab->getPos());
 	/*Check for cons*/
 	if(!isConsistent(ProgramPoint::step)){
-		WARN("*TrEnd- this transaction with mo-rf is inconsisten* \n");
+		WARN("*TrEnd this transaction with mo-rf is inconsistent - moot* \n");
 		moot();
 		return;
 	}
