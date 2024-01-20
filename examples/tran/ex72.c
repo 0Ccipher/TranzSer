@@ -1,3 +1,6 @@
+/*
+	Example 7 (2) - 6 traces 
+*/
 #include <pthread.h>
 #include <assert.h>
 #include <stdio.h>

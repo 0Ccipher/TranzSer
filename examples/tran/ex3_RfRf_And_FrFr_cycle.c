@@ -1,6 +1,6 @@
 /* Example 3-RfRf cycle and FrFr-cycle. FrFR cycle is allowed 
  *  in weak models but not in SC
- * ---Omkar
+ * 1 trace
 */
 
 

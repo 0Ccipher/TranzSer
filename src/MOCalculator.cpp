@@ -504,6 +504,7 @@ bool MOCalculator::inMaximalPathTr(const TransactionBackwardRevisit &r)
 		if ((lab->getPos() != r.getPos() && preds->contains(lab->getPos())) || g.isOptBlockedRead(lab)) {
 			continue;
 		}
+		std::vector<Event> moSuccs;
 		/*isCoBeforeSavedPrefix(r, lab)*/
 		if(auto *mLab = llvm::dyn_cast<MemAccessLabel>(lab)) {
 			auto w = llvm::isa<ReadLabel>(mLab) ? llvm::dyn_cast<ReadLabel>(mLab)->getRf() : mLab->getPos();
@@ -512,8 +513,12 @@ bool MOCalculator::inMaximalPathTr(const TransactionBackwardRevisit &r)
 						auto *sLab = g.getEventLabel(s);
 						if(sLab->getTransaction().isInvalid())
 							return false;
+						/*S belongs to a transaction. Add s to succ list*/
+						moSuccs.push_back(s);
+
 						auto *sTran = g.getTransaction(sLab->getTransaction());
 						auto *eLab = g.getEventLabel(sTran->getEndEvent());
+						auto eLabPoRfView = eLab->getPorfView();
 						bool flag = preds->contains(sLab->getPos()) &&
 							preds->contains(eLab->getPos()) &&
 							sLab->getTransaction() != trans->getPos() &&
@@ -529,9 +534,18 @@ bool MOCalculator::inMaximalPathTr(const TransactionBackwardRevisit &r)
 							if(mLab->getTransaction().isInvalid()) return false;
 							if(mLab->getTransaction() == revLab->getTransaction()){
 								for(auto ev : rTrans->getLoadsWithAddr()){
-									if(ev.second.index < r.getPos().index && 
-										sTran->isStorePresent(ev.first))
-										return false;
+									if(ev.second.index < r.getPos().index) {
+										if(sTran->isStorePresent(ev.first))
+											return false;
+										for(auto we : moSuccs){
+											if(we != sLab->getPos() && eLabPoRfView.contains(we)){
+												auto *weTrans = g.getTransaction(g.getEventLabel(we)->getTransaction());
+												if(weTrans->isStorePresent(ev.first))
+													return false;
+											}
+										}
+									}
+										
 								}
 							}
 								
@@ -567,7 +581,8 @@ bool MOCalculator::inMaximalPathTr(const TransactionBackwardRevisit &r)
 			WARN("`Not AddedMaximally event("+ std::__cxx11::to_string(lab->getPos().thread)+","
 				+std::__cxx11::to_string(lab->getPos().index) +")` 1 \n");
 			/* If lab.trans = BRevisit read.trans, then its okay lab to be not-maximal if all the 
-			mo-succ transaction contain writes on the same location as some read ev \in BRevisit read.trans.
+			mo-succ transaction(and their por-rf before transaction) contain writes on the same location 
+			as some read ev \in BRevisit read.trans.
 			And the mo-succ write.stamp < lab.stamp.
 			This check is mainly needed if lab is writeLabel (for reads, this issue may not arise; still check it)
 			*/
@@ -578,16 +593,26 @@ bool MOCalculator::inMaximalPathTr(const TransactionBackwardRevisit &r)
 				if(mLab->getTransaction() == revLab->getTransaction()){
 					if(std::all_of(succ_begin(mLab->getAddr(), w), succ_end(mLab->getAddr(), w),
 						[&](const Event &s){
-							auto *sLab = g.getEventLabel(s);
+							auto *sLab = g.getWriteLabel(s);
 							if(sLab->getStamp() > mLab->getStamp())
 								return true;
 							if(sLab->getTransaction().isInvalid())
 								return true;
 							auto *sTran = g.getTransaction(sLab->getTransaction());
+							auto *eLab = g.getEventLabel(sTran->getEndEvent());
+							auto eLabPoRfView = eLab->getPorfView();
 							for(auto ev : rTrans->getLoadsWithAddr()){
-								if(ev.second.index < r.getPos().index && 
-									sTran->isStorePresent(ev.first))
-									return true;
+								if(ev.second.index < r.getPos().index) {
+									if(sTran->isStorePresent(ev.first))
+										return true;
+									for(auto we : moSuccs){
+										if(we != sLab->getPos() && eLabPoRfView.contains(we)) {
+											auto *weTrans = g.getTransaction(g.getEventLabel(we)->getTransaction());
+											if(weTrans->isStorePresent(ev.first))
+												return true;
+										}
+									}
+								}		
 							}
 							return false;
 						} )) {

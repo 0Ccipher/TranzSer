@@ -51,7 +51,7 @@ int __VERIFIER_atomic_t2(){
 	printf("x2: %d\n",r1);
 	r1 = atomic_load_explicit(&y, memory_order_seq_cst);
 	printf("y2: %d\n",r1);
-	atomic_store_explicit(&z, 2, memory_order_seq_cst);
+	atomic_store_explicit(&z, 2, memory_order_seq_cst); // it's okay if this is not maximal
 	r1 = atomic_load_explicit(&z, memory_order_seq_cst);
 	printf("z2-own: %d\n",r1);
 
