@@ -2236,17 +2236,20 @@ SVal GenMCDriver::visitLoad(std::unique_ptr<ReadLabel> rLab, const EventDeps *de
 	WARN("RF-set size = " + to_string(stores.size())+"\n");
 	/*Add an label for rf - and check cons*/
 	changeRf(lab->getPos(), stores.back());
+	WARN("RF ()" + to_string(stores.back().thread)+","+to_string(stores.back().index)+"\n");
 	{
 		bool found = false;
 		while (!found) {
 			found = true;
 			changeRf(lab->getPos(), stores.back());
+			WARN("RF ()" + to_string(stores.back().thread)+","+to_string(stores.back().index)+"\n");
 			if (!isConsistent(ProgramPoint::step)) {
 				found = false;
 				stores.erase(stores.end() - 1);
 				BUG_ON(!getConf()->LAPOR && stores.empty());
 				if (stores.empty())
 					break;
+				WARN("RF inconsistent \n");
 			}
 		}
 		if (!found) {
