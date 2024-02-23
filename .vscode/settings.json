@@ -97,7 +97,13 @@
             "*.def": "cpp",
             "*.inc": "cpp",
             "__hash_table": "cpp",
-            "__tree": "cpp"
+            "__tree": "cpp",
+            "genmc.h": "c",
+            "stdlib.h": "c",
+            "my_queue.h": "c",
+            "stdatomic.h": "c",
+            "stdio.h": "c",
+            "course.h": "c"
       },
       "C_Cpp.errorSquiggles": "enabled"
 }
