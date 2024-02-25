@@ -13,17 +13,53 @@ Course *newCourse(int id, const char *name, const char *department, const char *
     return course;
 }
 
-const char *toString(Course *course) {
+Course *newCourseFromString(char *string){
+    Course *course = (Course *)malloc(sizeof(Course));
+    printf("extracting course %s\n",string);
+    char *token = strtok(string, ";");
+    if (token == NULL) {
+        printf("Wrong format\n");
+        return NULL;
+    }
+    course->id = atoi(token);
+    token = strtok(NULL, ";");
+    if (token == NULL) {
+        printf("Wrong format\n");
+        return NULL;
+    }
+    course->name = strdup(token);
+    token = strtok(NULL, ";");
+    if (token == NULL) {
+        printf("Wrong format\n");
+        return NULL;
+    }
+    course->department = strdup(token);
+    token = strtok(NULL, ";");
+    if (token == NULL) {
+        printf("Wrong format\n");
+        return NULL;
+    }
+    course->status = strdup(token);
+    token = strtok(NULL, ";");
+    if (token == NULL) {
+        printf("Wrong format\n");
+        return NULL;
+    }
+    course->capacity = atoi(token);
+    return course;
+}
+
+char *courseToString(Course *course) {
     static char buffer[256];
     sprintf(buffer, "%d;%s;%s;%s;%d", course->id, course->name, course->department, course->status, course->capacity);
     return buffer;
 }
 
-int getId(Course *course) {
+int getcId(Course *course) {
     return course->id;
 }
 
-const char *getName(Course *course) {
+const char *getcName(Course *course) {
     return course->name;
 }
 
@@ -44,7 +80,7 @@ void setStatus(Course *course, const char *status) {
     course->status = strdup(status);
 }
 
-void deleteCourse(Course *course) {
+void freeCourse(Course *course) {
 //     free(course->name);
 //     free(course->department);
 //     free(course->status);
