@@ -18,7 +18,7 @@ Student *newStudent(int id, const char *name, bool registered, const char *rollN
 
 Student *newStudentFromString(char *string){
     Student *student = (Student *)malloc(sizeof(Student));
-    printf("extracting Student %s\n",string);
+    // printf("extracting Student %s\n",string);
     char *token = strtok(string, ";");
     if (token == NULL) {
         printf("Wrong format\n");

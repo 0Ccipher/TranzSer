@@ -9,17 +9,20 @@
 #include "course.c"
 #include "database_atomic.c"
 
-#define STUDENT_TABLE "ST"
-#define COURSE_TABLE "CT"
-#define EROLLMENT_TABLE "ET"
+#define STUDENT_TABLE "ST"  //table 0
+#define COURSE_TABLE "CT"  // table 1
+#define EROLLMENT_TABLE "ET" //table 2
 
+void __VERIFIER_Transaction_begin(){};
+void __VERIFIER_Transaction_end(){};
 
 // Function to enroll a student in a course
 void enroll(int studentID, int courseID) {
-    printf("Enrolling student %d in course %d\n",studentID , studentID);
+    __VERIFIER_Transaction_begin();
+    printf("Enrolling student %d in course %d\n",studentID , courseID);
     static char stid[20];
     sprintf(stid,"%d",studentID);
-    char * ststr = read(STUDENT_TABLE , stid);
+    char * ststr = readRowFromTable(0,STUDENT_TABLE , stid);
     if(ststr == NULL){
         printf("Student not found\n");
         return;
@@ -27,53 +30,66 @@ void enroll(int studentID, int courseID) {
     Student *student = newStudentFromString(ststr);
     static char ctid[20];
     sprintf(ctid,"%d",courseID);
-    char * ctstr = read(COURSE_TABLE , ctid);
+    char * ctstr = readRowFromTable(1,COURSE_TABLE , ctid);
     if(ctstr == NULL){
         printf("Course not found\n");
         return;
     }
     Course *course = newCourseFromString(ctstr);
-    printf("Student %s in course %s\n",studentToString(student) , courseToString(course));
+    // printf("Student %s in course %s\n",studentToString(student) , courseToString(course));
     static char entry[20];
     sprintf(entry,"%d:%d",courseID,studentID);
     if(isRegistered(student) && strcmp(getStatus(course),"open") == 0){
-          int totalEnrollments = countIfIDStartsWith(EROLLMENT_TABLE,ctid);
+          int totalEnrollments = countIfIDStartsWith(2,EROLLMENT_TABLE,ctid);
+          printf("Current Enrollments : %d\n",totalEnrollments);
           if(totalEnrollments < course->capacity){
-                write(EROLLMENT_TABLE,entry,entry);
+                writetoTable(2,EROLLMENT_TABLE,entry,entry); //row and value as entry
                 printf("Enrolled \n");
           }
     }
+    __VERIFIER_Transaction_end();
 }
 
-// Function to close a course
-void closeCourse(Course *course) {
-    course->status = strdup("closed");
+// Function to close a course row is id
+void closeCourse(char * row) {
+    __VERIFIER_Transaction_begin();
+    writetoTable(1,COURSE_TABLE ,row,"closed");
+    __VERIFIER_Transaction_end();
 }
 
 // Function to open a course
-void openCourse(Course *course) {
-    course->status = strdup("open");
+void openCourse(char * row) {
+    __VERIFIER_Transaction_begin();
+    writetoTable(1,COURSE_TABLE ,row,"open");
+    __VERIFIER_Transaction_end();
 }
 
 // Function to delete a course
 void deleteCourse(int courseID) {
+    __VERIFIER_Transaction_begin();
     static char ctid[20];
     sprintf(ctid,"%d",courseID);
-    char * ctstr = read(COURSE_TABLE , ctid);
+    char * ctstr = readRowFromTable(1,COURSE_TABLE , ctid);
     if(ctstr == NULL){
       printf("course not found");
       return;
     }
-    deleteRow(COURSE_TABLE , ctid);
+    deleteRowFromTable(1,COURSE_TABLE , ctid);
     bool flag = true;
     while(flag){
-      flag = deleteRow(EROLLMENT_TABLE,ctid);
+      flag = deleteRowFromTable(2,EROLLMENT_TABLE,ctid);
     }
+    __VERIFIER_Transaction_end();
 }
 
-Table * getAllEnrollments(){
-   return getAllRows(EROLLMENT_TABLE);
+static Table * getAllEnrollments(){ 
+    __VERIFIER_Transaction_begin();
+   Table * t =  getAllRows(2);
+   __VERIFIER_Transaction_end();
+   return t;
 }
+
+
 // int main() {
 //       pthread_t t1,t2,t3;
 //       initDatabase();

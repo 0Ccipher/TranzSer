@@ -329,9 +329,9 @@ void TranSCCalculator::initCalc()
 	/* Collect all SC events (except for RMW loads) */
 	auto accesses = getGraph().getSCEventsTransactions();
 	TranSCRelation = Calculator::GlobalTranRelation(accesses.second);
-	WARN("Transactions in calculator : "+std::__cxx11::to_string(accesses.second.size()) +" \n");
+	// WARN("Transactions in calculator : "+std::__cxx11::to_string(accesses.second.size()) +" \n");
 	for(auto tr : accesses.second){
-		WARN("Transactions: ("+std::__cxx11::to_string(tr.thread)+"," +std::__cxx11::to_string(tr.index) +") \n");
+		// WARN("Transactions: ("+std::__cxx11::to_string(tr.thread)+"," +std::__cxx11::to_string(tr.index) +") \n");
 	}
 	return;
 }

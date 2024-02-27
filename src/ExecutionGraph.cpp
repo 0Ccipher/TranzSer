@@ -1663,10 +1663,10 @@ void ExecutionGraph::copyGraphUpTo(ExecutionGraph &other, const VectorClock &v) 
 			
 			if(auto *bLab = llvm::dyn_cast<TrBeginLabel>(nLab)){
 				other.addNewTransaction(getTransaction(bLab->getTransaction())->clone());
-				WARN("Copied the TrBeginLabel ("+to_string(bLab->getPos().thread)+","+to_string(bLab->getPos().index)+") \n");
+				// WARN("Copied the TrBeginLabel ("+to_string(bLab->getPos().thread)+","+to_string(bLab->getPos().index)+") \n");
 			}
 			if(auto *eLab = llvm::dyn_cast<TrEndLabel>(nLab)){
-				WARN("Copied the TrEndLabel ("+to_string(eLab->getPos().thread)+","+to_string(eLab->getPos().index)+") \n");
+				// WARN("Copied the TrEndLabel ("+to_string(eLab->getPos().thread)+","+to_string(eLab->getPos().index)+") \n");
 			}
 		}
 	}
