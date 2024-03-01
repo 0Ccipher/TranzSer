@@ -82,8 +82,9 @@ std::vector<Transaction> TranSCCalculator::calcRfSCSuccs(const Event ev) const
 	auto *wLab = static_cast<const WriteLabel *>(lab);
 	for (const auto &e : wLab->getReadersList()) {
 		const EventLabel *rLab = g.getEventLabel(e);
-		if(wLab->getTransaction() == rLab->getTransaction() || 
-					rLab->getTransaction().isInvalid()) continue;
+		if(rLab->getTransaction().isInvalid()) continue;
+		if(!(g.getTransaction(rLab->getTransaction())->getStatus())) continue; //aborted transaction
+		if(wLab->getTransaction() == rLab->getTransaction()) continue;
 		auto succs = calcSCSuccs( e);
 		rfs.insert(rfs.end(), succs.begin(), succs.end());
 	}
@@ -103,17 +104,18 @@ void TranSCCalculator::addRbEdges(
 	auto *wLab = static_cast<const WriteLabel *>(lab);
 	for (const auto &e : wLab->getReadersList()) {
 		const EventLabel *rLab = g.getEventLabel(e);
+		if(rLab->getTransaction().isInvalid()) continue;
+		if(!(g.getTransaction(rLab->getTransaction())->getStatus())) continue; //aborted transaction
 		/*Already covered in mo if store and load transaction is same*/
-		if(wLab->getTransaction() == rLab->getTransaction() || 
-					rLab->getTransaction().isInvalid()) continue;
+		if(wLab->getTransaction() == rLab->getTransaction()) continue;
 		/*Do not add the fr to the same transaction-tr of this 
 		* read-r(x) due to later write tr[r(x),---,w(x)-] 
 		*/
 		auto tempMoAfter = moAfter;
 		tempMoAfter.erase(std::remove_if(tempMoAfter.begin() , tempMoAfter.end() , [&](Transaction s)
-								{
-									return s == rLab->getTransaction();
-								}) ,
+							{
+								return s == rLab->getTransaction();
+							}) ,
 					tempMoAfter.end());
 		auto preds = calcSCPreds( e);
 		matrix.addEdgesFromTo(preds, tempMoAfter);        /* Base/fence: Adds rb-edges (fr)*/
@@ -137,18 +139,7 @@ void TranSCCalculator::addMoRfEdges(
 }
 
 /*
- * addSCEcosLoc - Helper function that calculates a part of TranSC_base and TranSC_fence
  *
- * For TranSC_base and TranSC_fence, it adds co, rb, and hb_loc edges. The
- * procedure for co and rb is straightforward: at each point, we only
- * need to keep a list of all the co-after writes that are either SC,
- * or can reach an SC fence. For hb_loc, however, we only consider
- * rf-edges because the other cases are implicitly covered (sb, co, etc).
- *
- * For TranSC_fence only, it adds (co;rf)- and (rb;rf)-edges. Simple cases like
- * co, rf, and rb are covered by TranSC_base, and all other combinations with
- * more than one step either do not compose, or lead to an already added
- * single-step relation (e.g, (rf;rb) => co, (rb;co) => rb)
  */
 void TranSCCalculator::addSCEcosLoc( SAddr loc,
 				 Calculator::GlobalRelation &coMatrix,
@@ -158,7 +149,7 @@ void TranSCCalculator::addSCEcosLoc( SAddr loc,
 	// auto &stores = coMatrix.getElems();
 	/* Collect all SC events/transactions (except for RMW loads) */
 	auto accesses = g.getSCEventsTransactions();
-	/*All Transactions*/
+	/*All Transactions except aborted ones*/
 	auto &sctrans = accesses.second; 
 	for(auto i = 0u; i < sctrans.size(); i++) {
 		/*
@@ -193,10 +184,7 @@ void TranSCCalculator::addSCEcosLoc( SAddr loc,
 }
 
 /*
- * Adds sb as well as [Esc];sb_(<>loc);hb;sb_(<>loc);[Esc] edges. The first
- * part of this function is common for TranSC_base and TranSC_fence, while the second
- * part of this function is not triggered for fences (these edges are covered in
- * addSCEcos()).
+ * Adds sb(po) edges.
  */
 void TranSCCalculator::addSbHbEdges(Calculator::GlobalTranRelation &matrix) const
 {
@@ -204,11 +192,10 @@ void TranSCCalculator::addSbHbEdges(Calculator::GlobalTranRelation &matrix) cons
 	auto &hbRelation = g.getGlobalRelation(ExecutionGraph::RelationId::hb);
 
 	auto accesses = g.getSCEventsTransactions();
-	auto &sctrans = accesses.second;
+	auto &sctrans = accesses.second; // ignored aborted transactions
 	for(auto i = 0u; i < sctrans.size(); i++){
 		for(auto j = 0u; j < sctrans.size(); j++){
-			if(i==j)
-				continue;
+			if(i==j) continue;
 			const Transactions *trani = g.getTransaction(sctrans[i]);
 			const Transactions *tranj = g.getTransaction(sctrans[j]);
 
@@ -234,6 +221,7 @@ void TranSCCalculator::addInitEdges(
 		for (auto j = 0u; j < g.getThreadTranSize(i); j++) {
 			const Transactions *tr = g.getTransaction(Transaction(i,j));
 			auto loads = tr->getLoads();
+			if(!tr->getStatus()) continue;; // ignore aborted transactions
 			if(loads.empty()) continue;
 			for(auto ev:loads){
 				const EventLabel *lab = g.getEventLabel(ev);
@@ -295,11 +283,10 @@ void TranSCCalculator::calcTranSCRelation()
 
 	/*
 	 * Collect memory locations with more than one SC accesses
-	 * and add the rest of TranSC_base and TranSC_fence
+	 * and add the rest of mo,rf edges
 	 */
 	addSCEcos( getDoubleLocs(), TranSCRelation);
 	TranSCRelation.transClosure();
-	// addSbHbEdges(TranSCRelation);
 	return;
 }
 
@@ -348,12 +335,12 @@ Calculator::CalculationResult TranSCCalculator::doCalc()
 		{WARN("`Not consistent hb `  \n"); return Calculator::CalculationResult(false, false);}
 	calcTranSCRelation();
 	if (!TranSCRelation.isIrreflexive())
-		{ initCalc(); 
-		calcTranSCRelation(); 
-		WARN("`Not consistent tranSC `  \n"); 
 		return Calculator::CalculationResult(false, false);
-		}
-
+	// 	{ initCalc(); 
+	// 	calcTranSCRelation(); 
+	// 	WARN("`Not consistent tranSC `  \n"); 
+	// 	return Calculator::CalculationResult(false, false);
+	// 	}
 	auto result = addTranSCConstraints();
 	if (!result.cons)
 		return Calculator::CalculationResult(result.changed, false);
@@ -362,8 +349,10 @@ Calculator::CalculationResult TranSCCalculator::doCalc()
 
 	/* Check that co is acyclic */
 	for (auto &coLoc : coRelation) {
-		if (!coLoc.second.isIrreflexive())
-		{WARN("`Not consistent co `  \n"); return Calculator::CalculationResult(result.changed, false);}
+		if (!coLoc.second.isIrreflexive()){
+			// WARN("`Not consistent co `  \n"); 
+			return Calculator::CalculationResult(result.changed, false);
+		}
 	}
 	return Calculator::CalculationResult(result.changed, true);
 }

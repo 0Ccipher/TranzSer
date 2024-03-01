@@ -15,28 +15,28 @@ Table gEnrollments; //table 2
 void * thr1(void *arg){
     printf("thread 1 - start \n");
     enroll(1,1);
-    getAllEnrollments();
-    // Table *currentTable = getAllRows(2);
-    // if(currentTable != NULL)
-    // for (int i = 0; i < currentTable->size; i++) {
-    //     printf("Table: %s, Row: %s, Value: %s\n", currentTable->rows[i].table, currentTable->rows[i].row, currentTable->rows[i].value);
-    // }
-    enroll(1,2);
+    // getAllEnrollments();
+    Table *currentTable = getAllRows(2);
+    if(currentTable != NULL)
+    for (int i = 0; i < currentTable->size; i++) {
+        printf("Table: %s, Row: %s, Value: %s\n", currentTable->rows[i].table, currentTable->rows[i].row, currentTable->rows[i].value);
+    }
+    // enroll(1,2);
     printf("thread 1 - finish \n");
     return NULL;
 }
 void * thr2(void *arg){
     printf("thread 2 - start \n");
-    enroll(2,1);
-    getAllEnrollments();
+    // enroll(2,1);
+    // getAllEnrollments();
     deleteCourse(2);
     printf("thread 2 - finish \n");
     return NULL;
 }
 void * thr3(void *arg){
     printf("thread 3 - start \n");
-    enroll(2,1);
-    deleteCourse(1);
+    // enroll(2,1);
+    // deleteCourse(1);
     printf("thread 3 - finish \n");
     return NULL;
 }

@@ -27,9 +27,9 @@ class Transactions{
 public:
 	using StoreMap = std::unordered_map<SAddr, Event>;
 	using LoadMap = std::unordered_map<SAddr, Event>;
-	Transactions(unsigned int s, Transaction tr, Event be) : stamp(s), position(tr), beginEvent(be) {}
+	Transactions(unsigned int s, Transaction tr, Event be) : stamp(s), position(tr), beginEvent(be) , active(true) {}
 	Transactions(Transaction tr, Event be)
-		: stamp(0), position(tr) , beginEvent(be) {}
+		: stamp(0), position(tr) , beginEvent(be) , active(true) {}
 
 	/* Getter/setter for the stamp in an execution graph*/
 	unsigned int getStamp() const { return stamp; }
@@ -79,6 +79,8 @@ public:
 
 	void setFinishedStatus(bool value) {finshedExecution = value;};
 	bool getFinishedStatus()  const {return finshedExecution;};
+	void setStatus(bool value) { active = value;}
+	const bool getStatus() const {return active;} 
 
 	/* Methods that get/set the vector clocks for this label. */
 	const View& getHbView() const { return hbView; }
@@ -115,6 +117,9 @@ private:
 	/* Position of the beging event label of this transaction within the execution graph (thread, index) */
 	const Event beginEvent;
 	Event endEvent;
+	
+	/*False for aborted*/
+	bool active = true;
 
 	/*Latest stores of this Transaction */
 	

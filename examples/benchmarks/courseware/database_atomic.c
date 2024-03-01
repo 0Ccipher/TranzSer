@@ -102,6 +102,7 @@ bool deleteRowFromTable(int tableIndex, char * table , char *row) {
         if(currentTable->rows[i].row == NULL) continue;
         if (strncmp(currentTable->rows[i].row, row , strlen(row)) == 0) {
             rowIndex = i;
+             printf("Deleting- :%d :row %s \n",tableIndex ,currentTable->rows[i].row);
             break;
         }
     }

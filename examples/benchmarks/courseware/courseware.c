@@ -67,6 +67,7 @@ void openCourse(char * row) {
 // Function to delete a course
 void deleteCourse(int courseID) {
     __VERIFIER_Transaction_begin();
+    printf("delete start\n");
     static char ctid[20];
     sprintf(ctid,"%d",courseID);
     char * ctstr = readRowFromTable(1,COURSE_TABLE , ctid);
@@ -79,6 +80,7 @@ void deleteCourse(int courseID) {
     while(flag){
       flag = deleteRowFromTable(2,EROLLMENT_TABLE,ctid);
     }
+    printf("delete end\n");
     __VERIFIER_Transaction_end();
 }
 
