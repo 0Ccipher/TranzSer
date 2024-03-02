@@ -58,6 +58,7 @@ enum class InternalFunctions {
 	//newscdpor
 	FN_TrBegin,
 	FN_TrEnd,
+	FN_TrAbort,
 	
 	FN_AssertFail,
 	FN_OptBegin,

@@ -746,6 +746,7 @@ private:  // Helper functions
   //newscdpor
   DECLARE_CUSTOM_OPCODE(TrBegin);
   DECLARE_CUSTOM_OPCODE(TrEnd);
+  DECLARE_CUSTOM_OPCODE(TrAbort);
   DECLARE_CUSTOM_OPCODE(RecAssertFail);
   DECLARE_CUSTOM_OPCODE(SpinStart);
   DECLARE_CUSTOM_OPCODE(SpinEnd);

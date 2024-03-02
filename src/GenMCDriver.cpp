@@ -1785,6 +1785,54 @@ void GenMCDriver::visitTrEnd(std::unique_ptr<TrEndLabel> lab){
 		loadRevisits(tran);
 }
 
+void GenMCDriver::visitTrAbort(std::unique_ptr<TrAbortLabel> lab){
+
+	if (isExecutionDrivenByGraph()) {
+		getGraph().setInsideTransaction(false);
+		return;
+	}
+	updateLabelViews(lab.get(), nullptr);
+	auto &g = getGraph();
+	BUG_ON(!g.isInsideTransaction());
+	lab->setTransaction(g.getCurTransaction());
+	auto *trAbortLab = g.addOtherLabelToGraph(std::move(lab));
+	auto *trans = g.getTransaction(g.getCurTransaction());
+	// auto tranHB = getGraph().getGlobalTranRelation(ExecutionGraph::RelationId::TranSC);
+	/* Remove all earlier stores of this transaction from mo*/
+	auto *mm = llvm::dyn_cast<MOCalculator>(g.getCoherenceCalculator());
+	if (mm){
+		mm->removeAllStores(trAbortLab->getTransaction());
+		trans->eraseAllAddedMo();
+		trans->eraseRevisitedStores();
+	}
+	else
+		BUG();
+	//aborted transaction
+	trans->setFinishedStatus(true);
+	g.setInsideTransaction(false);
+	/* Clear the Revisit list for reads from this transaction*/
+	auto *bLab = g.getEventLabel(trans->getBeginEvent());
+	restrictWorklist(bLab);
+	restrictRevisitSet(bLab);
+	/* Make the loads not Revisitable*/
+	auto curreads = trans->getLoadsWithAddr();
+	for(auto ev : curreads){
+		trans->eraseLoad(ev.first);
+		auto *rLab = g.getReadLabel(ev.second);
+		rLab->setRevisitStatus(false);
+	}
+	/*restrict the stores, if they are PO after this read.*/
+	auto curstores = trans->getStoresWithAddr();
+	for(auto ev : curstores){
+		trans->eraseStore(ev.first);
+	}
+	/*Check for cons*/
+	if(!isConsistent(ProgramPoint::step)){
+		moot();
+		return;
+	}
+
+}
 int GenMCDriver::visitThreadCreate(std::unique_ptr<ThreadCreateLabel> tcLab, const EventDeps *deps,
 				   llvm::Function *calledFun, SVal arg, const llvm::ExecutionContext &SF)
 {
@@ -2954,7 +3002,7 @@ GenMCDriver::copyGraphTr( TransactionBackwardRevisit *br, VectorClock *v)
 		if (lab->getStamp() > revLab->getStamp())
 			lab->setStamp(og->nextStamp());
 	}
-	/* Restrict the transactions with this BRevisted read in the updated grapg-og*/
+	/* Restrict the transactions of this BRevisted read in the updated graph-og*/
 	auto readev = revLab->getPos();
 	auto *trans = og->getTransaction(revLab->getTransaction());
 	auto curreads = trans->getLoadsWithAddr();

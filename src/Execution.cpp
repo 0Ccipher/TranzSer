@@ -2851,6 +2851,12 @@ void Interpreter::callTrEnd(Function *F, const std::vector<GenericValue> &ArgVal
 	driver->visitTrEnd(TrEndLabel::create(nextPos()));
 }
 
+void Interpreter::callTrAbort(Function *F, const std::vector<GenericValue> &ArgVals,
+				const std::unique_ptr<EventDeps> &specialDeps)
+{
+	driver->visitTrAbort(TrAbortLabel::create(nextPos()));
+}
+
 void Interpreter::callSpinStart(Function *F, const std::vector<GenericValue> &ArgVals,
 				const std::unique_ptr<EventDeps> &specialDeps)
 {

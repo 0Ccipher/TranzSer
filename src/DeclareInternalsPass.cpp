@@ -61,6 +61,7 @@ bool DeclareInternalsPass::runOnModule(Module &M)
 	//newscdpor
 	modified |= declareInternal(M, "__VERIFIER_Transaction_begin", Type::getVoidTy(M.getContext()), {});
 	modified |= declareInternal(M, "__VERIFIER_Transaction_end", Type::getVoidTy(M.getContext()), {});
+	modified |= declareInternal(M, "__VERIFIER_Transaction_abort", Type::getVoidTy(M.getContext()), {});
 	return modified;
 }
 

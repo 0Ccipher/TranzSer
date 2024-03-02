@@ -131,6 +131,7 @@ public:
 		EL_RCUUnlockLKMM,
 		EL_TrBegin,
 		EL_TrEnd,
+		EL_TrAbort,
 	};
 
 protected:
@@ -369,6 +370,32 @@ public:
 
 	static bool classof(const EventLabel *lab) { return classofKind(lab->getKind()); }
 	static bool classofKind(EventLabelKind k) { return k == EL_TrEnd; }
+};
+
+/*******************************************************************************
+ **                            TrAbortLabel Class
+ ******************************************************************************/
+
+/* A TrEnd label. Records the end of a transaction */
+class TrAbortLabel : public EventLabel {
+
+public:
+	TrAbortLabel(unsigned int st, Event pos)
+		: EventLabel(EL_TrAbort, st, llvm::AtomicOrdering::NotAtomic, pos) {}
+	TrAbortLabel(Event pos)
+		: EventLabel(EL_TrAbort, llvm::AtomicOrdering::NotAtomic, pos) {}
+
+	template<typename... Ts>
+	static std::unique_ptr<TrAbortLabel> create(Ts&&... params) {
+		return std::make_unique<TrAbortLabel>(std::forward<Ts>(params)...);
+	}
+
+	std::unique_ptr<EventLabel> clone() const override {
+		return std::make_unique<TrAbortLabel>(*this);
+	}
+
+	static bool classof(const EventLabel *lab) { return classofKind(lab->getKind()); }
+	static bool classofKind(EventLabelKind k) { return k == EL_TrAbort; }
 };
 
 

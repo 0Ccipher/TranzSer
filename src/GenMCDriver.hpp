@@ -300,6 +300,7 @@ public:
 	void visitTrBegin(std::unique_ptr<TrBeginLabel> lab);
 	/* TrEnd interpreted */
 	void visitTrEnd(std::unique_ptr<TrEndLabel> lab);
+	void visitTrAbort(std::unique_ptr<TrAbortLabel> lab);
 
 
 	/* This method either blocks the offending thread (e.g., if the
