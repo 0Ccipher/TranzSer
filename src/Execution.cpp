@@ -4517,6 +4517,7 @@ void Interpreter::callInternalFunction(Function *F, const std::vector<GenericVal
 		//newscdpor
 		CALL_INTERNAL_FUNCTION(TrBegin);
 		CALL_INTERNAL_FUNCTION(TrEnd);
+		CALL_INTERNAL_FUNCTION(TrAbort);
 		CALL_INTERNAL_FUNCTION(SpinStart);
 		CALL_INTERNAL_FUNCTION(SpinEnd);
 		CALL_INTERNAL_FUNCTION(FaiZNESpinEnd);

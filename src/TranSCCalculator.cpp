@@ -83,7 +83,6 @@ std::vector<Transaction> TranSCCalculator::calcRfSCSuccs(const Event ev) const
 	for (const auto &e : wLab->getReadersList()) {
 		const EventLabel *rLab = g.getEventLabel(e);
 		if(rLab->getTransaction().isInvalid()) continue;
-		if(!(g.getTransaction(rLab->getTransaction())->getStatus())) continue; //aborted transaction
 		if(wLab->getTransaction() == rLab->getTransaction()) continue;
 		auto succs = calcSCSuccs( e);
 		rfs.insert(rfs.end(), succs.begin(), succs.end());
@@ -105,7 +104,6 @@ void TranSCCalculator::addRbEdges(
 	for (const auto &e : wLab->getReadersList()) {
 		const EventLabel *rLab = g.getEventLabel(e);
 		if(rLab->getTransaction().isInvalid()) continue;
-		if(!(g.getTransaction(rLab->getTransaction())->getStatus())) continue; //aborted transaction
 		/*Already covered in mo if store and load transaction is same*/
 		if(wLab->getTransaction() == rLab->getTransaction()) continue;
 		/*Do not add the fr to the same transaction-tr of this 
@@ -221,7 +219,6 @@ void TranSCCalculator::addInitEdges(
 		for (auto j = 0u; j < g.getThreadTranSize(i); j++) {
 			const Transactions *tr = g.getTransaction(Transaction(i,j));
 			auto loads = tr->getLoads();
-			if(!tr->getStatus()) continue;; // ignore aborted transactions
 			if(loads.empty()) continue;
 			for(auto ev:loads){
 				const EventLabel *lab = g.getEventLabel(ev);

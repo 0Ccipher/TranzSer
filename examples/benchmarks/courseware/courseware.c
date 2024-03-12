@@ -13,8 +13,9 @@
 #define COURSE_TABLE "CT"  // table 1
 #define EROLLMENT_TABLE "ET" //table 2
 
-void __VERIFIER_Transaction_begin(){};
-void __VERIFIER_Transaction_end(){};
+void __VERIFIER_Transaction_begin();
+void __VERIFIER_Transaction_end();
+void __VERIFIER_Transaction_abort();
 
 // Function to enroll a student in a course
 void enroll(int studentID, int courseID) {
@@ -25,6 +26,7 @@ void enroll(int studentID, int courseID) {
     char * ststr = readRowFromTable(0,STUDENT_TABLE , stid);
     if(ststr == NULL){
         printf("Student not found\n");
+        __VERIFIER_Transaction_abort();
         return;
     }
     Student *student = newStudentFromString(ststr);
@@ -33,6 +35,7 @@ void enroll(int studentID, int courseID) {
     char * ctstr = readRowFromTable(1,COURSE_TABLE , ctid);
     if(ctstr == NULL){
         printf("Course not found\n");
+        __VERIFIER_Transaction_abort();
         return;
     }
     Course *course = newCourseFromString(ctstr);
@@ -73,10 +76,14 @@ void deleteCourse(int courseID) {
     char * ctstr = readRowFromTable(1,COURSE_TABLE , ctid);
     if(ctstr == NULL){
       printf("course not found");
+      __VERIFIER_Transaction_abort();
       return;
     }
-    deleteRowFromTable(1,COURSE_TABLE , ctid);
-    bool flag = true;
+    bool flag = deleteRowFromTable(1,COURSE_TABLE , ctid);
+    if(!flag){
+        __VERIFIER_Transaction_abort();
+        return;
+    }
     while(flag){
       flag = deleteRowFromTable(2,EROLLMENT_TABLE,ctid);
     }

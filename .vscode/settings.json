@@ -103,7 +103,9 @@
             "my_queue.h": "c",
             "stdatomic.h": "c",
             "stdio.h": "c",
-            "course.h": "c"
+            "course.h": "c",
+            "string.h": "c",
+            "student.h": "c"
       },
       "C_Cpp.errorSquiggles": "enabled"
 }

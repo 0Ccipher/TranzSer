@@ -108,6 +108,7 @@ public:
 			VISIT_LABEL(RCUUnlock, LKMM);
 			VISIT_LABEL(TrBegin);
 			VISIT_LABEL(TrEnd);
+			VISIT_LABEL(TrAbort);
 		default:
 			BUG();
 		}
@@ -188,6 +189,7 @@ public:
 	//newscdpor
 	void visitTrBeginLabel(const TrBeginLabel &lab) { return DELEGATE_LABEL(EventLabel); }
 	void visitTrEndLabel(const TrEndLabel &lab) { return DELEGATE_LABEL(EventLabel); }
+	void visitTrAbortLabel(const TrAbortLabel &lab) { return DELEGATE_LABEL(EventLabel); }
 
 	/*
 	 * If none of the above matched, propagate to the next level.

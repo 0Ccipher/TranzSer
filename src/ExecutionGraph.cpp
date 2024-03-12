@@ -1137,7 +1137,6 @@ void ExecutionGraph::populateHbEntries(AdjList<Event, EventHasher> &relation) co
 			if (labIdx > thrIdx)
 				edges.push_back(std::make_pair(elems[labIdx - 1], elems[labIdx]));
 			if (auto *rLab = llvm::dyn_cast<ReadLabel>(lab)) {
-				if(rLab->getTransaction().isInvalid() || getTransaction(rLab->getTransaction())->getStatus())
 				if (!rLab->getRf().isInitializer()) {
 					auto pred = (labIdx > thrIdx) ?
 						elems[labIdx - 1] : Event::getInitializer();
@@ -1739,7 +1738,6 @@ ExecutionGraph::getSCEventsTransactions() const
 			scs.push_back(lab->getPos());
 	}
 	for(const auto *trans : alltransactions(*this)){
-		if(trans->getStatus()) // do not consider aborted transactions
 		sctrans.push_back(trans->getPos());
 	}
 	return std::make_pair(scs,sctrans);

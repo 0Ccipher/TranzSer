@@ -49,6 +49,7 @@ void __VERIFIER_spin_end(int) __attribute__ ((__nothrow__));
 /*Marks start and end of new Transaction*/
 void __VERIFIER_Transaction_begin(void) __attribute__ ((__nothrow__));
 void __VERIFIER_Transaction_end(void) __attribute__ ((__nothrow__));
+void __VERIFIER_Transaction_abort(void) __attribute__ ((__nothrow__));
 
 /*
  * Marker function that denotes that a store is local.

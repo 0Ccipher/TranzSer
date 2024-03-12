@@ -156,6 +156,9 @@ llvm::raw_ostream& operator<<(llvm::raw_ostream& s,
 	case EventLabel::EL_TrEnd:
 		s << "END_TRANSACTION";
 		break;
+	case EventLabel::EL_TrAbort:
+		s << "ABORTED";
+		break;
 	default:
 		PRINT_BUGREPORT_INFO_ONCE("print-label-type",
 					  "Cannot print label type");

@@ -272,6 +272,7 @@ void TranDriver::updateLabelViews(EventLabel *lab, const EventDeps *deps) /* dep
 	//newscdpor
 	case EventLabel::EL_TrBegin:
 	case EventLabel::EL_TrEnd:
+	case EventLabel::EL_TrAbort:
 		calcBasicViews(lab);
 		break;
 	case EventLabel::EL_SmpFenceLKMM:

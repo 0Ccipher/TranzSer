@@ -1810,22 +1810,6 @@ void GenMCDriver::visitTrAbort(std::unique_ptr<TrAbortLabel> lab){
 	//aborted transaction
 	trans->setFinishedStatus(true);
 	g.setInsideTransaction(false);
-	/* Clear the Revisit list for reads from this transaction*/
-	auto *bLab = g.getEventLabel(trans->getBeginEvent());
-	restrictWorklist(bLab);
-	restrictRevisitSet(bLab);
-	/* Make the loads not Revisitable*/
-	auto curreads = trans->getLoadsWithAddr();
-	for(auto ev : curreads){
-		trans->eraseLoad(ev.first);
-		auto *rLab = g.getReadLabel(ev.second);
-		rLab->setRevisitStatus(false);
-	}
-	/*restrict the stores, if they are PO after this read.*/
-	auto curstores = trans->getStoresWithAddr();
-	for(auto ev : curstores){
-		trans->eraseStore(ev.first);
-	}
 	/*Check for cons*/
 	if(!isConsistent(ProgramPoint::step)){
 		moot();
