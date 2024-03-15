@@ -28,7 +28,7 @@ void * thr1(void *arg){
 void * thr2(void *arg){
     printf("thread 2 - start \n");
     enroll(2,1);
-    // getAllEnrollments();
+    getAllEnrollments();
     deleteCourse(2);
     printf("thread 2 - finish \n");
     return NULL;
@@ -36,7 +36,7 @@ void * thr2(void *arg){
 void * thr3(void *arg){
     printf("thread 3 - start \n");
     enroll(2,1);
-    // deleteCourse(1);
+    deleteCourse(1);
     printf("thread 3 - finish \n");
     return NULL;
 }

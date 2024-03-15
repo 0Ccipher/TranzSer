@@ -102,13 +102,13 @@ bool deleteRowFromTable(int tableIndex, char * table , char *row) {
         if(currentTable->rows[i].row == NULL) continue;
         if (strncmp(currentTable->rows[i].row, row , strlen(row)) == 0) {
             rowIndex = i;
-             printf("Deleting- :%d :row %s \n",tableIndex ,currentTable->rows[i].row);
+             printf("Deleting- %d :row %s \n",tableIndex ,currentTable->rows[i].row);
             break;
         }
     }
 
     if (rowIndex == -1) {
-        printf("Row not found\n");
+        printf("Table : %d Row not found\n",tableIndex);
         return false;
     }
 

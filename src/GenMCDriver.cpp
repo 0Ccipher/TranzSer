@@ -1776,13 +1776,13 @@ void GenMCDriver::visitTrEnd(std::unique_ptr<TrEndLabel> lab){
 	tran->setFinishedStatus(true);
 	g.setInsideTransaction(false);
 	tran->setEndEvent(trEndLab->getPos());
+	if (!inRecoveryMode() && !inReplay())
+		loadRevisits(tran);
 	/*Check for cons*/
 	if(!isConsistent(ProgramPoint::step)){
 		moot();
 		return;
 	}
-	if (!inRecoveryMode() && !inReplay())
-		loadRevisits(tran);
 }
 
 void GenMCDriver::visitTrAbort(std::unique_ptr<TrAbortLabel> lab){
