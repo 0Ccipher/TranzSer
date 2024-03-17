@@ -1,5 +1,3 @@
-/* Copyright (C)
-* This benchmark is part of NIDHUGG-CCV*/
 
 #include <pthread.h>
 #include <stdatomic.h>
