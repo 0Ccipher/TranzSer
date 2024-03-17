@@ -1,50 +1,65 @@
-#include <pthread.h>
-#include <assert.h>
-#include <stdio.h>
+void __VERIFIER_Transaction_begin();
+void __VERIFIER_Transaction_end();
 
-int x=0,y=0,z=0,w = 0,r1 = 0,r2=0,r3 = 0,a1=0;
+#define begin __VERIFIER_Transaction_begin()
+#define end __VERIFIER_Transaction_end() 
+
+#include <assert.h>
+#include <stdint.h>
+#include <stdatomic.h>
+#include <pthread.h>
+
+#define N 3
+
+atomic_int x=0,y=0,z=0,w = 0,r1 = 0,r2=0,r3 = 0,a1=0;
+
 void __VERIFIER_atomic_t1(){
+	begin;
 	x = 2;
 	y = 2;
+	end;
 }
 
 void __VERIFIER_atomic_t2(){
+	begin;
 	w = 1;
+	end;
  }
 
 void __VERIFIER_atomic_t3(){	
+	begin;
 	z = 1;
 	x = 1;
+	end;
 }
 
 
 
 int __VERIFIER_atomic_t4(){
+	begin;
 	r1 = y;
 	r2 = x;
 	r1 = (r1 == 2);
 	r2 = (r2 == 1);
 	if(r1 & r2)
 		r3 = 1;
+	end;
 	return r3;
 }
 
 
 void *thr1(void *arg){
-	printf(" ");
  	__VERIFIER_atomic_t1();
 	return NULL;
 }
 
 void *thr2(void *arg){
-	printf(" ");
 	__VERIFIER_atomic_t2();
 	__VERIFIER_atomic_t3();
 	return NULL;
 }
 
 void *thr3(void *arg){
-	printf(" ");
 	a1 = __VERIFIER_atomic_t4();
 	return NULL;
 }
