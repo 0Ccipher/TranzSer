@@ -106,7 +106,8 @@
             "course.h": "c",
             "string.h": "c",
             "student.h": "c",
-            "assert.h": "c"
+            "assert.h": "c",
+            "pthread.h": "c"
       },
       "C_Cpp.errorSquiggles": "enabled"
 }

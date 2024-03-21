@@ -14,9 +14,12 @@ Course *newCourse(int id, const char *name, const char *department, const char *
 }
 
 Course *newCourseFromString(char *string){
+    printf("Course from string : %s \n", string);
     Course *course = (Course *)malloc(sizeof(Course));
     // printf("extracting course %s\n",string);
-    char *token = strtok(string, ";");
+    static char str[100];
+    sprintf(str, "%s" , string);
+    char *token = strtok(str, ";");
     if (token == NULL) {
         printf("Wrong format\n");
         return NULL;

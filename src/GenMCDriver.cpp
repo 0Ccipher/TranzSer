@@ -2122,6 +2122,7 @@ void GenMCDriver::filterOptimizeRfs(const ReadLabel *lab, std::vector<Event> &st
 
 SVal GenMCDriver::visitLoad(std::unique_ptr<ReadLabel> rLab, const EventDeps *deps)
 {
+	// WARN("Load : ("+ std::to_string(rLab->getPos().thread)+ ","+ std::to_string(rLab->getPos().index)+")\n");
 	auto &g = getGraph();
 	auto *EE = getEE();
 	auto &thr = EE->getCurThr();
