@@ -110,8 +110,8 @@ void MOCalculator::removeAllStores(Transaction tr)
 					if(!lab->getTransaction().isInvalid()) {
 						if(lab->getTransaction() == tr 	
 								&& !trans->isRevisitedStore(lab->getAddr())){
-							WARN("**Removed from mo write("+std::__cxx11::to_string(lab->getPos().thread)
-									+","+std::__cxx11::to_string(lab->getPos().index)+")**\n");
+							// WARN("**Removed from mo write("+std::__cxx11::to_string(lab->getPos().thread)
+							// 		+","+std::__cxx11::to_string(lab->getPos().index)+")**\n");
 							return true;
 						}
 							
@@ -476,8 +476,8 @@ bool MOCalculator::inMaximalPath(const BackwardRevisit &r)
 //newscdpor
 bool MOCalculator::inMaximalPathTr(const TransactionBackwardRevisit &r)
 {
-	WARN("inMaximalPathTr Read ("+ std::__cxx11::to_string(r.getPos().thread)+
-		","+std::__cxx11::to_string(r.getPos().index) +")\n");
+	// WARN("inMaximalPathTr Read ("+ std::__cxx11::to_string(r.getPos().thread)+
+	// 	","+std::__cxx11::to_string(r.getPos().index) +")\n");
 	auto &g = getGraph();
 	auto preds = g.getRevisitViewTr(r);
 	
@@ -496,7 +496,7 @@ bool MOCalculator::inMaximalPathTr(const TransactionBackwardRevisit &r)
 						return true;
 					return false;
 				})) {
-		WARN("there exists a Mo succ, which is not in graph \n");
+		// WARN("there exists a Mo succ, which is not in graph \n");
 		return false;
 	}
 		
@@ -525,9 +525,9 @@ bool MOCalculator::inMaximalPathTr(const TransactionBackwardRevisit &r)
 							mLab->getIndex() > sLab->getPPoRfView()[mLab->getThread()] &&
 							mLab->getIndex() > eLab->getPPoRfView()[mLab->getThread()];
 						if(flag) {
-							WARN("isCoBeforeSavedPrefix check(RF-for read) event("
-								+ std::__cxx11::to_string(w.thread)+","+
-								std::__cxx11::to_string(w.index) +") 1 \n");
+							// WARN("isCoBeforeSavedPrefix check(RF-for read) event("
+							// 	+ std::__cxx11::to_string(w.thread)+","+
+							// 	std::__cxx11::to_string(w.index) +") 1 \n");
 							/*Check if this mLab-event belongs to same transaction as rLab and
 							* sTran(succs of mLab) also has write on some read in trans before rLab
 							*/
@@ -549,19 +549,19 @@ bool MOCalculator::inMaximalPathTr(const TransactionBackwardRevisit &r)
 								}
 							}
 								
-							WARN("isCoBeforeSavedPrefix check(RF-for read) event("+ 
-								std::__cxx11::to_string(w.thread)+","+std::__cxx11::to_string(w.index)
-									+") 2 \n");
-							WARN("isCoBeforeSavedPrefix succ event("+ 
-								std::__cxx11::to_string(sLab->getPos().thread)+","+
-								std::__cxx11::to_string(sLab->getPos().index) +")\n");
+							// WARN("isCoBeforeSavedPrefix check(RF-for read) event("+ 
+							// 	std::__cxx11::to_string(w.thread)+","+std::__cxx11::to_string(w.index)
+							// 		+") 2 \n");
+							// WARN("isCoBeforeSavedPrefix succ event("+ 
+							// 	std::__cxx11::to_string(sLab->getPos().thread)+","+
+							// 	std::__cxx11::to_string(sLab->getPos().index) +")\n");
 							return true;
 						}
 						return false;
 						}) ) {
-				WARN("`CoBeforeSavedPrefix(RF-for read) event("+ 
-					std::__cxx11::to_string(lab->getPos().thread)+","+
-					std::__cxx11::to_string(lab->getPos().index) +")`\n");
+				// WARN("`CoBeforeSavedPrefix(RF-for read) event("+ 
+				// 	std::__cxx11::to_string(lab->getPos().thread)+","+
+				// 	std::__cxx11::to_string(lab->getPos().index) +")`\n");
 				return false;
 			}
 		
@@ -572,14 +572,14 @@ bool MOCalculator::inMaximalPathTr(const TransactionBackwardRevisit &r)
 		if (rLab){
 			auto *rfLab = g.getEventLabel(rLab->getRf());
 			if( !preds->contains(rfLab->getPos()) && rfLab->getStamp() > lab->getStamp() ) {
-				WARN("`hasBeenRevisitedByDeleted for read("+ std::__cxx11::to_string(lab->getPos().thread)
-					+","+std::__cxx11::to_string(lab->getPos().index) +")`\n");
+				// WARN("`hasBeenRevisitedByDeleted for read("+ std::__cxx11::to_string(lab->getPos().thread)
+				// 	+","+std::__cxx11::to_string(lab->getPos().index) +")`\n");
 				return false;
 			}
 		}
 		if (!wasAddedMaximally(lab)) {
-			WARN("`Not AddedMaximally event("+ std::__cxx11::to_string(lab->getPos().thread)+","
-				+std::__cxx11::to_string(lab->getPos().index) +")` 1 \n");
+			// WARN("`Not AddedMaximally event("+ std::__cxx11::to_string(lab->getPos().thread)+","
+			// 	+std::__cxx11::to_string(lab->getPos().index) +")` 1 \n");
 			/* If lab.trans = BRevisit read.trans, then its okay lab to be not-maximal if all the 
 			mo-succ transaction(and their por-rf before transaction) contain writes on the same location 
 			as some read ev \in BRevisit read.trans.
@@ -621,8 +621,8 @@ bool MOCalculator::inMaximalPathTr(const TransactionBackwardRevisit &r)
 				}
 
 			}
-			WARN("`Not AddedMaximally event("+ std::__cxx11::to_string(lab->getPos().thread)+","
-				+std::__cxx11::to_string(lab->getPos().index) +")` 2 \n");
+			// WARN("`Not AddedMaximally event("+ std::__cxx11::to_string(lab->getPos().thread)+","
+			// 	+std::__cxx11::to_string(lab->getPos().index) +")` 2 \n");
 			return false;
 		}
 	}

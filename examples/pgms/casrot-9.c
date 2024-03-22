@@ -14,7 +14,7 @@ void __VERIFIER_Transaction_end();
 #  define N 9
 
 atomic_int x;
-int idx[9] = {1,2,3,4,5,6,7,8,9};
+int idx[11] = {1,2,3,4,5,6,7,8,9};
 
 void *thread_n(void *arg)
 {

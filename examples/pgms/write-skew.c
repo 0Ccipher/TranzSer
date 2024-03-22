@@ -9,70 +9,63 @@ void __VERIFIER_Transaction_end();
 #include <stdatomic.h>
 #include <pthread.h>
 
-#define N 3
+#define N 6
 
 atomic_int x=0,y=0,z=0;
-atomic_int a1=0,a2=0;
+atomic_int a1 =0, a2=0;\
 atomic_int arr[N];
 
-void __VERIFIER_atomic_t1(){	
-	begin;
-	for(int i=0 ; i<N;i++)
-		arr[i] = 1;
-	z = 1;
-	x = 1;
-	end;
-}
 
-void __VERIFIER_atomic_t2(){
+int __VERIFIER_atomic_t1(){
+	//z = 2;
 	begin;
+	int r1 = x;
 	y = 1;
-	end;
- }
-
-int __VERIFIER_atomic_t3(){
-	begin;
-	x = 2;
-	int r1 = z ;
-	int l3 = ( z == 0);
-	end;
-	return l3;
-}
-int __VERIFIER_atomic_t4(){
-	begin;
-	int r2 = y;
-	int r3 = x;
-	int r4 = 0;
-	if( y == 1 && x == 2){
-		r4 = 1;
-		for(int i=0 ; i<N;i++)
-		r2 = arr[i];
+	int r2 = 0;
+	r2 = ( r1 == 0);
+	if (r2 == 1){
+		for(int i=0 ; i < N;i++)
+			atomic_load_explicit(&arr[i],memory_order_seq_cst);
 	}
-		
-	
 	end;
-	return r4;
+	return r2;
+}
+int __VERIFIER_atomic_t2(){
+	begin;
+	int r1 = y;
+	x = 2;
+	int r2 = x;
+	int r3 = 0;
+	r3 = (r1 == 0);
+	if (r3 == 1){
+		for(int i=0 ; i < N;i++)
+			atomic_store_explicit(&arr[i],10,memory_order_seq_cst);
+	}
+	end;
+	return r3;
 }
 
 
 void *thr1(void *arg){
- 	__VERIFIER_atomic_t1();
- 	__VERIFIER_atomic_t2();
+ 	a1 = __VERIFIER_atomic_t1();
 	return NULL;
 }
 
 void *thr2(void *arg){
-	a1 = __VERIFIER_atomic_t3();
-	a2 = __VERIFIER_atomic_t4();
+	a2 = __VERIFIER_atomic_t2();
 	return NULL;
 
 }
+
 int main(int argc, char *argv[]){
 	pthread_t t1,t2;
+	
 	pthread_create(&t1,NULL,thr1,NULL);
 	pthread_create(&t2,NULL,thr2,NULL);
+	
 	pthread_join(t1,NULL);
 	pthread_join(t2,NULL);
+	
 
 	printf(" a1=%d , a2=%d \n", a1,a2);
 	if(a1 & a2) assert(0);

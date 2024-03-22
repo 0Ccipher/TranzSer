@@ -13,13 +13,15 @@ void __VERIFIER_Transaction_end();
 
 #  define N 9
 
-atomic_int x;
+atomic_int x,y,z;
 atomic_int idx[N+1];
 
 void *thread_writer(void *unused)
 {
 	begin;
 	atomic_store_explicit(&x, 42, memory_order_seq_cst);
+	atomic_store_explicit(&y, 42, memory_order_seq_cst);
+	atomic_store_explicit(&z, 42, memory_order_seq_cst);
 	end;
 	return NULL;
 }
@@ -29,6 +31,8 @@ void *thread_reader(void *arg)
 	begin;
 	int r = *((int *) arg);
 	atomic_load_explicit(&x, memory_order_seq_cst);
+	atomic_load_explicit(&y, memory_order_seq_cst);
+	atomic_load_explicit(&z, memory_order_seq_cst);
 	end;
 	return NULL;
 }

@@ -944,7 +944,7 @@ ExecutionGraph::getRevisitViewTr(const TransactionBackwardRevisit &r) const
 	}
 		
 	s = s + "]";
-	WARN("View : " + s+"\n");
+	// WARN("View : " + s+"\n");
 	return std::move(preds);
 }
 

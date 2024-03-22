@@ -11,10 +11,10 @@ void __VERIFIER_Transaction_end();
 #define begin __VERIFIER_Transaction_begin()
 #define end __VERIFIER_Transaction_end() 
 
-#  define N 11
+#  define N 8
 
 atomic_int x;
-int idx[11] = {1,2,3,4,5,6,7,8,9,10,11};
+int idx[9] = {1,2,3,4,5,6,7,8};
 
 void *thread_n(void *arg)
 {
