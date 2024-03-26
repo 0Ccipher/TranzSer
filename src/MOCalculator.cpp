@@ -508,6 +508,11 @@ bool MOCalculator::inMaximalPathTr(const TransactionBackwardRevisit &r)
 		/*isCoBeforeSavedPrefix(r, lab)*/
 		if(auto *mLab = llvm::dyn_cast<MemAccessLabel>(lab)) {
 			auto w = llvm::isa<ReadLabel>(mLab) ? llvm::dyn_cast<ReadLabel>(mLab)->getRf() : mLab->getPos();
+			auto wLab = g.getEventLabel(w);
+			if(!w.isInitializer()&&wLab->getTransaction().isInvalid()) continue;
+			auto wLabTrans = g.getTransaction(wLab->getTransaction());
+			if(!w.isInitializer()&&!wLabTrans->isStorePresent(mLab->getAddr())) continue;
+			if(!w.isInitializer()&&wLabTrans->getStore(mLab->getAddr()) != w) continue;
 			if(any_of(succ_begin(mLab->getAddr(), w), succ_end(mLab->getAddr(), w), 
 					[&](const Event &s){
 						auto *sLab = g.getEventLabel(s);
