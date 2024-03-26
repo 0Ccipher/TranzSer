@@ -13,6 +13,8 @@ void __VERIFIER_Transaction_end();
 
 atomic_int x=0,y=0,z=0;
 atomic_int a1 = 0, a2 =0;
+atomic_int vars[4] = {0,0,0,0};
+
 void __VERIFIER_atomic_t1(){	
 	begin;
 	z = 1;
@@ -33,7 +35,7 @@ int __VERIFIER_atomic_t3(){
 	int r1 = x;
 	int r2 = y;
 	int r3 = 0;
-	printf("x3=%d , y3=%d ", x,y);
+	//printf("x3=%d , y3=%d ", x,y);
 	if(r1==1 && r2==0) r3 = 1;
 	end;
 	return r3;
@@ -42,32 +44,57 @@ int __VERIFIER_atomic_t4(){
 	begin;
 	int r1 = x;
 	int r2 = y;
-	printf("x4=%d , y4=%d ", x,y);
+	//printf("x4=%d , y4=%d ", x,y);
 	int r3 = 0;
 	if(r1==0 && r2==2) r3 = 1;
 	end;
 	return r3;
 }
 
+void __VERIFIER_atomic_t5(){
+	begin;
+	int r1 = vars[0];
+	vars[0] = 10;
+	end;
+}
+
+void __VERIFIER_atomic_t6(){
+	begin;
+	int r1 = vars[2];
+	vars[1] = 16;
+	vars[2] = 16;
+	end;
+}
+
+void __VERIFIER_atomic_t7(){
+	begin;
+	int r1 = vars[3];
+	int r2 = vars[1];
+	r2 = r2 + r1;
+	vars[1] = r2;
+	end;
+}
+
 
 void *thr1(void *arg){
  	__VERIFIER_atomic_t1();
+	__VERIFIER_atomic_t5();
 	return NULL;
 }
 
 void *thr2(void *arg){
 	__VERIFIER_atomic_t2();
+	__VERIFIER_atomic_t6();
 	return NULL;
 }
 
 void *thr3(void *arg){
-	printf(" ");
  	a1 = __VERIFIER_atomic_t3();
+	__VERIFIER_atomic_t7();
 	return NULL;
 }
 
 void *thr4(void *arg){
-	printf(" ");
 	a2 = __VERIFIER_atomic_t4();
 	return NULL;
 
@@ -84,7 +111,7 @@ int main(int argc, char *argv[]){
 	pthread_join(t3,NULL);
 	pthread_join(t4,NULL);
 
-	printf(" a1=%d , a2=%d \n", a1,a2);
+	//printf(" a1=%d , a2=%d \n", a1,a2);
 	if(a1 & a2) assert(0);
 	return 0;
 }

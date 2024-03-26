@@ -44,7 +44,7 @@ int __VERIFIER_atomic_t4(){
 	int r2 = y;
 	int r3 = x;
 	int r4 = 0;
-	if( y == 1 && x == 2){
+	if( r2 == 1 && r3 == 2){
 		r4 = 1;
 		for(int i=0 ; i<N;i++)
 		r2 = arr[i];
@@ -75,7 +75,7 @@ int main(int argc, char *argv[]){
 	pthread_join(t1,NULL);
 	pthread_join(t2,NULL);
 
-	printf(" a1=%d , a2=%d \n", a1,a2);
+	//printf(" a1=%d , a2=%d \n", a1,a2);
 	if(a1 & a2) assert(0);
 	return 0;
 }

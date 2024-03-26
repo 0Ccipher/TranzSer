@@ -30,7 +30,7 @@ int __VERIFIER_atomic_t3(){
 	x = 2;
 	int r1 = z ;
 	int l3 = ( z == 0);
-	printf("z : %d \n",z);
+	//printf("z : %d \n",z);
 	end;
 	return l3;
 }
@@ -41,7 +41,7 @@ int __VERIFIER_atomic_t4(){
 	int r3 = 0;
 	if( r2 == 1 && r1 == 2)
 		r3 = 1;
-	printf("x : %d , y : %d \n",x,y);
+	//printf("x : %d , y : %d \n",x,y);
 	end;
 	return r3;
 }
@@ -72,16 +72,18 @@ void __VERIFIER_atomic_t7(){
 void *thr1(void *arg){
  	__VERIFIER_atomic_t1();
  	__VERIFIER_atomic_t2();
- 	// __VERIFIER_atomic_t7();
- 	// __VERIFIER_atomic_t5();
+ 	__VERIFIER_atomic_t7();
+ 	__VERIFIER_atomic_t5();
+	__VERIFIER_atomic_t6();
 	return NULL;
 }
 
 void *thr2(void *arg){
 	a1 = __VERIFIER_atomic_t3();
 	a2 = __VERIFIER_atomic_t4();
-	// __VERIFIER_atomic_t5();
-	// __VERIFIER_atomic_t6();
+	__VERIFIER_atomic_t6();
+	__VERIFIER_atomic_t5();
+	__VERIFIER_atomic_t6();
 	return NULL;
 
 }

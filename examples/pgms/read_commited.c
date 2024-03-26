@@ -1,8 +1,3 @@
-void __VERIFIER_Transaction_begin();
-void __VERIFIER_Transaction_end();
-
-#define begin __VERIFIER_Transaction_begin()
-#define end __VERIFIER_Transaction_end() 
 
 #include <assert.h>
 #include <stdint.h>
@@ -10,6 +5,14 @@ void __VERIFIER_Transaction_end();
 #include <pthread.h>
 
 #define N 3
+
+void __VERIFIER_Transaction_begin();
+void __VERIFIER_Transaction_end();
+void __VERIFIER_Transaction_abort();
+
+#define begin __VERIFIER_Transaction_begin()
+#define end __VERIFIER_Transaction_end() 
+#define abort __VERIFIER_Transaction_abort() 
 
 atomic_int x=0,y=0,z=0,w = 0,r1 = 0,r2=0,r3 = 0,a1=0;
 
@@ -29,6 +32,10 @@ void __VERIFIER_atomic_t2(){
 void __VERIFIER_atomic_t3(){	
 	begin;
 	z = 1;
+	if(z==1){
+		abort;
+		return;
+	}
 	x = 1;
 	end;
 }
@@ -72,7 +79,7 @@ int main(int argc, char *argv[]){
 	pthread_join(t1,NULL);
 	pthread_join(t2,NULL);
 	pthread_join(t3,NULL);
-	printf("a1=%d \n", a1);
+	// printf("a1=%d \n", a1);
 	if( a1) assert(0);
 	return 0;
 }
