@@ -14,8 +14,8 @@ import argparse
 import multiprocessing
 
 curDir = os.getcwd()
-LITMUSDIR = curDir + '/Tran/Tran'
-OUTPUTTFILE = curDir + '/test.results.txt'
+LITMUSDIR = curDir + '/Tran1/Tran'
+OUTPUTTFILE = curDir + '/test1.results.txt'
 LISTFILE = curDir + '/litmus_list.txt'
 # FIX ME
 transcBIN = 'genmc'
@@ -120,7 +120,7 @@ def run_test(tst):
     allow = False # Allow means "error found" (litmus test terminology)
     try:
         cmd = [transcBIN, '--mo', '--transc', '--check-consistency-type=full', '--check-consistency-point=step', '--schedule-policy=ltr', LITMUSDIR+tst['tstname']+'.c']
-        print(cmd)
+        # print(cmd)
         out = subprocess.check_output(cmd,stderr = subprocess.STDOUT)
     except subprocess.CalledProcessError as e:
         if e.returncode != 42:
@@ -133,9 +133,9 @@ def run_test(tst):
     lines = out.split("\n")
     res['tracecount'] = grep_count(lines, "Number of complete executions explored: ")
     res['allow'] = allow
-    if (out.find('No errors were detected') >= 0):
-        res['allow'] = False
-    # assert((out.find('No errors were detected') >= 0) == (not allow))
+    if (out.find('Assertion violation:') >= 0):
+        print("Allow"+str(tst))
+    assert((out.find('No errors were detected') >= 0) == (not allow))
     return res
 
 
@@ -148,6 +148,36 @@ def grep_count(lines, start):
         if line.startswith(start):
             return int(line[len(start):])
     return 0
+
+def runall(keep_going):
+    logfile = open(OUTPUTTFILE, 'w')
+    logfile.write('# The tests where executed using test-transc.py.\n')
+    logfile.write('# Date: ' + datetime.datetime.now().strftime('%y%m%d-%H:%M')+'\n')
+    logfile.write('\n')
+
+    ret = 0
+    totaltracecount = 0
+    tests = get_expected(LISTFILE)
+    n = 0
+    t0 = time.time()
+    for tst in get_expected(LISTFILE):
+        n += 1
+        res = run_test(tst)
+        (s, ok) = res_to_string(tst, res)
+        print('{0:4}: '.format(n), end = '')
+        totaltracecount += res['tracecount']
+        print(s)
+        logfile.write(s  + '\n')
+        if not ok:
+            if not keep_going: tests.clear()
+            ret = 1
+
+    runtime = time.time() - t0
+    logfile.write('# Total number of traces: ' + str(totaltracecount) + '\n')
+    logfile.write('# Total running time: {0:.2f} s\n'.format(runtime))
+    logfile.close()
+    return ret
+
 
 def runonetransc(filename):
     for tst in get_expected(LISTFILE):
@@ -182,7 +212,7 @@ if __name__ == "__main__":
     one_parser.add_argument('test', help='testname(without_dot_c)')
     args = parser.parse_args()
     if (args.mode == "all"):
-        ret = runalltransc(args.jobs, args.keep_going)
+        ret = runalltransc(args.jobs,args.keep_going)
         sys.exit(ret)
     elif (args.mode == "one"):
         ret = runonetransc(args.test)

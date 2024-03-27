@@ -98,10 +98,12 @@ void openCourse(int courseID) {
     Course *course = newCourseFromString(database[1]->row[index]);
     Course *nCourse = newCourse(course->id , course->name,course->department,"open",course->capacity);
     if(!writetoTable(1,COURSE_TABLE ,ctid,courseToString(nCourse))){
+        printf("Write failed \n");
         abort;
         return;
     }
     end;
+    printf("Write Done\n");
 }
 
 // Function to delete a course
@@ -110,12 +112,12 @@ void deleteCourse(int courseID) {
     printf("delete course start\n");
     static char ctid[20];
     sprintf(ctid,"%d",courseID);
-    // char * ctstr = readRowFromTable(1,COURSE_TABLE , ctid);
-    // if(ctstr == NULL){
-    //   printf("course not found\n");
-    //   abort;
-    //   return;
-    // }
+    int index = readRowFromTable(1,COURSE_TABLE , ctid);
+    if(index == -1){
+        printf("Course not found\n");
+        abort;
+        return;
+    }
     int flag = deleteRowFromTable(1,COURSE_TABLE , ctid);
     if(flag == -1 || flag == 0){
         abort;

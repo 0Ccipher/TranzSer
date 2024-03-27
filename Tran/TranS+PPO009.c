@@ -94,7 +94,7 @@ int main(int argc, char **argv){
   pthread_join(thr1,NULL);
   pthread_join(thr2,NULL);
   pthread_join(thr3,NULL);
-
+  
   int v13 = atomic_load_explicit(&vars[3], memory_order_seq_cst);
   int v14 = (v13 == 2);
   int v15 = atomic_load_explicit(&vars[0], memory_order_seq_cst);

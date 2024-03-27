@@ -98,5 +98,6 @@ int main(int argc, char **argv){
   pthread_join(thr3,NULL);
   pthread_join(thr4,NULL);
 
+  assert(0);
   return 0;
 }

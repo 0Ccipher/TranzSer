@@ -11,24 +11,24 @@ char cinput[7][MAX_STR_SIZE];
 
 void * thr1(void *arg){
     printf("thread 1 - start \n");
-    // enroll(1,1);
-    // getAllEnrollments();
-    // enroll(1,2);
+    enroll(1,1);
+    getAllEnrollments();
+    enroll(1,2);
     printf("thread 1 - finish \n");
     return NULL;
 }
 void * thr2(void *arg){
     printf("thread 2 - start \n");
     enroll(2,1);
-    // getAllEnrollments();
-    // deleteCourse(2);
+    getAllEnrollments();
+    deleteCourse(2);
     printf("thread 2 - finish \n");
     return NULL;
 }
 void * thr3(void *arg){
     printf("thread 3 - start \n");
     enroll(2,1);
-    deleteCourse(1);
+    // deleteCourse(1);
     printf("thread 3 - finish \n");
     return NULL;
 }

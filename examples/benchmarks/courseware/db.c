@@ -29,15 +29,15 @@ _Atomic(Table *) database[3];
 // }
 
 bool writetoTable(int tableIndex,char * table, char *row, char *value) {
-    // printf("WRITE TABLE : %p , %d , %s \n",gtable , rowIndex , value);
+    printf("WRITE TABLE : %s , row : %s , val : %s , tindex : %d \n",table , row , value , tableIndex);
     Table * currentTable = atomic_load_explicit(&database[tableIndex], SC);
     if (currentTable == NULL) return false;
     int rowIndex = -1;
     int size = 0;
     for (int i = 0; i < MAX_ROWS; i++,size++) {
-        if (strcmp(currentTable->row[i], "empty") == 0){
-            break;
-        }
+        // if (strcmp(currentTable->row[i], "empty") == 0){
+        //     return false;
+        // }
         if (strncmp(currentTable->row[i], row , strlen(row)) == 0) {
             rowIndex = i;
             break;
@@ -55,14 +55,14 @@ bool writetoTable(int tableIndex,char * table, char *row, char *value) {
 int readRowFromTable(int tableIndex, char * table , char *row) {
     Table * currentTable = atomic_load_explicit(&database[tableIndex], SC);
     if (currentTable == NULL) return -1;
-    printf(" readRowFromTable ID : %s , TSize : %d \n" , row , MAX_ROWS);
+    // printf(" readRowFromTable ID : %s , TSize : %d \n" , row , MAX_ROWS);
     for (int j = 0; j < MAX_ROWS; j++) {
-        if (strcmp(currentTable->row[j], "empty") == 0){
-            break;
-        }
-        printf("Cur row : %s j , %d \n", currentTable->row[j] , j);
+        // if (strcmp(currentTable->row[j], "empty") == 0){
+        //     break;
+        // }
+        // printf("Cur row : %s j , %d \n", currentTable->row[j] , j);
         if (strncmp(currentTable->row[j], row , strlen(row)) == 0) {
-            printf("Read row : %s\n", currentTable->row[j]);
+            // printf("Read row : %s\n", currentTable->row[j]);
             return j;
         }
     }
@@ -71,18 +71,18 @@ int readRowFromTable(int tableIndex, char * table , char *row) {
 }
 
 int deleteRowFromTable(int tableIndex, char * table , char *row) {
-    printf("Deleting - %d :row %s \n",tableIndex ,row);
+    // printf("Deleting - %d :row %s \n",tableIndex ,row);
     Table * currentTable = atomic_load_explicit(&database[tableIndex], SC);
     if (currentTable == NULL) return -1;
-    printf("Deleting - %d :row %s \n",tableIndex ,row);
+    // printf("Deleting - %d :row %s \n",tableIndex ,row);
     int rowIndex = -1;
     for (int i = 0; i < MAX_ROWS; i++) {
-        if (strcmp(currentTable->row[i], "empty") == 0){
-            break;
-        }
+        // if (strcmp(currentTable->row[i], "empty") == 0){
+        //     break;
+        // }
         if (strncmp(currentTable->row[i], row , strlen(row)) == 0) {
             rowIndex = i;
-            printf("Deleting 1- %d :row %s  , index : %d\n",tableIndex ,row, rowIndex);
+            // printf("Deleting 1- %d :row %s  , index : %d\n",tableIndex ,row, rowIndex);
             break;
         }
     }
@@ -91,13 +91,14 @@ int deleteRowFromTable(int tableIndex, char * table , char *row) {
         printf("Table : %d Row not found\n",tableIndex);
         return 0;
     }
-    
-    for (int i = rowIndex; i < MAX_ROWS - 1; i++) {
-        sprintf(currentTable->row[i], "%s" ,currentTable->row[i + 1]);
-    }
+
+    sprintf(currentTable->row[rowIndex], "%s" ,"empty");
+    // for (int i = rowIndex; i < MAX_ROWS - 1; i++) {
+    //     sprintf(currentTable->row[i], "%s" ,currentTable->row[i + 1]);
+    // }
 
     atomic_store_explicit(&database[tableIndex], currentTable, SC);
-    printf("Deleted- %d :row %s , deletedndex : %d\n",tableIndex ,row, rowIndex);
+    // printf("Deleted- %d :row %s , deletedndex : %d\n",tableIndex ,row, rowIndex);
     return 1;
 }
 
@@ -116,9 +117,9 @@ static char **readIfIDStartsWith(int tableIndex , char *table, char *row) {
     }
     int rowcount = -1;
     for (int i = 0; i < MAX_ROWS; i++) {
-        if (strcmp(currentTable->row[i], "empty") == 0){
-            break;
-        }
+        // if (strcmp(currentTable->row[i], "empty") == 0){
+        //     break;
+        // }
         if (strncmp(currentTable->row[i], row,strlen(row)) == 0) {
             rowcount++;
             rows[rowcount] = strdup(currentTable->row[i]);
@@ -138,9 +139,9 @@ int countIfIDStartsWith(int tableIndex , char *table, char *row) {
 
     int rowcount = 0;
     for (int i = 0; i < MAX_ROWS; i++) {
-        if (strcmp(currentTable->row[i], "empty") == 0){
-            break;
-        }
+        // if (strcmp(currentTable->row[i], "empty") == 0){
+        //     break;
+        // }
         if (strncmp(currentTable->row[i], row,strlen(row)) == 0) {
             rowcount++;
         }
