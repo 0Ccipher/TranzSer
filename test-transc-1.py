@@ -14,8 +14,8 @@ import argparse
 import multiprocessing
 
 curDir = os.getcwd()
-LITMUSDIR = curDir + '/Tran/Tran'
-OUTPUTTFILE = curDir + '/test.results.txt'
+LITMUSDIR = curDir + '/Tran1/Tran'
+OUTPUTTFILE = curDir + '/test1.results.txt'
 LISTFILE = curDir + '/litmus_list.txt'
 # FIX ME
 transcBIN = 'genmc'

@@ -1,5 +1,5 @@
 /*
-	Example 16  - 6 traces (relaxed maximality checks for events with the transaction of R1y is case of postponed write)
+	Example 16  - 
 */
 #include <pthread.h>
 #include <assert.h>

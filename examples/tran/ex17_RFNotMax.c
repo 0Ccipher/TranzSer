@@ -81,9 +81,9 @@ int main(int argc, char *argv[]){
 	
 	pthread_join(t1,NULL);
 	// printf("t1-joined \n");
-	pthread_join(t2,NULL);
 	// printf("t2-joined \n");
 	pthread_join(t3,NULL);
+	pthread_join(t2,NULL);
 	// printf("t3-joined \n");
 	
 	

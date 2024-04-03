@@ -1776,8 +1776,12 @@ void GenMCDriver::visitTrEnd(std::unique_ptr<TrEndLabel> lab){
 	tran->setFinishedStatus(true);
 	g.setInsideTransaction(false);
 	tran->setEndEvent(trEndLab->getPos());
+	WARN("TrEnd("+ std::__cxx11::to_string(trEndLab->getPos().thread)+
+			","+std::__cxx11::to_string(trEndLab->getPos().index) +")\n");
 	if (!inRecoveryMode() && !inReplay())
 		loadRevisits(tran);
+	WARN("TrEnd("+ std::__cxx11::to_string(trEndLab->getPos().thread)+
+			","+std::__cxx11::to_string(trEndLab->getPos().index) +")\n");
 	/*Check for cons*/
 	if(!isConsistent(ProgramPoint::step)){
 		moot();
@@ -3098,9 +3102,11 @@ bool GenMCDriver::loadRevisits(const Transactions *trans)
 		}
 
 		restoreLocalState(std::move(localState));
+		WARN("BR returned("+ std::__cxx11::to_string(l.thread)+
+			","+std::__cxx11::to_string(l.index) +")\n");
 	}
 	bool res = true;
-
+	WARN("BRevist Return\n");
 	// bool res1 = checkAtomicity(sLab);
 	// auto stores = trans->getStoresWithAddr();
 	// bool res2 = checkRevBlockHELPER(sLab, loads);
@@ -3377,7 +3383,12 @@ bool GenMCDriver::restrictAndRevisit(WorkSet::ItemT item)
 		 No need to check for cons, this write can be postponedfor some read, hence need to do BRevisit first. 
 		* Cons will be handled after returning to explore()
 		*/
-		return loadRevisits(trans);
+		WARN("1 s TrEnd("+ std::__cxx11::to_string(trans->getEndEvent().thread)+
+			","+std::__cxx11::to_string(trans->getEndEvent().index) +")\n");
+		bool flag = loadRevisits(trans);
+		WARN("1 e TrEnd("+ std::__cxx11::to_string(trans->getEndEvent().thread)+
+			","+std::__cxx11::to_string(trans->getEndEvent().index) +")\n");
+		return flag;
 		
 	}
 	/* Restrict loads and stores in the transactions */

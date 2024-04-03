@@ -170,6 +170,8 @@ private:
 
 	bool wasAddedMaximally(const EventLabel *lab);
 
+	bool isGoptimal(Event s , Event r, Transaction t);
+
 	/* Returns true if LAB is co-before any event that would be part
 	 * of the saved prefix triggered by the revisit R */
 	bool isCoBeforeSavedPrefix(const BackwardRevisit &r, const EventLabel *lab);

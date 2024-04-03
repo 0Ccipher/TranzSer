@@ -263,9 +263,9 @@ MOCalculator::getConsistentLoadRevisits(const Transactions *trans)
 {
 	const auto &g = getGraph();
 	auto ls = g.getConsistentRevisitable(trans);
-
+	WARN("1 LOADS : "+std::to_string(ls.size()));
 	auto stores = trans->getStoresWithAddr();
-	/* If this store is po- and mo-maximal then we are done */
+	/* If stores in this trans are po- and mo-maximal then we are done */
 	if (!supportsOutOfOrder() && std::all_of( stores.begin() , stores.end() , 
 				[&](std::pair<SAddr,Event> &s) {
 						auto *sLab = getGraph().getWriteLabel(s.second);
@@ -275,23 +275,24 @@ MOCalculator::getConsistentLoadRevisits(const Transactions *trans)
 
 	/* First, we have to exclude (mo;rf?;hb?;sb)-after reads */
 	// auto optRfs = getMOOptRfAfter(sLab);
-	std::vector<Event> moOptRfAfter;
-	for(auto store: stores){
-		std::for_each(succ_begin(store.first, store.second),
-		      succ_end(store.first, store.second), [&](const Event &w){
-			      auto *wLab = g.getWriteLabel(w);
-			      moOptRfAfter.push_back(wLab->getPos());
-			      moOptRfAfter.insert(moOptRfAfter.end(), wLab->readers_begin(), wLab->readers_end());
-		});
-	}
+	// std::vector<Event> moOptRfAfter;
+	// for(auto store: stores){
+	// 	std::for_each(succ_begin(store.first, store.second),
+	// 	      succ_end(store.first, store.second), [&](const Event &w){
+	// 		      auto *wLab = g.getWriteLabel(w);
+	// 		      moOptRfAfter.push_back(wLab->getPos());
+	// 		      moOptRfAfter.insert(moOptRfAfter.end(), wLab->readers_begin(), wLab->readers_end());
+	// 	});
+	// }
 	
-	ls.erase(std::remove_if(ls.begin(), ls.end(), [&](Event e)
-				{ 
-					const View &before = g.getHbPoBefore(e);
-				  	return std::any_of(moOptRfAfter.begin(), moOptRfAfter.end(),
-					 	[&](Event ev){ return before.contains(ev); });
-				}), ls.end());
-
+	// ls.erase(std::remove_if(ls.begin(), ls.end(), [&](Event e)
+	// 			{ 
+	// 				const View &before = g.getHbPoBefore(e);
+	// 			  	return std::any_of(moOptRfAfter.begin(), moOptRfAfter.end(),
+	// 				 	[&](Event ev){ return before.contains(ev); });
+	// 			}), ls.end());
+	
+	WARN("2 LOADS : "+std::to_string(ls.size()));
 	/* If out-of-order event addition is not supported, then we are done
 	 * due to po-maximality */
 	if (!supportsOutOfOrder())
@@ -476,8 +477,8 @@ bool MOCalculator::inMaximalPath(const BackwardRevisit &r)
 //newscdpor
 bool MOCalculator::inMaximalPathTr(const TransactionBackwardRevisit &r)
 {
-	// WARN("inMaximalPathTr Read ("+ std::__cxx11::to_string(r.getPos().thread)+
-	// 	","+std::__cxx11::to_string(r.getPos().index) +")\n");
+	WARN("inMaximalPathTr Read ("+ std::__cxx11::to_string(r.getPos().thread)+
+		","+std::__cxx11::to_string(r.getPos().index) +")\n");
 	auto &g = getGraph();
 	auto preds = g.getRevisitViewTr(r);
 	
@@ -492,11 +493,14 @@ bool MOCalculator::inMaximalPathTr(const TransactionBackwardRevisit &r)
 					auto *wLab = g.getWriteLabel(store.second);
 					auto succIt = succ_begin(wLab->getAddr(), wLab->getPos());
 					auto succE = succ_end(wLab->getAddr(), wLab->getPos());
-					if (!(succIt == succE) && !(preds->contains(*succIt)))
+					if (!(succIt == succE) && !(preds->contains(*succIt))){
+						WARN("0 Notoptimal succ ("+ std::__cxx11::to_string(store.second.thread)+
+								","+std::__cxx11::to_string(store.second.index) +")\n");
 						return true;
+					}
 					return false;
 				})) {
-		// WARN("there exists a Mo succ, which is not in graph \n");
+		WARN("there exists a Mo succ, which is not in graph \n");
 		return false;
 	}
 		
@@ -504,11 +508,13 @@ bool MOCalculator::inMaximalPathTr(const TransactionBackwardRevisit &r)
 		if ((lab->getPos() != r.getPos() && preds->contains(lab->getPos())) || g.isOptBlockedRead(lab)) {
 			continue;
 		}
+		
 		std::vector<Event> moSuccs;
 		/*isCoBeforeSavedPrefix(r, lab)*/
 		if(auto *mLab = llvm::dyn_cast<MemAccessLabel>(lab)) {
 			auto w = llvm::isa<ReadLabel>(mLab) ? llvm::dyn_cast<ReadLabel>(mLab)->getRf() : mLab->getPos();
 			auto wLab = g.getEventLabel(w);
+			if(mLab->getTransaction().isInvalid()) continue;
 			if(!w.isBottom()&&!w.isInitializer()&&wLab->getTransaction().isInvalid()) continue;
 			auto wLabTrans = g.getTransaction(wLab->getTransaction());
 			if(!w.isBottom()&&!w.isInitializer()&&!wLabTrans->isStorePresent(mLab->getAddr())) continue;
@@ -530,44 +536,25 @@ bool MOCalculator::inMaximalPathTr(const TransactionBackwardRevisit &r)
 							mLab->getIndex() > sLab->getPPoRfView()[mLab->getThread()] &&
 							mLab->getIndex() > eLab->getPPoRfView()[mLab->getThread()];
 						if(flag) {
-							// WARN("isCoBeforeSavedPrefix check(RF-for read) event("
-							// 	+ std::__cxx11::to_string(w.thread)+","+
-							// 	std::__cxx11::to_string(w.index) +") 1 \n");
 							/*Check if this mLab-event belongs to same transaction as rLab and
 							* sTran(succs of mLab) also has write on some read in trans before rLab
 							*/
 							if(mLab->getTransaction().isInvalid()) return false;
 							if(mLab->getTransaction() == revLab->getTransaction()){
-								for(auto ev : rTrans->getLoadsWithAddr()){
-									if(ev.second.index < r.getPos().index) {
-										if(sTran->isStorePresent(ev.first))
-											return false;
-										for(auto we : moSuccs){
-											if(we != sLab->getPos() && eLabPoRfView.contains(we)){
-												auto *weTrans = g.getTransaction(g.getEventLabel(we)->getTransaction());
-												if(weTrans->isStorePresent(ev.first))
-													return false;
-											}
-										}
-									}
-										
+								if(isGoptimal(s,r.getPos(),trans->getPos())){
+									return false;
 								}
 							}
-								
-							// WARN("isCoBeforeSavedPrefix check(RF-for read) event("+ 
-							// 	std::__cxx11::to_string(w.thread)+","+std::__cxx11::to_string(w.index)
-							// 		+") 2 \n");
-							// WARN("isCoBeforeSavedPrefix succ event("+ 
-							// 	std::__cxx11::to_string(sLab->getPos().thread)+","+
-							// 	std::__cxx11::to_string(sLab->getPos().index) +")\n");
+						
+							WARN("Notoptimal succ ("+ std::__cxx11::to_string(s.thread)+
+								","+std::__cxx11::to_string(s.index) +")\n");
 							return true;
 						}
 						return false;
 						}) ) {
-				// WARN("`CoBeforeSavedPrefix(RF-for read) event("+ 
-				// 	std::__cxx11::to_string(lab->getPos().thread)+","+
-				// 	std::__cxx11::to_string(lab->getPos().index) +")`\n");
-				return false;
+								WARN("1 not optimal lab ("+ std::__cxx11::to_string(lab->getPos().thread)+
+									","+std::__cxx11::to_string(lab->getPos().index) +")\n");
+								return false;
 			}
 		
 
@@ -577,14 +564,12 @@ bool MOCalculator::inMaximalPathTr(const TransactionBackwardRevisit &r)
 		if (rLab){
 			auto *rfLab = g.getEventLabel(rLab->getRf());
 			if( !preds->contains(rfLab->getPos()) && rfLab->getStamp() > lab->getStamp() ) {
-				// WARN("`hasBeenRevisitedByDeleted for read("+ std::__cxx11::to_string(lab->getPos().thread)
-				// 	+","+std::__cxx11::to_string(lab->getPos().index) +")`\n");
+				WARN("2 not optimal lab ("+ std::__cxx11::to_string(lab->getPos().thread)+
+						","+std::__cxx11::to_string(lab->getPos().index) +")\n");
 				return false;
 			}
 		}
 		if (!wasAddedMaximally(lab)) {
-			// WARN("`Not AddedMaximally event("+ std::__cxx11::to_string(lab->getPos().thread)+","
-			// 	+std::__cxx11::to_string(lab->getPos().index) +")` 1 \n");
 			/* If lab.trans = BRevisit read.trans, then its okay lab to be not-maximal if all the 
 			mo-succ transaction(and their por-rf before transaction) contain writes on the same location 
 			as some read ev \in BRevisit read.trans.
@@ -603,22 +588,11 @@ bool MOCalculator::inMaximalPathTr(const TransactionBackwardRevisit &r)
 								return true;
 							if(sLab->getTransaction().isInvalid())
 								return true;
-							auto *sTran = g.getTransaction(sLab->getTransaction());
-							auto *eLab = g.getEventLabel(sTran->getEndEvent());
-							auto eLabPoRfView = eLab->getPorfView();
-							for(auto ev : rTrans->getLoadsWithAddr()){
-								if(ev.second.index < r.getPos().index) {
-									if(sTran->isStorePresent(ev.first))
-										return true;
-									for(auto we : moSuccs){
-										if(we != sLab->getPos() && eLabPoRfView.contains(we)) {
-											auto *weTrans = g.getTransaction(g.getEventLabel(we)->getTransaction());
-											if(weTrans->isStorePresent(ev.first))
-												return true;
-										}
-									}
-								}		
+							if(isGoptimal(s,r.getPos(),trans->getPos())){
+								return true;
 							}
+							WARN("Notoptimal succ ("+ std::__cxx11::to_string(s.thread)+
+								","+std::__cxx11::to_string(s.index) +")\n");
 							return false;
 						} )) {
 							continue;
@@ -626,12 +600,70 @@ bool MOCalculator::inMaximalPathTr(const TransactionBackwardRevisit &r)
 				}
 
 			}
-			// WARN("`Not AddedMaximally event("+ std::__cxx11::to_string(lab->getPos().thread)+","
-			// 	+std::__cxx11::to_string(lab->getPos().index) +")` 2 \n");
+			WARN("3 not optimal lab ("+ std::__cxx11::to_string(lab->getPos().thread)+
+					","+std::__cxx11::to_string(lab->getPos().index) +")\n");
 			return false;
 		}
 	}
+	WARN("Read Is Maximal("+ std::__cxx11::to_string(r.getPos().thread)+
+		","+std::__cxx11::to_string(r.getPos().index) +")\n");
 	return true;
+}
+
+bool MOCalculator::isGoptimal(Event s , Event r, Transaction t){
+	
+	auto &g = getGraph();
+	/* Compute relations. */
+	g.isConsistent(CheckConsType::full);
+	auto tranHB = getGraph().getGlobalTranRelation(ExecutionGraph::RelationId::TranSC);
+	auto *sLab = g.getWriteLabel(s);
+	auto *sTran = g.getTransaction(sLab->getTransaction());
+	auto *sTranELab = g.getEventLabel(sTran->getEndEvent());
+	auto eLabPoRfView = sTranELab->getPorfView();
+	auto *revLab = g.getEventLabel(r);
+	BUG_ON(revLab->getTransaction().isInvalid());
+	auto *revTran = g.getTransaction(revLab->getTransaction());
+
+	for(auto ev : revTran->getLoadsWithAddr()){
+		if(ev.second.index < r.index) {
+			auto *evLab = g.getReadLabel(ev.second);
+			auto *rfLab = !(evLab->getRf().isInitializer()) ? g.getEventLabel(evLab->getRf()) : nullptr;
+			auto *rfTran = !(evLab->getRf().isInitializer()) ? g.getTransaction(rfLab->getTransaction()) : nullptr; 
+			std::vector<Event> stores(store_begin(evLab->getAddr()) , store_end(evLab->getAddr()));
+			if(evLab->getRf().isInitializer() || rfTran->isStorePresent(sLab->getAddr())){
+				if(sTran->isStorePresent(ev.first))
+					return true;
+				for(auto we : stores){
+					//:Check if sTran.HBbefore(we) 
+					if(we != sLab->getPos()) {
+						auto *weTrans = g.getTransaction(g.getEventLabel(we)->getTransaction());
+						if(eLabPoRfView.contains(we) || tranHB(weTrans->getPos() , sTran->getPos())) {
+							if(evLab->getRf().isInitializer())
+								return true;
+						}
+						
+					}
+				}
+			}
+			if(!evLab->getRf().isInitializer()){
+				std::set<Event> rfsuccStore(succ_begin(evLab->getAddr() , rfLab->getPos()) , 
+								succ_end(evLab->getAddr() , rfLab->getPos()));
+				if(sTran->isStorePresent(ev.first) && rfsuccStore.count(s) != 0){
+					return true;
+				}
+				for(auto we : rfsuccStore){
+					if(we != sLab->getPos()) {
+						auto *weTrans = g.getTransaction(g.getEventLabel(we)->getTransaction());
+						if(eLabPoRfView.contains(we) || tranHB(weTrans->getPos() , sTran->getPos())) {
+							return true;
+						}
+					}
+				}
+			}
+			
+		}		
+	}
+	return false;
 }
 
 void MOCalculator::initCalc()
