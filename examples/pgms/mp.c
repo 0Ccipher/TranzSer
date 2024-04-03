@@ -35,7 +35,7 @@ int __VERIFIER_atomic_t3(){
 	r3 = (r2 == 2);
 	int r5 = 0;
 	r5 = ((r4 == 0));
-	printf(" y3=%d", y);
+	// printf(" y3=%d", y);
 	r3 = ((r3 & r5));
 	end;
 	return r3;
@@ -46,7 +46,7 @@ int __VERIFIER_atomic_t4(){
 	int r1 = atomic_load(&w);
 	int r2 = atomic_load(&x);
 	int r3 = 0;
-	printf(" x4=%d ", x);
+	// printf(" x4=%d ", x);
 	r3 = (x == 1);
 	end;
 	return r3;
@@ -71,7 +71,7 @@ int main(int argc, char *argv[]){
 	pthread_create(&t2,NULL,thr2,NULL);
 	pthread_join(t1,NULL);
 	pthread_join(t2,NULL);
-	printf("\n--- a1=%d a2=%d ----\n", a1,a2);
+	// printf("\n--- a1=%d a2=%d ----\n", a1,a2);
 	if( a1 & a2) assert(0);
 	return 0;
 }
