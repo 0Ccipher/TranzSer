@@ -86,17 +86,17 @@ int main(int argc, char *argv[]){
   pthread_t thr2; 
   pthread_t thr3; 
 
-  atomic_init(&vars[2], 0);
-  atomic_init(&vars[1], 0);
-  atomic_init(&vars[3], 0);
-  atomic_init(&vars[0], 0);
-  atomic_init(&vars[4], 0);
-  atomic_init(&atom_2_r6_2, 0);
-  atomic_init(&atom_2_r7_0, 0);
-  atomic_init(&atom_2_r8_1, 0);
-  atomic_init(&atom_3_r6_1, 0);
-  atomic_init(&atom_3_r7_0, 0);
-  atomic_init(&atom_3_r8_1, 0);
+  //atomic_init(&vars[2], 0);
+  //atomic_init(&vars[1], 0);
+  //atomic_init(&vars[3], 0);
+  //atomic_init(&vars[0], 0);
+  //atomic_init(&vars[4], 0);
+  //atomic_init(&atom_2_r6_2, 0);
+  //atomic_init(&atom_2_r7_0, 0);
+  //atomic_init(&atom_2_r8_1, 0);
+  //atomic_init(&atom_3_r6_1, 0);
+  //atomic_init(&atom_3_r7_0, 0);
+  //atomic_init(&atom_3_r8_1, 0);
 
   pthread_create(&thr0, NULL, t0, NULL);
   pthread_create(&thr1, NULL, t1, NULL);

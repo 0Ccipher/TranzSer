@@ -74,12 +74,12 @@ int main(int argc, char *argv[]){
   pthread_t thr2; 
   pthread_t thr3; 
 
-  atomic_init(&vars[1], 0);
-  atomic_init(&vars[0], 0);
-  atomic_init(&atom_0_r3_3, 0);
-  atomic_init(&atom_0_r4_4, 0);
-  atomic_init(&atom_3_r5_2, 0);
-  atomic_init(&atom_3_r1_1, 0);
+  //atomic_init(&vars[1], 0);
+  //atomic_init(&vars[0], 0);
+  //atomic_init(&atom_0_r3_3, 0);
+  //atomic_init(&atom_0_r4_4, 0);
+  //atomic_init(&atom_3_r5_2, 0);
+  //atomic_init(&atom_3_r1_1, 0);
 
   pthread_create(&thr0, NULL, t0, NULL);
   pthread_create(&thr1, NULL, t1, NULL);

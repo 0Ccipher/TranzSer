@@ -44,9 +44,9 @@ int main(int argc, char *argv[]){
   pthread_t thr0; 
   pthread_t thr1; 
 
-  atomic_init(&vars[0], 1);
-  atomic_init(&atom_1_r1_2, 0);
-  atomic_init(&atom_1_r2_3, 0);
+  //atomic_init(&vars[0], 1);
+  //atomic_init(&atom_1_r1_2, 0);
+  //atomic_init(&atom_1_r2_3, 0);
 
   pthread_create(&thr0, NULL, t0, NULL);
   pthread_create(&thr1, NULL, t1, NULL);

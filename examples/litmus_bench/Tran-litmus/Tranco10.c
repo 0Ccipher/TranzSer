@@ -28,7 +28,7 @@ return NULL;
 int main(int argc, char *argv[]){
   pthread_t thr0; 
 
-  atomic_init(&vars[0], 0);
+  //atomic_init(&vars[0], 0);
 
   pthread_create(&thr0, NULL, t0, NULL);
 

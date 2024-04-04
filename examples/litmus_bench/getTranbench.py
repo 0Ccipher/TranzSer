@@ -50,6 +50,7 @@ for tst in tests:
 #include <stdint.h>
 #include <stdatomic.h>
 #include <pthread.h>\n\n'''+start)
+        out = out.replace('''atomic_init(''' , '''//atomic_init(''')
         # out = out.replace("memory_order_acquire",'memory_order_seq_cst')
         # out = out.replace("memory_order_release",'memory_order_seq_cst')
         # out = out.replace("memory_order_acq_rel",'memory_order_seq_cst')
