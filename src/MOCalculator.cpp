@@ -508,7 +508,7 @@ bool MOCalculator::inMaximalPathTr(const TransactionBackwardRevisit &r)
 		if ((lab->getPos() != r.getPos() && preds->contains(lab->getPos())) || g.isOptBlockedRead(lab)) {
 			continue;
 		}
-		
+		if(lab->isLocal()) continue; //if localread continue
 		std::vector<Event> moSuccs;
 		/*isCoBeforeSavedPrefix(r, lab)*/
 		if(auto *mLab = llvm::dyn_cast<MemAccessLabel>(lab)) {

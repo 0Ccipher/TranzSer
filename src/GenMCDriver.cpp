@@ -2167,7 +2167,7 @@ SVal GenMCDriver::visitLoad(std::unique_ptr<ReadLabel> rLab, const EventDeps *de
 		if(trans->isLoadPresent(lab->getAddr()) || trans->isStorePresent(lab->getAddr())){
 			/*This read is not enabled to revisit*/
 			g.getReadLabel(lab->getPos())->setRevisitStatus(false);
-
+			g.getReadLabel(lab->getPos())->setLocal(true);
 			int readindex = -1;
 			int storeindex = -1;
 			if(trans->isLoadPresent(lab->getAddr()))
@@ -2266,6 +2266,8 @@ SVal GenMCDriver::visitLoad(std::unique_ptr<ReadLabel> rLab, const EventDeps *de
 		auto status = llvm::isa<MOCalculator>(g.getCoherenceCalculator()) ? false :
 			isCoMaximal(lab->getAddr(), s, true); /* MO messes with the status */
 		addToWorklist(std::make_unique<ForwardRevisit>(lab->getPos(), s, status));
+		// WARN("NewRF("+ std::__cxx11::to_string(s.thread)+
+		// 	","+std::__cxx11::to_string(s.index) +")\n");
 	});
 	return retVal;
 }

@@ -3,64 +3,26 @@
 #include <string.h>
 #include <stdbool.h>
 #include <pthread.h>
-#include "courseware.c"
+#include "courseware_1.c"
 
-char sinput[7][MAX_STR_SIZE];
-char cinput[7][MAX_STR_SIZE];
 
 
 void * thr1(void *arg){
-    printf("thread 1 - start \n");
-    deleteCourse(3);
-    enroll(0,3);
-    getAllEnrollments();
-    printf("thread 1 - finish \n");
+    // enroll(1,1);
+    // getAllEnrollments();
+    // enroll(1,2);
     return NULL;
 }
 void * thr2(void *arg){
-    printf("thread 2 - start \n");
-    openCourse(3);
-    enroll(2,3);
-    getAllEnrollments();
-    printf("thread 2 - finish \n");
+    // enroll(2,1);
+    // getAllEnrollments();
+    deleteCourse(1);
     return NULL;
 }
 void * thr3(void *arg){
-    printf("thread 3 - start \n");
-    openCourse(3);
-    enroll(2,3);
-    // deleteCourse(3);
-    printf("thread 3 - finish \n");
+    enroll(2,1);
+    // deleteCourse(1);
     return NULL;
-}
-
-void init(){
-    sprintf(t[0].row[0], "%s","0;Daniel Szabo;true;0");
-    sprintf(t[0].row[1], "%s","1;Patricio Inzaghi;false;1");
-    sprintf(t[0].row[2], "%s","2;Weiqiang Yu;true;2");
-    sprintf(t[0].row[3], "%s","3;Srinidhi Nagendra;true;3");
-    sprintf(t[0].row[4], "%s","4;Mouna Safir;true;4");
-    sprintf(t[0].row[5], "%s","5;Enrique Roman Calvo;true;5");
-    sprintf(t[0].row[6], "%s","6;Klara Nosan;true;7");
-    sprintf(t[1].row[0], "%s","0;placeholde;placeholde;closed;0");
-    sprintf(t[1].row[1], "%s","1;Formal Methods for Testing;CS;open;1");
-    sprintf(t[1].row[2], "%s","2;Quantum Computing;CS;open;2");
-    sprintf(t[1].row[3], "%s","3;Computer-Aided Program Verification;CS;open;3");
-    sprintf(t[1].row[4], "%s","4;Cryptography I;CS;open;3");
-    sprintf(t[1].row[5], "%s","5;Cryptography II;CS;open;3");
-    sprintf(t[1].row[6], "%s","6;Euskera;FL;closed;3");
-
-    sprintf(t[2].row[0], "%s","0:-1");
-    for(int i=7 ; i < MAX_ROWS ; i++){
-        sprintf(t[0].row[i], "%s","empty");
-        sprintf(t[1].row[i], "%s","empty");
-    }
-    for(int i=1 ; i < MAX_ROWS ; i++){
-        sprintf(t[2].row[i], "%s","empty");
-    }
-    database[0]= ATOMIC_VAR_INIT(&t[0]);
-    database[1]= ATOMIC_VAR_INIT(&t[1]);
-    database[2]= ATOMIC_VAR_INIT(&t[2]);
 }
 
 

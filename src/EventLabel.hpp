@@ -240,7 +240,12 @@ public:
 	void setTransaction(Transaction tr) {transaction = tr;}
 	Transaction getTransaction() const{ return transaction;}
 
+	bool isLocal() const{return islocal;}
+	void setLocal(bool val) {islocal=val;}
+
 private:
+	bool islocal = false; // for reads
+
 	/* Discriminator enum for LLVM-style RTTI */
 	const EventLabelKind kind;
 

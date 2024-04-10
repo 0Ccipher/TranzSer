@@ -6,7 +6,7 @@
                   "type": "cppdbg",
                   "request": "launch",
                   "program": "${workspaceFolder}/src/genmc",
-                  "args": ["--mo","--transc","--schedule-policy=ltr","--check-consistency-point=step","--check-consistency-type=full", "./examples/tran/ex6.c"],
+                  "args": ["--mo","--transc","--schedule-policy=ltr","--check-consistency-point=step","--print-exec-graphs","--check-consistency-type=full", "./examples/benchmarks/courseware/driver-1.c"],
                   "stopAtEntry": false,
                   "cwd": "${workspaceFolder}",
                   "environment": [],
