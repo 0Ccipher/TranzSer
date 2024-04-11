@@ -25,11 +25,11 @@ void abort;
 // Function to enroll a student in a course
 void enroll(int studentID, int courseID) {
    begin;
+  printf("Enrolling %d in %d \n",studentID, courseID);
     for(int i=0;i<2;i++){
         atomic_load_explicit(&student[i],SC);
         atomic_load_explicit(&registered[i],SC);
         atomic_load_explicit(&course[i],SC);  
-        atomic_load_explicit(&enrollments[i],SC);
         atomic_load_explicit(&courseStatus[i],SC);
         atomic_load_explicit(&courseCapacity[i],SC);
     }
@@ -43,6 +43,9 @@ void enroll(int studentID, int courseID) {
         printf("Invalid Course\n");
         return;
     }
+    for(int i=0;i<2;i++){
+        atomic_load_explicit(&enrollments[i],SC);
+    }
     //isregistered(student) && isopen(course)
     int isregistered = atomic_load_explicit(&registered[studentID],SC);
     int isopen = atomic_load_explicit(&courseStatus[courseID],SC);
@@ -51,7 +54,7 @@ void enroll(int studentID, int courseID) {
         //if enrollments < capacity - enroll
         int enrolls = atomic_load_explicit(&enrollments[courseID] , SC);
         int capacity = atomic_load_explicit(&courseCapacity[courseID] , SC);
-        printf("Current Enrolls for course %d of capacity %d: %d \n", 
+        printf("Current Enrolls for course %d of capacity %d := %d \n", 
                                     courseID , capacity ,enrolls);
         if(enrolls < capacity){
             atomic_store_explicit(&enrollments[courseID],enrolls+1,SC);
@@ -110,6 +113,7 @@ void enroll(int studentID, int courseID) {
 // Function to delete a course
 void deleteCourse(int courseID) {
    begin;
+   printf("Deleting course %d \n",courseID);
    for(int i=0;i<2;i++){
         atomic_load_explicit(&course[i],SC);  
         atomic_load_explicit(&courseStatus[i],SC);
@@ -117,6 +121,7 @@ void deleteCourse(int courseID) {
     }
     if(atomic_load_explicit(&course[courseID],SC) == -1){
         abort; //invalid course 
+        printf("Invalid Course\n");
         return;
     }
     for(int i=0;i<2;i++){
@@ -134,10 +139,10 @@ void deleteCourse(int courseID) {
         int r2 = atomic_load_explicit(&enrollments[i],SC);
         int r3 = atomic_load_explicit(&courseStatus[i],SC);
         int r4 = atomic_load_explicit(&courseCapacity[i],SC);
-        atomic_store_explicit(&course[courseID],r1,SC);
+        atomic_store_explicit(&course[i],r1,SC);
         atomic_store_explicit(&enrollments[i],r2,SC);
-        atomic_store_explicit(&courseStatus[courseID],r3,SC);
-        atomic_store_explicit(&courseCapacity[courseID],r4,SC);
+        atomic_store_explicit(&courseStatus[i],r3,SC);
+        atomic_store_explicit(&courseCapacity[i],r4,SC);
     }
     end;
 }
@@ -180,6 +185,6 @@ int main() {
     // pthread_join(t1,NULL);
     pthread_join(t2,NULL);
     pthread_join(t3,NULL);
-
+    printf("----------------------------------------------\n");
     return 0;
 }

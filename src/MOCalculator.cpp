@@ -505,7 +505,8 @@ bool MOCalculator::inMaximalPathTr(const TransactionBackwardRevisit &r)
 	}
 		
 	for (const auto *lab : labels(g)) {
-		if ((lab->getPos() != r.getPos() && preds->contains(lab->getPos())) || g.isOptBlockedRead(lab)) {
+		auto *enLab = llvm::dyn_cast<TrEndLabel>(lab);
+		if ((lab->getPos() != r.getPos() && preds->contains(lab->getPos()) && !enLab) || g.isOptBlockedRead(lab)) {
 			continue;
 		}
 		if(lab->isLocal()) continue; //if localread continue
@@ -584,9 +585,10 @@ bool MOCalculator::inMaximalPathTr(const TransactionBackwardRevisit &r)
 					if(std::all_of(succ_begin(mLab->getAddr(), w), succ_end(mLab->getAddr(), w),
 						[&](const Event &s){
 							auto *sLab = g.getWriteLabel(s);
-							if(sLab->getStamp() > mLab->getStamp())
-								return true;
 							if(sLab->getTransaction().isInvalid())
+								return true;
+							/*sLab is porf-prefix of t*/
+							if(sLab->getStamp() > mLab->getStamp() && !preds->contains(sLab->getPos()))
 								return true;
 							if(isGoptimal(s,r.getPos(),trans->getPos())){
 								return true;
@@ -603,6 +605,37 @@ bool MOCalculator::inMaximalPathTr(const TransactionBackwardRevisit &r)
 			// WARN("3 not optimal lab ("+ std::__cxx11::to_string(lab->getPos().thread)+
 			// 		","+std::__cxx11::to_string(lab->getPos().index) +")\n");
 			return false;
+		}
+		if(auto *eLab = llvm::dyn_cast<TrEndLabel>(lab)){
+			if(eLab->getTransaction().isInvalid()) continue;
+			if(eLab->getTransaction() != revLab->getTransaction()) continue;
+			// WARN("CheckMaxTR endlab\n");
+			auto *revTran = g.getTransaction(revLab->getTransaction());
+			for(auto ev : revTran->getStoresWithAddr()){
+				if(ev.second.index < r.getPos().index){
+					auto *mLab = g.getWriteLabel(ev.second);
+					if(std::all_of(succ_begin(ev.first, ev.second), succ_end(ev.first, ev.second),
+						[&](const Event &s){
+							auto *sLab = g.getWriteLabel(s);
+							
+							if(sLab->getTransaction().isInvalid())
+								return true;
+							
+							if(sLab->getStamp() > mLab->getStamp() && !preds->contains(sLab->getPos()))
+								return true;
+						
+							if(isGoptimal(s,r.getPos(),trans->getPos())){
+								return true;
+							}
+							return false;
+						} )) {
+							continue;
+					}
+					else{
+						return false; // this store ev.second is not optimal
+					}
+				}
+			}
 		}
 	}
 	// WARN("Read Is Maximal("+ std::__cxx11::to_string(r.getPos().thread)+
