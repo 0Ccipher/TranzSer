@@ -2221,6 +2221,12 @@ SVal GenMCDriver::visitLoad(std::unique_ptr<ReadLabel> rLab, const EventDeps *de
 		while (!found) {
 			found = true;
 			changeRf(lab->getPos(), stores.back());
+			// WARN("Main-rlab ("+ std::__cxx11::to_string(lab->getPos().thread)+
+			// 		","+std::__cxx11::to_string(lab->getPos().index) +")\n");
+			// WARN("RF ("+ std::__cxx11::to_string(stores.back().thread)+
+			// 		","+std::__cxx11::to_string(stores.back().index) +")\n");
+			// WARN("addedMAX:"+std::__cxx11::to_string(lab->wasAddedMax())+"\n");
+	
 			if (!isConsistent(ProgramPoint::step)) {
 				found = false;
 				stores.erase(stores.end() - 1);
@@ -2267,7 +2273,8 @@ SVal GenMCDriver::visitLoad(std::unique_ptr<ReadLabel> rLab, const EventDeps *de
 			isCoMaximal(lab->getAddr(), s, true); /* MO messes with the status */
 		addToWorklist(std::make_unique<ForwardRevisit>(lab->getPos(), s, status));
 		// WARN("NewRF("+ std::__cxx11::to_string(s.thread)+
-		// 	","+std::__cxx11::to_string(s.index) +")\n");
+		// 	","+std::__cxx11::to_string(s.index) +") with ismax:" 
+		// 	+ std::__cxx11::to_string(status)+"\n");
 	});
 	return retVal;
 }
@@ -3064,6 +3071,7 @@ bool GenMCDriver::loadRevisits(const Transactions *trans)
 			/*Since loads are are sorted by stamp and  this load is not maximal extension, 
 			* earlier ones are also not maximal
 			*/
+			// WARN("Not Maximal Extension\n");
 			break;
 		}
 		
@@ -3097,6 +3105,9 @@ bool GenMCDriver::loadRevisits(const Transactions *trans)
 		if (tp && tp->getRemainingTasks() < 8 * tp->size()) {
 			tp->submit(getSharedState());
 		} else {
+			// WARN("CheckCons-BRevist("+ std::__cxx11::to_string(l.thread)+
+			// ","+std::__cxx11::to_string(l.index) +")\n");
+	
 			if (isConsistent(ProgramPoint::step)){
 				explore();
 			}

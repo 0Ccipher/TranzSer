@@ -328,9 +328,13 @@ Calculator::CalculationResult TranSCCalculator::doCalc()
 	auto &coRelation = g.getPerLocRelation(ExecutionGraph::RelationId::co);
 
 	hbRelation.transClosure();
-	if (!hbRelation.isIrreflexive())
-		{WARN("`Not consistent hb `  \n"); return Calculator::CalculationResult(false, false);}
+	if (!hbRelation.isIrreflexive()){
+		// WARN("`Not consistent hb `  \n"); 
+		return Calculator::CalculationResult(false, false);
+	}
 	calcTranSCRelation();
+	// if (!TranSCRelation.isIrreflexive())
+	// 	WARN("`Not consistent tranSC `  \n"); 
 	if (!TranSCRelation.isIrreflexive())
 		return Calculator::CalculationResult(false, false);
 	// 	{ initCalc(); 

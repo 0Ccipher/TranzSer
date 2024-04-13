@@ -16,7 +16,7 @@ import multiprocessing
 curDir = os.getcwd()
 LITMUSDIR = curDir + '/Tran-litmus/Tran'
 OUTPUTTFILE = curDir + '/testTranzSer.results.txt'
-LISTFILE = curDir + '/test.results.txt'
+LISTFILE = curDir + '/ref.results.txt'
 # FIX ME
 transcBIN = 'genmc'
 class bcolors:

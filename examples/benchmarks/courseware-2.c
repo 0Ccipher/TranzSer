@@ -186,20 +186,21 @@ int getAllEnrollments(){
 
 
 void * thr1(void *arg){
+    getAllEnrollments();
     enroll(0,0);
     getAllEnrollments();
-    enroll(0,1);
     return NULL;
 }
 void * thr2(void *arg){
+    getAllEnrollments();
     enroll(1,0);
     getAllEnrollments();
-    deleteCourse(1);
     return NULL;
 }
 void * thr3(void *arg){
-    enroll(1,0);
+    getAllEnrollments();
     deleteCourse(0);
+    getAllEnrollments();
     return NULL;
 }
 

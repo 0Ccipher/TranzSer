@@ -1,5 +1,5 @@
 /*
-	Example 12 - 12 traces (only mo edges) 
+	Example 11 - 12 traces (only mo edges) 
 */
 #include <pthread.h>
 #include <assert.h>

@@ -1,3 +1,4 @@
+/* 3 traces*/
 #include <pthread.h>
 #include <assert.h>
 #include <stdio.h>
