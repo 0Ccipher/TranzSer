@@ -1,0 +1,13 @@
+SRA withco
+
+(* We dont consider fences for these benchmarks *)
+
+let porf = po | rf
+let hb = porf+
+
+irreflexive hb
+irreflexive co;hb
+irreflexive fr;hb
+irreflexive fr;co
+
+acyclic porf | co

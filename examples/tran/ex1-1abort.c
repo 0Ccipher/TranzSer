@@ -21,6 +21,7 @@ int __VERIFIER_atomic_t1(){
 	r1 = atomic_load_explicit(&y, memory_order_seq_cst);
 	printf("y1: %d\n",r1);
 	if(r1==0){
+		x = 1000;
 		__VERIFIER_Transaction_abort();
 		return 1;
 	}

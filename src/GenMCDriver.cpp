@@ -1808,6 +1808,7 @@ void GenMCDriver::visitTrAbort(std::unique_ptr<TrAbortLabel> lab){
 		mm->removeAllStores(trAbortLab->getTransaction());
 		trans->eraseAllAddedMo();
 		trans->eraseRevisitedStores();
+		trans->eraseAllStore();
 	}
 	else
 		BUG();
@@ -3065,12 +3066,16 @@ bool GenMCDriver::loadRevisits(const Transactions *trans)
 
 		auto *sLab = g.getWriteLabel(trans->getStore(rLab->getAddr()));
 
+		// WARN("BRevistTr Read ("+ std::__cxx11::to_string(l.thread)+","+std::__cxx11::to_string(l.index) +")\t"+
+		// 	"From trans t ("+ std::__cxx11::to_string(trans->getPos().thread)+","+std::__cxx11::to_string(trans->getPos().index) +")\n");
+
 		/* Create TransactionBAckwardRevisit */
 		auto br =  std::make_unique<TransactionBackwardRevisit>(rLab, eLab , sLab , trans->getPos());
 		if (!g.isMaximalExtensionTr(*br)){
 			/*Since loads are are sorted by stamp and  this load is not maximal extension, 
 			* earlier ones are also not maximal
 			*/
+			string s = "";
 			// WARN("Not Maximal Extension\n");
 			break;
 		}
@@ -3105,9 +3110,7 @@ bool GenMCDriver::loadRevisits(const Transactions *trans)
 		if (tp && tp->getRemainingTasks() < 8 * tp->size()) {
 			tp->submit(getSharedState());
 		} else {
-			// WARN("CheckCons-BRevist("+ std::__cxx11::to_string(l.thread)+
-			// ","+std::__cxx11::to_string(l.index) +")\n");
-	
+			// WARN("CheckCons-BRevist("+ std::__cxx11::to_string(l.thread)+","+std::__cxx11::to_string(l.index) +") := "+std::__cxx11::to_string(isConsistent(ProgramPoint::step))+"\n");
 			if (isConsistent(ProgramPoint::step)){
 				explore();
 			}

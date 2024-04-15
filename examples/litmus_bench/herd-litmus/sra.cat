@@ -1,0 +1,26 @@
+SRA withco
+
+(* sync, lwsync, isync, eieio are translated to fences under RA semantics *)
+(* fence is modeled as atomic-read-write instruction to a special location *)
+
+let emptyrelation = 0
+let fencetotalorders = linearisations(F,emptyrelation)
+
+with Ftotalorder from fencetotalorders
+
+let indirect-Ftotalorder = Ftotalorder;Ftotalorder
+let added-f-rf= Ftotalorder\indirect-Ftotalorder
+
+let f-rf = rf | added-f-rf
+let f-co = co | Ftotalorder
+let f-fr = f-rf^-1;f-co
+
+let f-porf = po | f-rf
+let f-hb = f-porf+
+
+irreflexive f-hb
+irreflexive f-co;f-hb
+irreflexive f-fr;f-hb
+irreflexive f-fr;f-co
+
+acyclic f-porf | f-co

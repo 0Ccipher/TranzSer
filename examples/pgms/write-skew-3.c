@@ -56,11 +56,10 @@ int __VERIFIER_atomic_t2(){
 	begin;
 	int r1 = y;
 	x = 2;
-	int r2 = x;
 	int r3 = 0;
 	r3 = (r1 == 0);
 	end;
-	if(r2==0) return 0;
+	if(r3==0) return 0;
 	begin;
 	atomic_load(&vars[0]);
 	atomic_store(&vars[0],2);

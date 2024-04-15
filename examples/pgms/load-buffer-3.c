@@ -78,6 +78,8 @@ return NULL;
 
 void *t1(void *arg){
   a2 =__VERIFIER_atomic_t1();
+  	__VERIFIER_atomic_t6();
+
 return NULL;
 
 }

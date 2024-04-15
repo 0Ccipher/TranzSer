@@ -58,6 +58,7 @@ public:
 	/*Returns stores in sorted order of stamp//index*/
 	std::vector<std::pair<SAddr,Event>> getStoresWithAddr() const;
 	void eraseStore(SAddr addr);
+	void eraseAllStore() {stores.clear();};
 
 	void addRevisitedStore(SAddr addr, Event store) {revisitedStores[addr] = store;};
 	bool isRevisitedStore(SAddr addr) const{ return (revisitedStores.count(addr) > 0) ;};

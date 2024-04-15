@@ -210,6 +210,7 @@ void * thr3(void *arg){
     openCourse(0);//3
     enroll(0,0);
     deleteCourse(0);//3
+    getAllEnrollments();
     return NULL;
 }
 

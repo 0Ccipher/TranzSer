@@ -394,8 +394,7 @@ std::vector<Event> ExecutionGraph::getConsistentRevisitable(const Transactions *
 		for (auto j = before[i] + 1u; j < getThreadSize(i); j++) {
 			const EventLabel *lab = getEventLabel(Event(i, j));
 			if (auto *rLab = llvm::dyn_cast<ReadLabel>(lab)) {
-				if (trans->isStorePresent(rLab->getAddr()) &&
-				    rLab->isRevisitable() && rLab->wasAddedMax())
+				if (trans->isStorePresent(rLab->getAddr()) && rLab->isRevisitable()) //&& rLab->wasAddedMax())
 					loads.push_back(rLab->getPos());
 			}
 		}

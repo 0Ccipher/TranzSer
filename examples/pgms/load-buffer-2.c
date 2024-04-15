@@ -30,11 +30,6 @@ int __VERIFIER_atomic_t0(){
   return r2;
 }
 
-void *t0(void *arg){
-  __VERIFIER_atomic_t0();
-return NULL;
-
-}
 
 int __VERIFIER_atomic_t1(){
   __VERIFIER_Transaction_begin();
@@ -51,11 +46,7 @@ int __VERIFIER_atomic_t1(){
   return r2;
 }
 
-void *t1(void *arg){
-  a2 =__VERIFIER_atomic_t1();
-return NULL;
 
-}
 
 void __VERIFIER_atomic_t5(){
 	begin;
@@ -79,6 +70,19 @@ void __VERIFIER_atomic_t7(){
 	r2 = r2 + r1;
 	vars[1] = r2;
 	end;
+}
+
+void *t0(void *arg){
+  __VERIFIER_atomic_t0();
+return NULL;
+
+}
+
+
+void *t1(void *arg){
+  a2 =__VERIFIER_atomic_t1();
+return NULL;
+
 }
 
 void *thr3(void *arg){
