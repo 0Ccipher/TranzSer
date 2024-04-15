@@ -1,4 +1,0 @@
-SC withco
-
-(* Sequential consistency *)
-acyclic po | fr | rf | co as sc
