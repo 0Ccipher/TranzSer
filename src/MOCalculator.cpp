@@ -1,3 +1,5 @@
+
+/* Omkar : Extended GenMC-Trust with transactions*/
 /*
  * GenMC -- Generic Model Checking.
  *
@@ -110,7 +112,7 @@ void MOCalculator::removeAllStores(Transaction tr)
 					if(!lab->getTransaction().isInvalid()) {
 						if(lab->getTransaction() == tr 	
 								&& !trans->isRevisitedStore(lab->getAddr())){
-							// //WARN---("**Removed from mo write("+std::__cxx11::to_string(lab->getPos().thread)
+							// WARN("**Removed from mo write("+std::__cxx11::to_string(lab->getPos().thread)
 							// 		+","+std::__cxx11::to_string(lab->getPos().index)+")**\n");
 							return true;
 						}
@@ -263,7 +265,7 @@ MOCalculator::getConsistentLoadRevisits(const Transactions *trans)
 {
 	const auto &g = getGraph();
 	auto ls = g.getConsistentRevisitable(trans);
-	// //WARN---("1 LOADS : "+std::to_string(ls.size()));
+	// WARN("1 LOADS : "+std::to_string(ls.size()));
 	auto stores = trans->getStoresWithAddr();
 	/* If stores in this trans are po- and mo-maximal then we are done */
 	if (!supportsOutOfOrder() && std::all_of( stores.begin() , stores.end() , 
@@ -292,7 +294,7 @@ MOCalculator::getConsistentLoadRevisits(const Transactions *trans)
 	// 				 	[&](Event ev){ return before.contains(ev); });
 	// 			}), ls.end());
 	
-	// //WARN---("2 LOADS : "+std::to_string(ls.size()));
+	// WARN("2 LOADS : "+std::to_string(ls.size()));
 	/* If out-of-order event addition is not supported, then we are done
 	 * due to po-maximality */
 	if (!supportsOutOfOrder())
@@ -477,7 +479,7 @@ bool MOCalculator::inMaximalPath(const BackwardRevisit &r)
 //newscdpor
 bool MOCalculator::inMaximalPathTr(const TransactionBackwardRevisit &r)
 {
-	//WARN---("inMaximalPathTr Read ("+ std::__cxx11::to_string(r.getPos().thread)+","+std::__cxx11::to_string(r.getPos().index) +")\t");
+	WARN("inMaximalPathTr Read ("+ std::__cxx11::to_string(r.getPos().thread)+","+std::__cxx11::to_string(r.getPos().index) +")\t");
 	auto &g = getGraph();
 	auto preds = g.getRevisitViewTr(r);
 	
@@ -485,7 +487,7 @@ bool MOCalculator::inMaximalPathTr(const TransactionBackwardRevisit &r)
 	auto *revLab = g.getEventLabel(r.getPos());
 	BUG_ON(revLab->getTransaction().isInvalid());
 	auto *rTrans = g.getTransaction(revLab->getTransaction());
-	//WARN---("From trans t ("+ std::__cxx11::to_string(trans->getPos().thread)+","+std::__cxx11::to_string(trans->getPos().index) +")\n");
+	WARN("From trans t ("+ std::__cxx11::to_string(trans->getPos().thread)+","+std::__cxx11::to_string(trans->getPos().index) +")\n");
 	/*mo-succ of all writes from r.Transaction should be in the updated graph */
 	auto stores = trans->getStoresWithAddr();
 	if(std::any_of(stores.begin() , stores.end(), 
@@ -494,12 +496,12 @@ bool MOCalculator::inMaximalPathTr(const TransactionBackwardRevisit &r)
 					auto succIt = succ_begin(wLab->getAddr(), wLab->getPos());
 					auto succE = succ_end(wLab->getAddr(), wLab->getPos());
 					if (!(succIt == succE) && !(preds->contains(*succIt))){
-						//WARN---("0 Notoptimal succ ("+ std::__cxx11::to_string(store.second.thread)+","+std::__cxx11::to_string(store.second.index) +")\t");
+						WARN("0 Notoptimal succ ("+ std::__cxx11::to_string(store.second.thread)+","+std::__cxx11::to_string(store.second.index) +")\t");
 						return true;
 					}
 					return false;
 				})) {
-		//WARN---("there exists a Mo succ, which is not in graph \n");
+		WARN("there exists a Mo succ, which is not in graph \n");
 		return false;
 	}
 		
@@ -509,6 +511,7 @@ bool MOCalculator::inMaximalPathTr(const TransactionBackwardRevisit &r)
 			continue;
 		}
 		if(lab->isLocal()) continue; //if localread continue
+		// WARN("Checkopt for lab ("+ std::__cxx11::to_string(lab->getPos().thread)+","+std::__cxx11::to_string(lab->getPos().index) +")\n");
 		std::vector<Event> moSuccs;
 		/*isCoBeforeSavedPrefix(r, lab)*/
 		if(auto *mLab = llvm::dyn_cast<MemAccessLabel>(lab)) {
@@ -546,13 +549,13 @@ bool MOCalculator::inMaximalPathTr(const TransactionBackwardRevisit &r)
 								}
 							}
 						
-							//WARN---("Notoptimal succ ("+ std::__cxx11::to_string(s.thread)+","+std::__cxx11::to_string(s.index) +")\t");
+							WARN("Notoptimal succ ("+ std::__cxx11::to_string(s.thread)+","+std::__cxx11::to_string(s.index) +")\t");
 							return true;
 						}
 						return false;
 					}) 
 			) {
-				//WARN---("1 not optimal lab ("+ std::__cxx11::to_string(lab->getPos().thread)+","+std::__cxx11::to_string(lab->getPos().index) +")\n");
+				WARN("1 not optimal lab ("+ std::__cxx11::to_string(lab->getPos().thread)+","+std::__cxx11::to_string(lab->getPos().index) +")\n");
 				return false;
 			}
 		
@@ -563,7 +566,7 @@ bool MOCalculator::inMaximalPathTr(const TransactionBackwardRevisit &r)
 		if (rLab){
 			auto *rfLab = g.getEventLabel(rLab->getRf());
 			if( !preds->contains(rfLab->getPos()) && rfLab->getStamp() > lab->getStamp() ) {
-				//WARN---("revrsedread 2 not optimal lab ("+ std::__cxx11::to_string(lab->getPos().thread)+","+std::__cxx11::to_string(lab->getPos().index) +")\n");
+				WARN("revrsedread 2 not optimal lab ("+ std::__cxx11::to_string(lab->getPos().thread)+","+std::__cxx11::to_string(lab->getPos().index) +")\n");
 				return false;
 			}
 		}
@@ -579,32 +582,11 @@ bool MOCalculator::inMaximalPathTr(const TransactionBackwardRevisit &r)
 			auto w = llvm::isa<ReadLabel>(mLab) ? llvm::dyn_cast<ReadLabel>(mLab)->getRf()
 							: mLab->getPos();
 			if(mLab->getTransaction().isInvalid()) continue;
-			if(!w.isBottom()&&!w.isInitializer()&&mLab->getTransaction().isInvalid()) continue;
-			auto wLabTrans = g.getTransaction(mLab->getTransaction());
-			if(!w.isBottom()&&!w.isInitializer()&&!wLabTrans->isStorePresent(mLab->getAddr())) continue;
-			if(!w.isBottom()&&!w.isInitializer()&&wLabTrans->getStore(mLab->getAddr()) != w) continue;
-			// {
-			// 	if(mLab->getTransaction() == revLab->getTransaction()){
-			// 		if(std::all_of(succ_begin(mLab->getAddr(), w), succ_end(mLab->getAddr(), w),
-			// 			[&](const Event &s){
-			// 				auto *sLab = g.getWriteLabel(s);
-			// 				if(sLab->getTransaction().isInvalid())
-			// 					return true;
-			// 				/*sLab is porf-prefix of t*/
-			// 				if(sLab->getStamp() > lab->getStamp() && !preds->contains(sLab->getPos()))
-			// 					return true;
-			// 				if(isGoptimal(s,r.getPos(),trans->getPos())){
-			// 					return true;
-			// 				}
-			// 				//WARN---("8*Notoptimal succ ("+ std::__cxx11::to_string(s.thread)+
-			// 					","+std::__cxx11::to_string(s.index) +")\n");
-			// 				return false;
-			// 			} )) {
-			// 				continue;
-			// 		}
-			// 	}
-
-			// }
+			auto wLab = g.getEventLabel(w);
+			if(!w.isBottom() && !w.isInitializer() && wLab->getTransaction().isInvalid()) continue;
+			auto wLabTrans = g.getTransaction(wLab->getTransaction());
+			if(!w.isBottom() && !w.isInitializer() && !wLabTrans->isStorePresent(mLab->getAddr())) continue;
+			if(!w.isBottom() && !w.isInitializer() && wLabTrans->getStore(mLab->getAddr()) != w) continue;
 			/*Check lab is co-max or not. 
 			The part where w is cobeforeCaverPrefix is handled above*/
 			if(std::all_of(succ_begin(mLab->getAddr(), w), succ_end(mLab->getAddr(), w),
@@ -613,14 +595,15 @@ bool MOCalculator::inMaximalPathTr(const TransactionBackwardRevisit &r)
 						if(sLab->getTransaction().isInvalid())
 							return true;
 						/*sLab is in Tset-> w is not maximal return false - cobeforeprefix case handled above*/
-						if(sLab->getStamp() < mLab->getStamp() && !preds->contains(sLab->getPos()) 
-								&& sLab->getTransaction() != trans->getPos()){
+						if((sLab->getStamp() < lab->getStamp() || preds->contains(sLab->getPos())) 
+								&& sLab->getTransaction() != trans->getPos() 
+								&& sLab->getTransaction() != mLab->getTransaction()){
 							if(mLab->getTransaction() == revLab->getTransaction()){
 								if(isGoptimal(s,r.getPos(),trans->getPos())){
 									return true;
 								}
 							}
-							//WARN---("Notoptimal succ ("+ std::__cxx11::to_string(s.thread)+","+std::__cxx11::to_string(s.index) +")\t");
+							WARN("Notoptimal succ ("+ std::__cxx11::to_string(s.thread)+","+std::__cxx11::to_string(s.index) +")\t");
 							return false;
 						}
 						return true;
@@ -628,13 +611,13 @@ bool MOCalculator::inMaximalPathTr(const TransactionBackwardRevisit &r)
 				) {
 					continue;
 			}
-			//WARN---("3 not optimal lab ("+ std::__cxx11::to_string(lab->getPos().thread)+","+std::__cxx11::to_string(lab->getPos().index) +")\n");
+			WARN("3 not optimal lab ("+ std::__cxx11::to_string(lab->getPos().thread)+","+std::__cxx11::to_string(lab->getPos().index) +")\n");
 			return false;
 		}
 		if(auto *eLab = llvm::dyn_cast<TrEndLabel>(lab)){
 			if(eLab->getTransaction().isInvalid()) continue;
 			if(eLab->getTransaction() != revLab->getTransaction()) continue;
-			//WARN---("CheckMaxTR endlab\n");
+			WARN("CheckMaxTR endlab\n");
 			auto *revTran = g.getTransaction(revLab->getTransaction());
 			for(auto ev : revTran->getStoresWithAddr()){
 				Event ps;
@@ -648,18 +631,20 @@ bool MOCalculator::inMaximalPathTr(const TransactionBackwardRevisit &r)
 							if(sLab->getTransaction().isInvalid())
 								return true;
 							
-							if(sLab->getStamp() > lab->getStamp() && !preds->contains(sLab->getPos()))
-								return true;
-						
-							if(isGoptimal(s,r.getPos(),trans->getPos())){
-								return true;
-							}
+							if((sLab->getStamp() < lab->getStamp() || preds->contains(sLab->getPos())) 
+								&& sLab->getTransaction() != trans->getPos() 
+								&& sLab->getTransaction() != mLab->getTransaction()) {
+									if(isGoptimal(s,r.getPos(),trans->getPos())){
+										return true;
+									}
+								}
+							
 							return false;
 						} )) {
 							continue;
 					}
 					else{
-						//WARN---("Notoptimal succ ("+ std::__cxx11::to_string(ps.thread)+","+std::__cxx11::to_string(ps.index) +")\t"+"4 not optimal lab ("+ std::__cxx11::to_string(lab->getPos().thread)+","+std::__cxx11::to_string(lab->getPos().index) +")\n");
+						WARN("Notoptimal succ ("+ std::__cxx11::to_string(ps.thread)+","+std::__cxx11::to_string(ps.index) +")\t"+"4 not optimal lab ("+ std::__cxx11::to_string(lab->getPos().thread)+","+std::__cxx11::to_string(lab->getPos().index) +")\n");
 								
 							
 						return false; // this store ev.second is not optimal
@@ -668,7 +653,7 @@ bool MOCalculator::inMaximalPathTr(const TransactionBackwardRevisit &r)
 			}
 		}
 	}
-	// //WARN---("Read Is Maximal("+ std::__cxx11::to_string(r.getPos().thread)+
+	// WARN("Read Is Maximal("+ std::__cxx11::to_string(r.getPos().thread)+
 	// 	","+std::__cxx11::to_string(r.getPos().index) +")\n");
 	return true;
 }

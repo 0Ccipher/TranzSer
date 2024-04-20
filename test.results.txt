@@ -1,5 +1,5 @@
 # The tests where executed using test-transc.py.
-# Date: 240414-22:23
+# Date: 240416-13:18
 
 Z6055 Forbid[92m OK [0m : 14
 Z6054 Forbid[92m OK [0m : 14
@@ -9817,4 +9817,4 @@ DETOUR1-PosWR000 Forbid[92m OK [0m : 18
 3.2W001 Forbid[92m OK [0m : 6
 3.2W000 Forbid[92m OK [0m : 2
 # Total number of traces: 253513
-# Total running time: 943.33 s
+# Total running time: 822.72 s

@@ -1,37 +1,34 @@
-void __VERIFIER_Transaction_begin();
-void __VERIFIER_Transaction_end();
-
-#define begin __VERIFIER_Transaction_begin()
-#define end __VERIFIER_Transaction_end() 
-
-
-#include <pthread.h>
+/*TranZSER test*/#include <pthread.h>
 #include <stdatomic.h>
 #include <assert.h>
 
+void __VERIFIER_Transaction_begin();
+void __VERIFIER_Transaction_end();
+#define begin __VERIFIER_Transaction_begin()
+#define end __VERIFIER_Transaction_end()
 atomic_int vars[3]; 
 atomic_int atom_1_r1_1; 
 
 atomic_int __fence_var;
 
 void *t0(void *arg){
+ begin;
 label_1:;
-  begin;
   atomic_store_explicit(&vars[0], 2, memory_order_seq_cst);
   int v2_r3 = atomic_load_explicit(&vars[0], memory_order_seq_cst);
   int v3_r4 = v2_r3 ^ v2_r3;
   int v4_r4 = v3_r4 + 1;
   atomic_store_explicit(&vars[1], v4_r4, memory_order_seq_cst);
-    end;
-return NULL;
+  end;
+  return NULL;
 }
 
 
 
 
 void *t1(void *arg){
+ begin;
 label_2:;
-  begin;
   int v6_r1 = atomic_load_explicit(&vars[1], memory_order_seq_cst);
   int v7_r3 = v6_r1 ^ v6_r1;
   int v8_r3 = v7_r3 + 1;
@@ -42,8 +39,8 @@ label_2:;
   atomic_store_explicit(&vars[0], v12_r6, memory_order_seq_cst);
   int v17 = (v6_r1 == 1);
   atomic_store_explicit(&atom_1_r1_1, v17, memory_order_seq_cst);
-    end;
-return NULL;
+  end;
+  return NULL;
 }
 
 
@@ -59,10 +56,5 @@ int main(int argc, char **argv){
   pthread_join(thr0,NULL);
   pthread_join(thr1,NULL);
 
-  int v13 = atomic_load_explicit(&vars[0], memory_order_seq_cst);
-  int v14 = (v13 == 2);
-  int v15 = atomic_load_explicit(&atom_1_r1_1, memory_order_seq_cst);
-  int v16_conj = v14 & v15;
-  if (v16_conj == 1) assert(0);
   return 0;
 }
