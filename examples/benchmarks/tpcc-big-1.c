@@ -7,13 +7,13 @@
 #define SC memory_order_seq_cst
 
 // atomic_int warehouse; //one warehouse
-atomic_int item[2]={1,2};
-atomic_int itemPrice[2]={4,5};
-atomic_int stock[2]={30,20}; // item stock
+atomic_int item[3]={1,2,3};
+atomic_int itemPrice[3]={4,5,8};
+atomic_int stock[3]={30,20,40}; // item stock
 // atomic_int districts; // one district
-atomic_int orders[4]={0,0,0,0}; // 0:c0i0;1:c0i1;2:c2i0;3:c2i1
-atomic_int customers[2]={0,2};
-atomic_int cbalance[2]={100,100};
+atomic_int orders[6]={0,0,0,0,0,0}; // 0:c0i0;1:c0i1;2:c2i0;3:c2i1-;c4:4,5
+atomic_int customers[3]={0,2,5};
+atomic_int cbalance[3]={100,100,150};
 atomic_int payments=0; //total payments 
 
 #define begin  __VERIFIER_Transaction_begin()
@@ -100,18 +100,29 @@ void * thr4(void *arg){
     return NULL;
 }
 
+void * thr5(void *arg){
+    stockLevel(100);
+    orderStatus(3);
+    createNewOrder(4,1,2);
+    return NULL;
+}
+
 int main() {
-    pthread_t t1,t2,t3,t4;
+    pthread_t t1,t2,t3,t4,t5;
 
     pthread_create(&t1,NULL,thr1,NULL);
     pthread_create(&t2,NULL,thr2,NULL);
     pthread_create(&t3,NULL,thr3,NULL);
     pthread_create(&t4,NULL,thr4,NULL);
+    pthread_create(&t5,NULL,thr5,NULL);
+    
+
 
     pthread_join(t1,NULL);
     pthread_join(t2,NULL);
     pthread_join(t3,NULL);
     pthread_join(t4,NULL);
+    pthread_join(t5,NULL);
    // printf("----------------------------------------------\n");
     return 0;
 }

@@ -27,8 +27,8 @@ void amalgamate(int custID0, int custID1){
     int cbal1 = atomic_load_explicit(&checkingAccountBal[custID1],SC);
     int total = sbal0 + cbal1;
     //update balance
-    atomic_store_explicit(&checkingAccountBal[custID1],0,SC);
-    atomic_store_explicit(&savingsAccountBal[custID0],total,SC);
+    atomic_store_explicit(&checkingAccountBal[custID0],0,SC);
+    atomic_store_explicit(&savingsAccountBal[custID1],total,SC);
     end;
 }
 
@@ -113,26 +113,28 @@ void * thr3(void *arg){
     return NULL;
 }
 void * thr4(void *arg){
-    writeCheck(0,140);
+    writeCheck(1,140);
     depositChecking(1,700);
-    // sendPayment(1,0,10);
+    sendPayment(1,0,10);
     return NULL;
 }
 void * thr5(void *arg){
     writeCheck(1,500);
-    // balance(0);
-    // balance(1);
-    // balance(2);
+    balance(0);
+    balance(1);
+    balance(2);
     return NULL;
 }
 int main() {
     pthread_t t1,t2,t3,t4,t5;
 
-    pthread_create(&t2,NULL,thr2,NULL);
-    pthread_create(&t3,NULL,thr3,NULL);
+   
     pthread_create(&t4,NULL,thr4,NULL);
     pthread_create(&t5,NULL,thr5,NULL);
+    pthread_create(&t2,NULL,thr2,NULL);
+    pthread_create(&t3,NULL,thr3,NULL);
     pthread_create(&t1,NULL,thr1,NULL);
+
 
     pthread_join(t1,NULL);
     pthread_join(t2,NULL);

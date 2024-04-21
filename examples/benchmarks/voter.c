@@ -6,6 +6,10 @@
 
 #define SC memory_order_seq_cst
 
+atomic_int MaxVotesPerPhone[4] = {5,10,55,7};
+atomic_int contestant[4] = {1,2,3,4};
+atomic_int voteCount[4] = {2,10,5,6}; //votes per phone
+atomic_int votes[4] = {7,8,5,3};//votes to contestants
 
 
 #define begin  __VERIFIER_Transaction_begin()
@@ -16,18 +20,39 @@ void begin;
 void end;
 void abort;
 
+void vote(int voteid,int contestantNo, int phoneNo){
+    begin;
+    int contestant = atomic_load_explicit(&contestant[contestantNo],SC);
+    int voteCount = atomic_load_explicit(&voteCount[phoneNo],SC);
+    int maxvotes = atomic_load_explicit(&MaxVotesPerPhone[phoneNo],SC);
+    if(voteCount >= maxvotes){
+        abort;//voter_over_vote_limit
+        return;
+    }
+    int cvotes = atomic_load_explicit(&votes[contestantNo],SC);
+    atomic_store_explicit(&votes[contestantNo],cvotes+1,SC);
+    end;
+}
 
 void * thr1(void *arg){
+    vote(120,1,1);
+    vote(121,1,1);
     return NULL;
 }
 void * thr2(void *arg){
+    vote(122,2,1);
+    vote(123,3,2);
     return NULL;
 }
 void * thr3(void *arg){
+    vote(122,0,2);
+    vote(123,0,2);
     return NULL;
 }
 
 void * thr4(void *arg){
+    vote(122,3,2);
+    vote(123,3,2);
     return NULL;
 }
 

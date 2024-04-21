@@ -89,13 +89,12 @@ void * thr2(void *arg){
     return NULL;
 }
 void * thr3(void *arg){
-    // delivery();
     stockLevel(75);
     return NULL;
 }
 
 void * thr4(void *arg){
-    createNewOrder(1,1,2);
+    createNewOrder(2,1,2);
     orderStatus(0);
     return NULL;
 }

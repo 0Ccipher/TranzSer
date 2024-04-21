@@ -77,40 +77,32 @@ void delivery(){
 }
 
 void * thr1(void *arg){
-    createNewOrder(2,1,2);
-     orderStatus(0);
+    createNewOrder(0,1,2);
     return NULL;
 }
 void * thr2(void *arg){
-    payment(0,10);
-    stockLevel(234);
+    // payment(0,10);
+    // stockLevel(234);
     delivery();
-    return NULL;
-}
-void * thr3(void *arg){
-    delivery();
-    stockLevel(75);
     return NULL;
 }
 
+
 void * thr4(void *arg){
-    stockLevel(100);
-    orderStatus(1);
-    createNewOrder(0,1,2);
+    createNewOrder(1,1,2);
     return NULL;
 }
 
 int main() {
     pthread_t t1,t2,t3,t4;
 
+    
+    pthread_create(&t4,NULL,thr4,NULL);
     pthread_create(&t1,NULL,thr1,NULL);
     pthread_create(&t2,NULL,thr2,NULL);
-    pthread_create(&t3,NULL,thr3,NULL);
-    pthread_create(&t4,NULL,thr4,NULL);
 
     pthread_join(t1,NULL);
     pthread_join(t2,NULL);
-    pthread_join(t3,NULL);
     pthread_join(t4,NULL);
    // printf("----------------------------------------------\n");
     return 0;

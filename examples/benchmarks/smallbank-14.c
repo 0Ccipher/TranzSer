@@ -7,9 +7,9 @@
 #define SC memory_order_seq_cst
 
 
-atomic_int customersAccNO[3] = {1,2,3};
-atomic_int checkingAccountBal[3] = {1000,700,500};
-atomic_int savingsAccountBal[3] = {10000,2000,500};
+atomic_int customersAccNO[4] = {1,2,3,4};
+atomic_int checkingAccountBal[4] = {1000,700,500,900};
+atomic_int savingsAccountBal[4] = {10000,2000,500,1500};
 
 #define begin  __VERIFIER_Transaction_begin()
 #define end __VERIFIER_Transaction_end()
@@ -27,16 +27,16 @@ void amalgamate(int custID0, int custID1){
     int cbal1 = atomic_load_explicit(&checkingAccountBal[custID1],SC);
     int total = sbal0 + cbal1;
     //update balance
-    atomic_store_explicit(&checkingAccountBal[custID1],0,SC);
-    atomic_store_explicit(&savingsAccountBal[custID0],total,SC);
+    atomic_store_explicit(&checkingAccountBal[custID0],0,SC);
+    atomic_store_explicit(&savingsAccountBal[custID1],total,SC);
     end;
 }
 
 int balance(int custID){
     begin;
-    //atomic_load_explicit(&customersAccNO[custID],SC);
+    atomic_load_explicit(&customersAccNO[custID],SC);
     //get balance
-    int sbal0 = 0;//atomic_load_explicit(&savingsAccountBal[custID],SC);
+    int sbal0 = atomic_load_explicit(&savingsAccountBal[custID],SC);
     int cbal1 = atomic_load_explicit(&checkingAccountBal[custID],SC);
     int total = sbal0 + cbal1;
     end;
@@ -45,7 +45,7 @@ int balance(int custID){
 
 void depositChecking(int custID, int amount){
     begin;
-    //atomic_load_explicit(&customersAccNO[custID],SC);
+    atomic_load_explicit(&customersAccNO[custID],SC);
     //update balance
     atomic_store_explicit(&checkingAccountBal[custID],amount,SC);
     end;
@@ -70,8 +70,8 @@ void sendPayment(int sendAcct, int destAcct, int amount){
 
 void transactSavings(int custID, int amount){
     begin;
-    //atomic_load_explicit(&customersAccNO[custID],SC);
-    int sbal = 0;//atomic_load_explicit(&savingsAccountBal[custID],SC);
+    atomic_load_explicit(&customersAccNO[custID],SC);
+    int sbal = atomic_load_explicit(&savingsAccountBal[custID],SC);
     sbal = sbal - amount;
     if(sbal < 0){
         abort;
@@ -83,8 +83,8 @@ void transactSavings(int custID, int amount){
 
 void writeCheck(int custID, int amount){
     begin;
-    //atomic_load_explicit(&customersAccNO[custID],SC);
-    int sbal = 0;//atomic_load_explicit(&savingsAccountBal[custID],SC);
+    atomic_load_explicit(&customersAccNO[custID],SC);
+    int sbal = atomic_load_explicit(&savingsAccountBal[custID],SC);
     int cbal = atomic_load_explicit(&checkingAccountBal[custID],SC);
     int total = sbal + cbal;
     if(total < amount){
@@ -96,39 +96,50 @@ void writeCheck(int custID, int amount){
     }
     end;
 }
-
+void * thr1(void *arg){
+    writeCheck(2,100);
+    balance(3);
+    return NULL;
+}
 void * thr2(void *arg){
+    balance(0);
     balance(1);
     balance(2);
     return NULL;
 }
-
+void * thr3(void *arg){
+    amalgamate(0,1);
+    transactSavings(1,100);
+    balance(3);
+    return NULL;
+}
 void * thr4(void *arg){
+    writeCheck(0,140);
     depositChecking(1,700);
+    sendPayment(1,0,10);
     return NULL;
 }
 void * thr5(void *arg){
-    writeCheck(1,500);
-    balance(1);
-    // balance(2);
-    return NULL;
-}
-void * thr6(void *arg){
-    writeCheck(2,100);
+    balance(3);
+    balance(2);
+    writeCheck(3,340);
     return NULL;
 }
 int main() {
-    pthread_t t1,t2,t3,t4,t5,t6;
+    pthread_t t1,t2,t3,t4,t5;
 
+    pthread_create(&t1,NULL,thr1,NULL);
     pthread_create(&t2,NULL,thr2,NULL);
+    pthread_create(&t3,NULL,thr3,NULL);
     pthread_create(&t4,NULL,thr4,NULL);
     pthread_create(&t5,NULL,thr5,NULL);
-    pthread_create(&t6,NULL,thr6,NULL);
+    
 
+    pthread_join(t1,NULL);
     pthread_join(t2,NULL);
+    pthread_join(t3,NULL);
     pthread_join(t4,NULL);
-    pthread_join(t5,NULL);
-    pthread_join(t6,NULL);    
+    pthread_join(t5,NULL);    
    // printf("----------------------------------------------\n");
     return 0;
 }
