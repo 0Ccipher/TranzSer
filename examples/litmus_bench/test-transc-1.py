@@ -57,7 +57,7 @@ def res_to_string(tst, res):
     
 def runalltransc(jobs, keep_going):
     logfile = open(OUTPUTTFILE, 'w')
-    logfile.write('# The tests where executed using test-transc.py.\n')
+    logfile.write('# The tests where executed using test-transc-1.py.\n')
     logfile.write('# Date: ' + datetime.datetime.now().strftime('%y%m%d-%H:%M')+'\n')
     logfile.write('\n')
 

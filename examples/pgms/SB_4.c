@@ -92,18 +92,7 @@ void *write3(void *arg){
 	end;
 	return NULL;
 }
-void *write4(void *arg){
-	begin;
-	atomic_store_explicit(&arr[4], 10 , memory_order_seq_cst);
-	end;
-	return NULL;
-}
-void *write5(void *arg){
-	begin;
-	atomic_store_explicit(&arr[5], 10 , memory_order_seq_cst);
-	end;
-	return NULL;
-}
+
 
 int main(int argc, char *argv[]){
 	pthread_t t1,t2;

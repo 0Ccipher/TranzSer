@@ -7,14 +7,15 @@
 #define SC memory_order_seq_cst
 
 // atomic_int warehouse; //one warehouse
-atomic_int item[3]={1,2,3};
-atomic_int itemPrice[3]={4,5,8};
-atomic_int stock[3]={30,20,40}; // item stock
+atomic_int item[4]={1,2,3,4};
+atomic_int itemPrice[4]={4,5,8,14};
+atomic_int stock[4]={30,20,40,24}; // item stock
 // atomic_int districts; // one district
-atomic_int orders[6]={0,0,0,0,0,0}; // 0:c0i0;1:c0i1;2:c2i0;3:c2i1-;c4:4,5
-atomic_int customers[3]={0,2,5};
-atomic_int cbalance[3]={100,100,150};
+atomic_int orders[8]={0,0,0,0,0,0,0,0}; // 0:c0i0;1:c0i1;2:c2i0;3:c2i1-;c4:4,5;c6:6,7
+atomic_int customers[4]={0,2,5,7};
+atomic_int cbalance[4]={100,100,150,200};
 atomic_int payments=0; //total payments 
+
 
 #define begin  __VERIFIER_Transaction_begin()
 #define end __VERIFIER_Transaction_end()
@@ -79,6 +80,7 @@ void delivery(){
 void * thr1(void *arg){
     createNewOrder(2,1,2);
      orderStatus(0);
+     orderStatus(6);
     return NULL;
 }
 void * thr2(void *arg){
@@ -109,6 +111,9 @@ void * thr5(void *arg){
 void * thr6(void *arg){
     orderStatus(3);
     orderStatus(4);
+    // stockLevel(100);
+    // orderStatus(3);
+    createNewOrder(6,1,2);
     return NULL;
 }
 
@@ -121,7 +126,7 @@ int main() {
     pthread_create(&t4,NULL,thr4,NULL);
     pthread_create(&t5,NULL,thr5,NULL);
     pthread_create(&t6,NULL,thr6,NULL);
-    
+     
     
 
 

@@ -96,15 +96,17 @@ void writeCheck(int custID, int amount){
     }
     end;
 }
+
 void * thr1(void *arg){
     writeCheck(2,100);
     balance(0);
+    balance(3);
     return NULL;
 }
 void * thr2(void *arg){
     balance(0);
     balance(1);
-    balance(3);
+    balance(2);
     return NULL;
 }
 void * thr3(void *arg){
@@ -119,34 +121,30 @@ void * thr4(void *arg){
     return NULL;
 }
 void * thr5(void *arg){
-    writeCheck(3,500);
+   transactSavings(3,100);
     balance(0);
     balance(1);
     balance(2);
     return NULL;
 }
 
-void * thr6(void *arg){
-    balance(3);
-    balance(2);
-    return NULL;
-}
 int main() {
-    pthread_t t1,t2,t3,t4,t5,t6;
+    pthread_t t1,t2,t3,t4,t5;
 
     pthread_create(&t1,NULL,thr1,NULL);
-    pthread_create(&t2,NULL,thr2,NULL);
-    pthread_create(&t3,NULL,thr3,NULL);
     pthread_create(&t4,NULL,thr4,NULL);
     pthread_create(&t5,NULL,thr5,NULL);
-    pthread_create(&t6,NULL,thr6,NULL);
+    pthread_create(&t2,NULL,thr2,NULL);
+    pthread_create(&t3,NULL,thr3,NULL);
+        
+
+    
 
     pthread_join(t1,NULL);
     pthread_join(t2,NULL);
     pthread_join(t3,NULL);
     pthread_join(t4,NULL);
     pthread_join(t5,NULL);    
-    pthread_join(t6,NULL);
    // printf("----------------------------------------------\n");
     return 0;
 }

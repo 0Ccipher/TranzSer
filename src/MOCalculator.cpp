@@ -596,6 +596,7 @@ bool MOCalculator::inMaximalPathTr(const TransactionBackwardRevisit &r)
 			if(std::all_of(succ_begin(mLab->getAddr(), w), succ_end(mLab->getAddr(), w),
 					[&](const Event &s){
 						auto *sLab = g.getWriteLabel(s);
+						
 						if(sLab->getTransaction().isInvalid())
 							return true;
 						/*if sLab is in Tset-> w is not maximal return false */
@@ -604,6 +605,7 @@ bool MOCalculator::inMaximalPathTr(const TransactionBackwardRevisit &r)
 						if(sLab->getStamp() > lab->getStamp() && !preds->contains(sLab->getPos())){
 							return true;
 						}
+						
 						// sLab is in Tset--
 						//check isGopt, if applies 
 						if(mLab->getTransaction() == revLab->getTransaction()){
@@ -633,7 +635,6 @@ bool MOCalculator::inMaximalPathTr(const TransactionBackwardRevisit &r)
 						[&](const Event &s){
 							ps = s;
 							auto *sLab = g.getWriteLabel(s);
-							
 							if(sLab->getTransaction().isInvalid())
 								return true;
 							if(sLab->getTransaction() == trans->getPos()) return true;
@@ -642,9 +643,8 @@ bool MOCalculator::inMaximalPathTr(const TransactionBackwardRevisit &r)
 								return true;
 							}
 							//else sLab is in Tset--check isGopt
-							if(isGoptimal(s,r.getPos(),trans->getPos())){
+							if(isGoptimal(s,r.getPos(),trans->getPos())){								
 								return true;
-							
 							}
 							// WARN("4 Notoptimal write ("+ std::__cxx11::to_string(ev.second.thread)+","+std::__cxx11::to_string(ev.second.index) +")\t");
 							return false;
@@ -694,14 +694,17 @@ bool MOCalculator::isGoptimal(Event s , Event r, Transaction t){
 					//:Check if sTran.HBbefore(we) 
 					if(we != sLab->getPos()) {
 						auto *weTrans = g.getTransaction(g.getEventLabel(we)->getTransaction());
+						if(weTrans->getPos() != revTran->getPos())
 						if(eLabPoRfView.contains(we) || tranHB(weTrans->getPos() , sTran->getPos())) {
-							if(evLab->getRf().isInitializer())
+							if(evLab->getRf().isInitializer()){
 								return true;
+							}
 						}
 						
 					}
 				}
 			}
+			
 			if(!evLab->getRf().isInitializer()){
 				std::set<Event> rfsuccStore(succ_begin(evLab->getAddr() , rfLab->getPos()) , 
 								succ_end(evLab->getAddr() , rfLab->getPos()));
@@ -711,6 +714,7 @@ bool MOCalculator::isGoptimal(Event s , Event r, Transaction t){
 				for(auto we : rfsuccStore){
 					if(we != sLab->getPos()) {
 						auto *weTrans = g.getTransaction(g.getEventLabel(we)->getTransaction());
+						if(weTrans->getPos() != revTran->getPos())
 						if(eLabPoRfView.contains(we) || tranHB(weTrans->getPos() , sTran->getPos())) {
 							return true;
 						}

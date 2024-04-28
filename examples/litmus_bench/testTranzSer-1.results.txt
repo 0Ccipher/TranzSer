@@ -1,4 +1,4 @@
-# The tests where executed using test-transc.py.
+# The tests where executed using test-transc-1.py.
 # Date: 240417-11:54
 
 Z6.5+sync+sync+po Forbid[92m OK [0m : 6
